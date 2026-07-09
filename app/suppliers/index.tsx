@@ -14,8 +14,14 @@ export default function SuppliersScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
 
   const handleSave = async () => {
+    if (busy) {
+      return;
+    }
+
     const input = {
       name: name.trim(),
       phone: phone.trim() || undefined,
@@ -23,19 +29,28 @@ export default function SuppliersScreen() {
     };
 
     if (!input.name) {
+      setActionError('Informe o nome do fornecedor.');
       return;
     }
 
-    if (editingId) {
-      await edit(editingId, input);
-      setEditingId(null);
-    } else {
-      await create(input);
-    }
+    setBusy(true);
+    setActionError(undefined);
+    try {
+      if (editingId) {
+        await edit(editingId, input);
+        setEditingId(null);
+      } else {
+        await create(input);
+      }
 
-    setName('');
-    setPhone('');
-    setEmail('');
+      setName('');
+      setPhone('');
+      setEmail('');
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar o fornecedor.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -47,9 +62,11 @@ export default function SuppliersScreen() {
         <AppInput label="Nome" value={name} onChangeText={setName} />
         <AppInput label="Telefone" value={phone} onChangeText={setPhone} />
         <AppInput label="E-mail" value={email} onChangeText={setEmail} />
-        <AppButton label={editingId ? 'Salvar' : 'Criar'} onPress={() => void handleSave()} />
+        <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label="Cancelar" variant="ghost" onPress={() => setEditingId(null)} /> : null}
       </AppCard>
+
+      {actionError ? <EmptyState title="Fornecedores" description={actionError} /> : null}
 
       {loading ? (
         <EmptyState title="Fornecedores" description="Carregando..." />
@@ -76,7 +93,22 @@ export default function SuppliersScreen() {
                 setEmail(supplier.email ?? '');
               }}
             />
-            <AppButton label="Arquivar" variant="ghost" onPress={() => void archive(supplier.id)} />
+            <AppButton
+              label="Arquivar"
+              variant="ghost"
+              disabled={busy}
+              onPress={async () => {
+                setBusy(true);
+                setActionError(undefined);
+                try {
+                  await archive(supplier.id);
+                } catch (nextError) {
+                  setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o fornecedor.');
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
           </AppCard>
         ))
       )}

@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppState } from '@/state/app-state';
@@ -10,6 +12,26 @@ import { useSettings } from '@/hooks/useSettings';
 export default function SecurityScreen() {
   const { saveSettings } = useSettings();
   const { appLockEnabled, biometricUnlockEnabled, hideFinancialValues } = useAppState();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  const safeSave = async (input: Parameters<typeof saveSettings>[0]) => {
+    if (saving) {
+      return false;
+    }
+
+    setSaving(true);
+    setError(undefined);
+    try {
+      await saveSettings(input);
+      return true;
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a seguranca.');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ScreenContainer scroll padded>
@@ -30,14 +52,19 @@ export default function SecurityScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Valores financeiros</AppCard.Title>
         <StatusBadge tone={hideFinancialValues ? 'warning' : 'info'} label={hideFinancialValues ? 'Ocultos' : 'Visiveis'} />
-        <AppButton label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'} variant={hideFinancialValues ? 'secondary' : 'primary'} onPress={() => void saveSettings({ hideFinancialValues: !hideFinancialValues })} />
+        <AppButton label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'} disabled={saving} variant={hideFinancialValues ? 'secondary' : 'primary'} onPress={() => void safeSave({ hideFinancialValues: !hideFinancialValues })} />
       </AppCard>
 
+      {error ? <EmptyState title="Seguranca" description={error} /> : null}
+
       <AppButton
-        label="Concluir"
+        label={saving ? '...' : 'Concluir'}
+        disabled={saving}
         onPress={async () => {
-          await saveSettings({ hideFinancialValues, onboardingCompleted: true });
-          router.replace('/onboarding/done');
+          const saved = await safeSave({ hideFinancialValues, onboardingCompleted: true });
+          if (saved) {
+            router.replace('/onboarding/done');
+          }
         }}
       />
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />

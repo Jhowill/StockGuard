@@ -63,20 +63,30 @@ const DEFAULT_SETTINGS: AppSettingsRecord = {
   updatedAt: new Date().toISOString(),
 };
 
+const themeModes: ThemeMode[] = ['system', 'light', 'dark'];
+const languages: AppLanguage[] = ['system', 'pt-BR', 'en', 'es'];
+const currencies: CurrencyCode[] = ['BRL', 'USD', 'EUR'];
+const usageTypes: UsageType[] = ['store', 'workshop', 'personal', 'service', 'other'];
+const consentValues: AppSettingsRecord['personalizedAdsConsent'][] = ['unknown', 'granted', 'denied'];
+
+function pickAllowed<T extends string>(value: string | null | undefined, allowed: readonly T[], fallback: T) {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
 function mapRow(row: SettingsRow): AppSettingsRecord {
   return {
     id: 'default',
-    theme: row.theme,
-    language: row.language,
-    currency: row.currency,
-    usageType: row.usage_type,
+    theme: pickAllowed(row.theme, themeModes, DEFAULT_SETTINGS.theme),
+    language: pickAllowed(row.language, languages, DEFAULT_SETTINGS.language),
+    currency: pickAllowed(row.currency, currencies, DEFAULT_SETTINGS.currency),
+    usageType: pickAllowed(row.usage_type, usageTypes, DEFAULT_SETTINGS.usageType),
     onboardingCompleted: row.onboarding_completed === 1,
     appLockEnabled: row.app_lock_enabled === 1,
     biometricUnlockEnabled: row.biometric_unlock_enabled === 1,
     hideFinancialValues: row.hide_financial_values === 1,
     adsEnabled: row.ads_enabled === 1,
-    personalizedAdsConsent: row.personalized_ads_consent ?? 'unknown',
-    expirationWarningDays: row.expiration_warning_days,
+    personalizedAdsConsent: pickAllowed(row.personalized_ads_consent, consentValues, 'unknown'),
+    expirationWarningDays: Number.isFinite(row.expiration_warning_days) && row.expiration_warning_days > 0 ? row.expiration_warning_days : DEFAULT_SETTINGS.expirationWarningDays,
     lowStockWarningEnabled: row.low_stock_warning_enabled === 1,
     expirationWarningEnabled: row.expiration_warning_enabled === 1,
     backupReminderEnabled: row.backup_reminder_enabled === 1,

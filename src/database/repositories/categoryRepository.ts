@@ -38,10 +38,15 @@ export async function listCategories(includeArchived = false) {
 export async function createCategory(input: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'status'> & Partial<Pick<Category, 'status'>>) {
   const db = await getDatabase();
   const now = nowIso();
+  const name = input.name.trim();
+  if (!name) {
+    throw new Error('CATEGORY_NAME_REQUIRED');
+  }
+
   const id = Crypto.randomUUID();
   const category: Category = {
     id,
-    name: input.name,
+    name,
     colorToken: input.colorToken,
     iconName: input.iconName,
     sortOrder: input.sortOrder,
@@ -76,8 +81,12 @@ export async function updateCategory(id: string, input: Partial<Omit<Category, '
   const next: Category = {
     ...mapCategory(current),
     ...input,
+    name: input.name?.trim() ?? current.name,
     updatedAt: nowIso(),
   };
+  if (!next.name) {
+    throw new Error('CATEGORY_NAME_REQUIRED');
+  }
 
   await db.runAsync(
     `UPDATE categories SET name = ?, color_token = ?, icon_name = ?, sort_order = ?, status = ?, updated_at = ? WHERE id = ?`,

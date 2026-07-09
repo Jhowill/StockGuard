@@ -19,13 +19,21 @@ export default function UnlockScreen() {
 
   useEffect(() => {
     void (async () => {
-      const available = await canUseBiometricUnlock();
-      const enabled = await isBiometricEnabled();
-      setBiometricAvailable(available && enabled && biometricUnlockEnabled);
+      try {
+        const available = await canUseBiometricUnlock();
+        const enabled = await isBiometricEnabled();
+        setBiometricAvailable(available && enabled && biometricUnlockEnabled);
+      } catch {
+        setBiometricAvailable(false);
+      }
     })();
   }, [biometricUnlockEnabled]);
 
   const handleUnlock = async () => {
+    if (busy) {
+      return;
+    }
+
     if (!pin.trim()) {
       setError('Digite o PIN para continuar.');
       return;
@@ -42,12 +50,18 @@ export default function UnlockScreen() {
 
       unlockApp();
       router.replace('/(tabs)');
+    } catch {
+      setError('Nao foi possivel validar o PIN agora.');
     } finally {
       setBusy(false);
     }
   };
 
   const handleBiometric = async () => {
+    if (busy) {
+      return;
+    }
+
     setBusy(true);
     setError(undefined);
     try {
@@ -59,6 +73,8 @@ export default function UnlockScreen() {
 
       unlockApp();
       router.replace('/(tabs)');
+    } catch {
+      setError('Nao foi possivel autenticar com biometria.');
     } finally {
       setBusy(false);
     }
@@ -71,8 +87,8 @@ export default function UnlockScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone="info" label="App bloqueado" />
         <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} />
-        <AppButton label={busy ? '...' : 'Desbloquear com PIN'} onPress={() => void handleUnlock()} />
-        {biometricAvailable ? <AppButton label="Desbloquear com biometria" variant="secondary" onPress={() => void handleBiometric()} /> : null}
+        <AppButton label={busy ? '...' : 'Desbloquear com PIN'} disabled={busy} onPress={() => void handleUnlock()} />
+        {biometricAvailable ? <AppButton label="Desbloquear com biometria" variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>
 
       {error ? (

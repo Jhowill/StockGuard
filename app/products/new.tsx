@@ -9,6 +9,7 @@ import { createProduct } from '@/database/repositories/productRepository';
 import { createStockMovement } from '@/services/stockMovementService';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
+import { parseNonNegativeInteger, parseNonNegativeNumber } from '@/utils/validators';
 
 export default function NewProductScreen() {
   const { t } = useI18n();
@@ -26,12 +27,18 @@ export default function NewProductScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
-  const parsedQuantity = Number(quantity || 0);
-  const parsedMinQuantity = Number(minQuantity || 0);
+  const parsedQuantity = parseNonNegativeNumber(quantity);
+  const parsedMinQuantity = parseNonNegativeNumber(minQuantity);
+  const parsedCostPriceCents = costPriceCents.trim() ? parseNonNegativeInteger(costPriceCents) : null;
+  const parsedSalePriceCents = salePriceCents.trim() ? parseNonNegativeInteger(salePriceCents) : null;
 
   const canSave = useMemo(() => name.trim().length > 0 && !loading, [loading, name]);
 
   const handleSave = async () => {
+    if (loading) {
+      return;
+    }
+
     if (!name.trim()) {
       setError('NAME_REQUIRED');
       return;
@@ -46,11 +53,11 @@ export default function NewProductScreen() {
         sku: sku.trim() || undefined,
         barcode: barcode.trim() || undefined,
         categoryId: categoryId.trim() || undefined,
-        quantity: parsedQuantity,
+        quantity: 0,
         minQuantity: parsedMinQuantity,
         unit: 'unit',
-        costPriceCents: costPriceCents ? Number(costPriceCents) : null,
-        salePriceCents: salePriceCents ? Number(salePriceCents) : null,
+        costPriceCents: parsedCostPriceCents,
+        salePriceCents: parsedSalePriceCents,
         currency,
         location: location.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -93,7 +100,7 @@ export default function NewProductScreen() {
 
       {error ? <AppCard><AppCard.Text>{error}</AppCard.Text></AppCard> : null}
 
-      <AppButton label={loading ? '...' : t('common.save')} onPress={() => void handleSave()} />
+      <AppButton label={loading ? '...' : t('common.save')} disabled={!canSave} onPress={() => void handleSave()} />
       <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );

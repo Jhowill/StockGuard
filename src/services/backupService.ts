@@ -1,13 +1,12 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { getDatabase, withTransaction } from '@/database/db';
-import { listProducts, createProduct } from '@/database/repositories/productRepository';
-import { listCategories, createCategory } from '@/database/repositories/categoryRepository';
-import { listSuppliers, createSupplier } from '@/database/repositories/supplierRepository';
+import { listProducts } from '@/database/repositories/productRepository';
+import { listCategories } from '@/database/repositories/categoryRepository';
+import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { listMovements } from '@/database/repositories/stockMovementRepository';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
-import { createBackupRecord, listBackupRecords } from '@/database/repositories/backupRecordRepository';
-import { createEntitlement } from '@/database/repositories/adEntitlementRepository';
+import { createBackupRecord } from '@/database/repositories/backupRecordRepository';
 import { SCHEMA_VERSION } from '@/database/schema';
 import { nowIso } from '@/utils/date';
 import type { AppSettingsRecord } from '@/database/repositories/settingsRepository';
@@ -31,7 +30,12 @@ export type BackupPayload = {
 };
 
 function backupFolder() {
-  return FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? '';
+  const folder = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
+  if (!folder) {
+    throw new Error('BACKUP_FOLDER_UNAVAILABLE');
+  }
+
+  return folder;
 }
 
 async function ensureFolderExists(uri: string) {
@@ -100,35 +104,24 @@ export async function exportBackupFile() {
   return { fileUri, fileName, record, payload };
 }
 
-async function clearDatabaseTables() {
-  const db = await getDatabase();
-  await db.execAsync('BEGIN');
-  try {
-    await db.execAsync('DELETE FROM stock_movements;');
-    await db.execAsync('DELETE FROM products;');
-    await db.execAsync('DELETE FROM categories;');
-    await db.execAsync('DELETE FROM suppliers;');
-    await db.execAsync('DELETE FROM ad_entitlements;');
-    await db.execAsync('DELETE FROM feature_usage_limits;');
-    await db.execAsync('DELETE FROM audit_logs;');
-    await db.execAsync('DELETE FROM app_settings;');
-    await db.execAsync('COMMIT');
-  } catch (error) {
-    await db.execAsync('ROLLBACK');
-    throw error;
-  }
-}
-
 export async function restoreBackupFile(fileUri: string) {
   const raw = await FileSystem.readAsStringAsync(fileUri);
-  const parsed = JSON.parse(raw) as Partial<BackupPayload>;
+  let parsed: Partial<BackupPayload>;
+
+  try {
+    parsed = JSON.parse(raw) as Partial<BackupPayload>;
+  } catch {
+    throw new Error('INVALID_BACKUP_FILE');
+  }
 
   if (parsed.app !== 'EstoqueGuard Offline') {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
   const fallbackSettings = await getSettings();
-  const nextSettings = parsed.appSettings && typeof parsed.appSettings === 'object' ? parsed.appSettings : fallbackSettings;
+  const nextSettings = parsed.appSettings && typeof parsed.appSettings === 'object'
+    ? { ...fallbackSettings, ...parsed.appSettings }
+    : fallbackSettings;
   const categories = Array.isArray(parsed.categories) ? parsed.categories : [];
   const suppliers = Array.isArray(parsed.suppliers) ? parsed.suppliers : [];
   const products = Array.isArray(parsed.products) ? parsed.products : [];

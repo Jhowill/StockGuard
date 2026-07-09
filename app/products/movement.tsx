@@ -11,6 +11,7 @@ import { createStockMovement } from '@/services/stockMovementService';
 import { useProducts } from '@/hooks/useProducts';
 import { useAppState } from '@/state/app-state';
 import type { StockMovementType } from '@/types/stock';
+import { parsePositiveNumber } from '@/utils/validators';
 
 const movementTypes: Array<{ value: StockMovementType; label: string }> = [
   { value: 'in', label: 'Entrada' },
@@ -23,9 +24,10 @@ const movementTypes: Array<{ value: StockMovementType; label: string }> = [
 
 export default function MovementScreen() {
   const { productId } = useLocalSearchParams<{ productId?: string }>();
+  const initialProductId = useMemo(() => (Array.isArray(productId) ? productId[0] : productId) ?? '', [productId]);
   const { currency } = useAppState();
   const { products, loading } = useProducts();
-  const [selectedProductId, setSelectedProductId] = useState(productId ?? '');
+  const [selectedProductId, setSelectedProductId] = useState(initialProductId);
   const [type, setType] = useState<StockMovementType>('in');
   const [quantity, setQuantity] = useState('1');
   const [reason, setReason] = useState('');
@@ -33,11 +35,16 @@ export default function MovementScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
+  const quantityToMove = parsePositiveNumber(quantity);
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
 
-  const canSave = Boolean(selectedProduct && Number(quantity) > 0 && !saving);
+  const canSave = Boolean(selectedProduct && quantityToMove > 0 && !saving);
 
   const handleSave = async () => {
+    if (saving) {
+      return;
+    }
+
     if (!selectedProduct || !canSave) {
       setError('Selecione um produto e informe uma quantidade valida.');
       return;
@@ -51,7 +58,7 @@ export default function MovementScreen() {
         productId: selectedProduct.id,
         type,
         reason: reason.trim() || 'other',
-        quantity: Number(quantity),
+        quantity: quantityToMove,
         note: notes.trim() || undefined,
         currency,
       });
@@ -109,8 +116,8 @@ export default function MovementScreen() {
           <AppCard.Text>
             {selectedProduct.name} | atual {selectedProduct.quantity} | novo{' '}
             {type === 'in' || type === 'return' || type === 'adjustment_positive'
-              ? selectedProduct.quantity + Number(quantity || 0)
-              : selectedProduct.quantity - Number(quantity || 0)}
+              ? selectedProduct.quantity + quantityToMove
+              : selectedProduct.quantity - quantityToMove}
           </AppCard.Text>
         </AppCard>
       ) : null}
@@ -121,7 +128,7 @@ export default function MovementScreen() {
         </AppCard>
       ) : null}
 
-      <AppButton label={saving ? '...' : 'Salvar'} onPress={() => void handleSave()} />
+      <AppButton label={saving ? '...' : 'Salvar'} disabled={!canSave} onPress={() => void handleSave()} />
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );

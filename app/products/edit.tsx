@@ -8,13 +8,16 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { archiveProduct, findProductById, updateProduct } from '@/database/repositories/productRepository';
 import { useAppState } from '@/state/app-state';
+import { parseNonNegativeInteger, parseNonNegativeNumber } from '@/utils/validators';
 
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
   const { currency } = useAppState();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [actionError, setActionError] = useState<string | undefined>();
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
@@ -28,14 +31,14 @@ export default function ProductEditScreen() {
 
   useEffect(() => {
     void (async () => {
-      if (!id) {
+      if (!productId) {
         setLoading(false);
         setError('PRODUCT_ID_MISSING');
         return;
       }
 
       try {
-        const product = await findProductById(id);
+        const product = await findProductById(productId);
         if (!product) {
           setLoading(false);
           setError('PRODUCT_NOT_FOUND');
@@ -58,7 +61,7 @@ export default function ProductEditScreen() {
         setError('PRODUCT_LOAD_FAILED');
       }
     })();
-  }, [id]);
+  }, [productId]);
 
   const canSave = useMemo(() => name.trim().length > 0 && !saving, [name, saving]);
 
@@ -80,23 +83,24 @@ export default function ProductEditScreen() {
   }
 
   const handleSave = async () => {
-    if (!id || !canSave) {
+    if (!productId || !canSave) {
       return;
     }
 
     setSaving(true);
+    setActionError(undefined);
     try {
       const next = await updateProduct({
-        id,
+        id: productId,
         name: name.trim(),
         sku: sku.trim() || undefined,
         barcode: barcode.trim() || undefined,
         categoryId: categoryId.trim() || undefined,
         supplierId: supplierId.trim() || undefined,
-        minQuantity: Number(minQuantity || 0),
+        minQuantity: parseNonNegativeNumber(minQuantity),
         currency,
-        costPriceCents: costPriceCents ? Number(costPriceCents) : null,
-        salePriceCents: salePriceCents ? Number(salePriceCents) : null,
+        costPriceCents: costPriceCents.trim() ? parseNonNegativeInteger(costPriceCents) : null,
+        salePriceCents: salePriceCents.trim() ? parseNonNegativeInteger(salePriceCents) : null,
         location: location.trim() || undefined,
         notes: notes.trim() || undefined,
       });
@@ -105,9 +109,9 @@ export default function ProductEditScreen() {
         throw new Error('PRODUCT_UPDATE_FAILED');
       }
 
-      router.replace(`/products/${id}`);
+      router.replace(`/products/${productId}`);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'PRODUCT_UPDATE_FAILED');
+      setActionError(nextError instanceof Error ? nextError.message : 'PRODUCT_UPDATE_FAILED');
     } finally {
       setSaving(false);
     }
@@ -130,16 +134,24 @@ export default function ProductEditScreen() {
         <AppInput label="Observacoes" multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 
-      <AppButton label={saving ? '...' : 'Salvar'} onPress={() => void handleSave()} />
+      {actionError ? <EmptyState title="Editar produto" description={actionError} /> : null}
+
+      <AppButton label={saving ? '...' : 'Salvar'} disabled={!canSave} onPress={() => void handleSave()} />
       <AppButton
         label="Arquivar"
         variant="secondary"
+        disabled={saving}
         onPress={async () => {
-          if (!id) return;
+          if (!productId) return;
+          setSaving(true);
+          setActionError(undefined);
           try {
-            await archiveProduct(id);
-          } finally {
+            await archiveProduct(productId);
             router.replace('/(tabs)/products');
+          } catch (nextError) {
+            setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o produto.');
+          } finally {
+            setSaving(false);
           }
         }}
       />

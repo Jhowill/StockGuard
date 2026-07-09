@@ -42,9 +42,14 @@ export async function listSuppliers(includeArchived = false) {
 export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt' | 'status'> & Partial<Pick<Supplier, 'status'>>) {
   const db = await getDatabase();
   const now = nowIso();
+  const name = input.name.trim();
+  if (!name) {
+    throw new Error('SUPPLIER_NAME_REQUIRED');
+  }
+
   const supplier: Supplier = {
     id: Crypto.randomUUID(),
-    name: input.name,
+    name,
     phone: input.phone,
     email: input.email,
     document: input.document,
@@ -83,8 +88,12 @@ export async function updateSupplier(id: string, input: Partial<Omit<Supplier, '
   const next: Supplier = {
     ...mapSupplier(current),
     ...input,
+    name: input.name?.trim() ?? current.name,
     updatedAt: nowIso(),
   };
+  if (!next.name) {
+    throw new Error('SUPPLIER_NAME_REQUIRED');
+  }
 
   await db.runAsync(
     `UPDATE suppliers SET name = ?, phone = ?, email = ?, document = ?, address = ?, notes = ?, status = ?, updated_at = ? WHERE id = ?`,

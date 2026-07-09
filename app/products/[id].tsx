@@ -21,6 +21,7 @@ export default function ProductDetailScreen() {
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
   const { product, movements, loading, error } = useProductDetail(productId);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | undefined>();
 
   if (loading) {
     return (
@@ -88,23 +89,26 @@ export default function ProductDetailScreen() {
         )}
       </AppCard>
 
+      {actionError ? <EmptyState title={t('productDetail.title')} description={actionError} /> : null}
+
       <AppButton label={t('productDetail.move')} onPress={() => router.push({ pathname: '/products/movement', params: { productId: product.id } })} />
       <AppButton label={t('productDetail.edit')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
       <AppButton
         label={t('common.archive')}
         variant="ghost"
+        disabled={busy}
         onPress={async () => {
           setBusy(true);
+          setActionError(undefined);
           try {
             await archiveProduct(product.id);
             router.replace('/(tabs)/products');
-          } catch {
-            router.replace('/(tabs)/products');
+          } catch (nextError) {
+            setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o produto.');
           } finally {
             setBusy(false);
           }
         }}
-        style={{ opacity: busy ? 0.7 : 1 }}
       />
     </ScreenContainer>
   );

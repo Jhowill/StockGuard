@@ -18,6 +18,10 @@ export default function PinSecurityScreen() {
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
+    if (busy) {
+      return;
+    }
+
     if (pin.trim().length < 4) {
       setError('O PIN precisa ter pelo menos 4 digitos.');
       return;
@@ -42,6 +46,10 @@ export default function PinSecurityScreen() {
   };
 
   const remove = async () => {
+    if (busy) {
+      return;
+    }
+
     setBusy(true);
     setError(undefined);
     try {
@@ -63,8 +71,8 @@ export default function PinSecurityScreen() {
         <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? 'Ativado' : 'Desativado'} />
         <AppInput label="Novo PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} />
         <AppInput label="Confirmar PIN" secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} />
-        <AppButton label={busy ? '...' : 'Salvar PIN'} onPress={() => void save()} />
-        <AppButton label="Remover PIN" variant="secondary" onPress={() => void remove()} />
+        <AppButton label={busy ? '...' : 'Salvar PIN'} disabled={busy} onPress={() => void save()} />
+        <AppButton label="Remover PIN" variant="secondary" disabled={busy} onPress={() => void remove()} />
       </AppCard>
 
       {error ? <EmptyState title="Seguranca" description={error} /> : null}

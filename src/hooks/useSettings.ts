@@ -73,8 +73,6 @@ export function useSettings() {
       setOnboardingCompleted,
       setThemeMode,
       setUsageType,
-      setAppLockEnabled,
-      setBiometricUnlockEnabled,
       unlockApp,
     ],
   );

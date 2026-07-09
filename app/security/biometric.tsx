@@ -17,11 +17,24 @@ export default function BiometricSecurityScreen() {
 
   useEffect(() => {
     void (async () => {
-      setAvailable(await canUseBiometricUnlock());
+      try {
+        setAvailable(await canUseBiometricUnlock());
+      } catch {
+        setAvailable(false);
+      }
     })();
   }, []);
 
   const enable = async () => {
+    if (busy) {
+      return;
+    }
+
+    if (!available) {
+      setError('Biometria nao disponivel neste aparelho.');
+      return;
+    }
+
     setBusy(true);
     setError(undefined);
     try {
@@ -42,6 +55,10 @@ export default function BiometricSecurityScreen() {
   };
 
   const disable = async () => {
+    if (busy) {
+      return;
+    }
+
     setBusy(true);
     setError(undefined);
     try {
@@ -62,8 +79,8 @@ export default function BiometricSecurityScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.biometricUnlockEnabled ? 'success' : 'info'} label={settings?.biometricUnlockEnabled ? 'Ativada' : 'Desativada'} />
         <StatusBadge tone={available ? 'success' : 'warning'} label={available ? 'Disponivel neste aparelho' : 'Nao disponivel'} />
-        <AppButton label={busy ? '...' : 'Ativar biometria'} onPress={() => void enable()} />
-        <AppButton label="Desativar biometria" variant="secondary" onPress={() => void disable()} />
+        <AppButton label={busy ? '...' : 'Ativar biometria'} disabled={busy || !available} onPress={() => void enable()} />
+        <AppButton label="Desativar biometria" variant="secondary" disabled={busy} onPress={() => void disable()} />
       </AppCard>
 
       {error ? <EmptyState title="Seguranca" description={error} /> : null}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAdsAccess } from '@/hooks/useAdsAccess';
@@ -20,19 +21,64 @@ const features: Array<{ key: PremiumFeature; label: string }> = [
 ];
 
 export default function PremiumScreen() {
-  const { isTemporaryAdFree, adFreeExpiresAt, grantTemporaryAdFree, grantFeatureUnlock } = useAdsAccess();
+  const { isTemporaryAdFree, adFreeExpiresAt, grantTemporaryAdFree, grantFeatureUnlock, error: adsError } = useAdsAccess();
   const [selectedFeature, setSelectedFeature] = useState<PremiumFeature>('advanced_pdf_reports');
-  const { state } = useFeatureGate(selectedFeature);
+  const { state, refreshAccess, error: featureError } = useFeatureGate(selectedFeature);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | undefined>();
+
+  const handleAdFree = async () => {
+    if (busy) {
+      return;
+    }
+
+    setBusy(true);
+    setActionError(undefined);
+    try {
+      const result = await grantTemporaryAdFree();
+      if (result.status === 'failed') {
+        setActionError(result.reason);
+      }
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel liberar a recompensa.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleFeatureUnlock = async () => {
+    if (busy) {
+      return;
+    }
+
+    setBusy(true);
+    setActionError(undefined);
+    try {
+      const result = await grantFeatureUnlock(selectedFeature);
+      if (result.status === 'failed') {
+        setActionError(result.reason);
+      }
+      await refreshAccess(selectedFeature);
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel liberar o recurso.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <ScreenContainer scroll padded>
       <AppHeader title="Recompensas e premium" subtitle="Libere recursos temporariamente por recompensa." />
 
+      {actionError || adsError || featureError ? (
+        <EmptyState title="Recompensas" description={actionError ?? adsError ?? featureError ?? 'Nao foi possivel carregar recompensas.'} />
+      ) : null}
+
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Remover anuncios temporariamente</AppCard.Title>
         <AppCard.Text>Assista a um anuncio e fique sem banners por um periodo curto.</AppCard.Text>
         <StatusBadge tone={isTemporaryAdFree ? 'success' : 'info'} label={isTemporaryAdFree ? `ate ${adFreeExpiresAt ?? 'agora'}` : 'ativo'} />
-        <AppButton label="Assistir anuncio" onPress={() => void grantTemporaryAdFree()} />
+        <AppButton label={busy ? '...' : 'Assistir anuncio'} disabled={busy} onPress={() => void handleAdFree()} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
@@ -43,11 +89,12 @@ export default function PremiumScreen() {
             key={feature.key}
             label={feature.label}
             variant={selectedFeature === feature.key ? 'primary' : 'ghost'}
+            disabled={busy}
             onPress={() => setSelectedFeature(feature.key)}
           />
         ))}
         <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? 'Liberado' : 'Bloqueado'} />
-        <AppButton label="Assistir e liberar" variant="secondary" onPress={() => void grantFeatureUnlock(selectedFeature)} />
+        <AppButton label={busy ? '...' : 'Assistir e liberar'} variant="secondary" disabled={busy} onPress={() => void handleFeatureUnlock()} />
       </AppCard>
     </ScreenContainer>
   );

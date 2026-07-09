@@ -9,9 +9,10 @@ type Props = {
   onPress?: () => void;
   variant?: Variant;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 };
 
-export function AppButton({ label, onPress, variant = 'primary', style }: Props) {
+export function AppButton({ label, onPress, variant = 'primary', style, disabled = false }: Props) {
   const { palette } = useAppTheme();
   const isPrimary = variant === 'primary';
   const isSecondary = variant === 'secondary';
@@ -24,7 +25,8 @@ export function AppButton({ label, onPress, variant = 'primary', style }: Props)
 
   return (
     <Pressable
-      onPress={onPress}
+      disabled={disabled}
+      onPress={disabled ? undefined : onPress}
       style={({ pressed }) => [
         styles.button,
         {
@@ -33,6 +35,7 @@ export function AppButton({ label, onPress, variant = 'primary', style }: Props)
         },
         variant === 'ghost' && styles.ghost,
         pressed ? styles.pressed : null,
+        disabled ? styles.disabled : null,
         style,
       ]}
     >
@@ -55,6 +58,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.82,
+  },
+  disabled: {
+    opacity: 0.55,
   },
   label: {
     fontSize: 16,

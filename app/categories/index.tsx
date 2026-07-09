@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useCategories } from '@/hooks/useCategories';
+import { parseNonNegativeInteger } from '@/utils/validators';
 
 export default function CategoriesScreen() {
   const { categories, loading, error, create, edit, archive } = useCategories();
@@ -16,6 +17,8 @@ export default function CategoriesScreen() {
   const [iconName, setIconName] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
 
   const resolveIcon = (iconName?: string) => {
     if (iconName && iconName in Ionicons.glyphMap) {
@@ -26,28 +29,41 @@ export default function CategoriesScreen() {
   };
 
   const handleSave = async () => {
+    if (busy) {
+      return;
+    }
+
     const input = {
       name: name.trim(),
       colorToken: colorToken.trim() || undefined,
       iconName: iconName.trim() || undefined,
-      sortOrder: Number(sortOrder || 0),
+      sortOrder: parseNonNegativeInteger(sortOrder),
     };
 
     if (!input.name) {
+      setActionError('Informe o nome da categoria.');
       return;
     }
 
-    if (editingId) {
-      await edit(editingId, input);
-      setEditingId(null);
-    } else {
-      await create(input);
-    }
+    setBusy(true);
+    setActionError(undefined);
+    try {
+      if (editingId) {
+        await edit(editingId, input);
+        setEditingId(null);
+      } else {
+        await create(input);
+      }
 
-    setName('');
-    setColorToken('');
-    setIconName('');
-    setSortOrder('0');
+      setName('');
+      setColorToken('');
+      setIconName('');
+      setSortOrder('0');
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a categoria.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -60,9 +76,11 @@ export default function CategoriesScreen() {
         <AppInput label="Cor" value={colorToken} onChangeText={setColorToken} />
         <AppInput label="Icone" value={iconName} onChangeText={setIconName} />
         <AppInput label="Ordem" keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
-        <AppButton label={editingId ? 'Salvar' : 'Criar'} onPress={() => void handleSave()} />
+        <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label="Cancelar" variant="ghost" onPress={() => setEditingId(null)} /> : null}
       </AppCard>
+
+      {actionError ? <EmptyState title="Categorias" description={actionError} /> : null}
 
       {loading ? (
         <EmptyState title="Categorias" description="Carregando..." />
@@ -90,7 +108,22 @@ export default function CategoriesScreen() {
                 setSortOrder(String(category.sortOrder));
               }}
             />
-            <AppButton label="Arquivar" variant="ghost" onPress={() => void archive(category.id)} />
+            <AppButton
+              label="Arquivar"
+              variant="ghost"
+              disabled={busy}
+              onPress={async () => {
+                setBusy(true);
+                setActionError(undefined);
+                try {
+                  await archive(category.id);
+                } catch (nextError) {
+                  setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar a categoria.');
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
           </AppCard>
         ))
       )}

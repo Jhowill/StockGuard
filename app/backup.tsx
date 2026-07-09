@@ -13,6 +13,7 @@ export default function BackupScreen() {
   const { backups, loading, error, createBackup, restoreBackup, shareBackup } = useBackup();
   const [fileUri, setFileUri] = useState('');
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | undefined>();
 
   return (
     <ScreenContainer scroll padded>
@@ -23,11 +24,15 @@ export default function BackupScreen() {
         <AppCard.Text>Gere um arquivo local com produtos, categorias, fornecedores e configuracoes.</AppCard.Text>
         <AppButton
           label={busy ? '...' : 'Gerar backup'}
+          disabled={busy}
           onPress={async () => {
             setBusy(true);
+            setActionError(undefined);
             try {
               const result = await createBackup();
               setFileUri(result.fileUri);
+            } catch (nextError) {
+              setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel gerar o backup.');
             } finally {
               setBusy(false);
             }
@@ -42,17 +47,23 @@ export default function BackupScreen() {
         <AppButton
           label="Restaurar"
           variant="secondary"
+          disabled={busy || !fileUri.trim()}
           onPress={async () => {
-            if (!fileUri) return;
+            if (!fileUri.trim()) return;
             setBusy(true);
+            setActionError(undefined);
             try {
-              await restoreBackup(fileUri);
+              await restoreBackup(fileUri.trim());
+            } catch (nextError) {
+              setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel restaurar o backup.');
             } finally {
               setBusy(false);
             }
           }}
         />
       </AppCard>
+
+      {actionError ? <EmptyState title="Backup" description={actionError} /> : null}
 
       {loading ? (
         <EmptyState title="Backup" description="Carregando..." />
@@ -71,9 +82,18 @@ export default function BackupScreen() {
             />
             <AppButton
               label="Compartilhar"
+              disabled={busy || !backup.fileUri}
               onPress={async () => {
                 if (backup.fileUri) {
-                  await shareBackup(backup.fileUri);
+                  setBusy(true);
+                  setActionError(undefined);
+                  try {
+                    await shareBackup(backup.fileUri);
+                  } catch (nextError) {
+                    setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel compartilhar o backup.');
+                  } finally {
+                    setBusy(false);
+                  }
                 }
               }}
             />

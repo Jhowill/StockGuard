@@ -13,6 +13,15 @@ async function openDatabase() {
 
 async function initializeDatabase() {
   const db = await openDatabase();
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY NOT NULL,
+      version INTEGER NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      applied_at TEXT NOT NULL
+    );
+  `);
+
   const migrationRows = await db.getAllAsync<{ version: number }>(
     'SELECT version FROM schema_migrations ORDER BY version ASC',
   );
@@ -26,7 +35,15 @@ async function initializeDatabase() {
     await db.execAsync('BEGIN');
     try {
       for (const statement of migration.statements) {
-        await db.execAsync(statement);
+        try {
+          await db.execAsync(statement);
+        } catch (error) {
+          const message = error instanceof Error ? error.message.toLowerCase() : '';
+          const isDuplicateColumn = statement.toLowerCase().includes('add column') && message.includes('duplicate column');
+          if (!isDuplicateColumn) {
+            throw error;
+          }
+        }
       }
 
       await db.runAsync(

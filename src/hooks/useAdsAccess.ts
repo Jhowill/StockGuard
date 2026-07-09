@@ -8,14 +8,20 @@ export function useAdsAccess() {
   const [isTemporaryAdFree, setIsTemporaryAdFree] = useState(false);
   const [adFreeExpiresAt, setAdFreeExpiresAt] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>();
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    setError(undefined);
     try {
       const active = await findActiveEntitlements();
       const adFree = active.find((item) => item.type === 'temporary_ad_free' && item.expiresAt);
       setIsTemporaryAdFree(Boolean(adFree));
       setAdFreeExpiresAt(adFree?.expiresAt);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'ADS_ACCESS_LOAD_FAILED');
+      setIsTemporaryAdFree(false);
+      setAdFreeExpiresAt(undefined);
     } finally {
       setLoading(false);
     }
@@ -51,6 +57,7 @@ export function useAdsAccess() {
 
   return {
     loading,
+    error,
     isTemporaryAdFree,
     adFreeExpiresAt,
     canRequestAdFreeReward,

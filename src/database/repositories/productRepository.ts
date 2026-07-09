@@ -105,12 +105,39 @@ function mapProduct(row: ProductRow): ProductRecord {
   };
 }
 
+function assertNonNegativeNumber(value: number, code: string) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(code);
+  }
+}
+
+function assertOptionalNonNegativeInteger(value: number | null | undefined, code: string) {
+  if (value == null) {
+    return;
+  }
+
+  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    throw new Error(code);
+  }
+}
+
+function validateProduct(record: Pick<ProductRecord, 'name' | 'quantity' | 'minQuantity' | 'costPriceCents' | 'salePriceCents'>) {
+  if (!record.name.trim()) {
+    throw new Error('PRODUCT_NAME_REQUIRED');
+  }
+
+  assertNonNegativeNumber(record.quantity, 'INVALID_PRODUCT_QUANTITY');
+  assertNonNegativeNumber(record.minQuantity, 'INVALID_PRODUCT_MIN_QUANTITY');
+  assertOptionalNonNegativeInteger(record.costPriceCents, 'INVALID_PRODUCT_COST_PRICE');
+  assertOptionalNonNegativeInteger(record.salePriceCents, 'INVALID_PRODUCT_SALE_PRICE');
+}
+
 export async function createProduct(input: CreateProductInput) {
   const db = await getDatabase();
   const now = nowIso();
   const product: ProductRecord = {
     id: Crypto.randomUUID(),
-    name: input.name,
+    name: input.name.trim(),
     description: input.description,
     sku: input.sku,
     barcode: input.barcode,
@@ -132,6 +159,7 @@ export async function createProduct(input: CreateProductInput) {
     updatedAt: now,
     archivedAt: null,
   };
+  validateProduct(product);
 
   await db.runAsync(
     `INSERT INTO products (
@@ -177,8 +205,10 @@ export async function updateProduct(input: UpdateProductInput) {
   const next: ProductRecord = {
     ...current,
     ...input,
+    name: input.name?.trim() ?? current.name,
     updatedAt: nowIso(),
   };
+  validateProduct(next);
 
   await db.runAsync(
     `UPDATE products SET

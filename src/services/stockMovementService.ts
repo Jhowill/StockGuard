@@ -29,6 +29,10 @@ function calculateNewQuantity(previousQuantity: number, movementType: StockMovem
 }
 
 export async function createStockMovement(input: CreateStockMovementInput) {
+  if (!input.productId.trim()) {
+    throw new Error('PRODUCT_ID_MISSING');
+  }
+
   if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
     throw new Error('INVALID_QUANTITY');
   }
@@ -44,13 +48,13 @@ export async function createStockMovement(input: CreateStockMovementInput) {
       throw new Error('INSUFFICIENT_STOCK');
     }
 
-    const totalCostCents = input.unitCostCents ? input.unitCostCents * input.quantity : null;
-    const totalSaleCents = input.unitSalePriceCents ? input.unitSalePriceCents * input.quantity : null;
+    const totalCostCents = input.unitCostCents != null ? input.unitCostCents * input.quantity : null;
+    const totalSaleCents = input.unitSalePriceCents != null ? input.unitSalePriceCents * input.quantity : null;
 
     const movement: StockMovementRecord = await createMovement({
       productId: product.id,
       type: input.type,
-      reason: input.reason,
+      reason: input.reason.trim() || 'other',
       quantity: input.quantity,
       previousQuantity: product.quantity,
       newQuantity,

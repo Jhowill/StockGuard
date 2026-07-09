@@ -16,12 +16,16 @@ export async function setPin(pin: string) {
 }
 
 export async function verifyPin(pin: string) {
-  const stored = await SecureStore.getItemAsync(PIN_HASH_KEY);
-  if (!stored) {
+  try {
+    const stored = await SecureStore.getItemAsync(PIN_HASH_KEY);
+    if (!stored) {
+      return false;
+    }
+
+    return stored === (await hashPin(pin));
+  } catch {
     return false;
   }
-
-  return stored === (await hashPin(pin));
 }
 
 export async function clearPin() {
@@ -29,7 +33,11 @@ export async function clearPin() {
 }
 
 export async function hasPin() {
-  return Boolean(await SecureStore.getItemAsync(PIN_HASH_KEY));
+  try {
+    return Boolean(await SecureStore.getItemAsync(PIN_HASH_KEY));
+  } catch {
+    return false;
+  }
 }
 
 export async function enableBiometricLock() {
@@ -42,13 +50,21 @@ export async function disableBiometricLock() {
 }
 
 export async function isBiometricEnabled() {
-  return (await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY)) === '1';
+  try {
+    return (await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY)) === '1';
+  } catch {
+    return false;
+  }
 }
 
 export async function canUseBiometricUnlock() {
-  const hasHardware = await LocalAuthentication.hasHardwareAsync();
-  const enrolled = await LocalAuthentication.isEnrolledAsync();
-  return hasHardware && enrolled;
+  try {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const enrolled = await LocalAuthentication.isEnrolledAsync();
+    return hasHardware && enrolled;
+  } catch {
+    return false;
+  }
 }
 
 export async function authenticateWithBiometric() {
