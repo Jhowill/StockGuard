@@ -7,16 +7,20 @@ export async function createAuditLog(input: Omit<AuditLog, 'id' | 'createdAt'> &
   const createdAt = input.createdAt ?? new Date().toISOString();
   const id = Crypto.randomUUID();
 
-  await db.runAsync(
-    `INSERT INTO audit_logs (id, action, entity_type, entity_id, metadata_json, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    id,
-    input.action,
-    input.entityType ?? null,
-    input.entityId ?? null,
-    input.metadataJson ?? null,
-    createdAt,
-  );
+  try {
+    await db.runAsync(
+      `INSERT INTO audit_logs (id, action, entity_type, entity_id, metadata_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      id,
+      input.action,
+      input.entityType ?? null,
+      input.entityId ?? null,
+      input.metadataJson ?? null,
+      createdAt,
+    );
+  } catch {
+    // Audit should never break the core write path. If logging fails, we keep going.
+  }
 
   return { id, ...input, createdAt } satisfies AuditLog;
 }

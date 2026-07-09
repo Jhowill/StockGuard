@@ -25,6 +25,15 @@ function csvCell(value: string | number | undefined) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export async function exportReportCsv(summary: ReportSummary) {
   const rows = [
     ['Periodo', summary.period],
@@ -52,14 +61,14 @@ export async function exportReportCsv(summary: ReportSummary) {
 
 export async function exportReportPdf(summary: ReportSummary) {
   const rows = summary.topProductsByQuantity
-    .map((product) => `<tr><td>${product.productName}</td><td>${product.quantity}</td></tr>`)
+    .map((product) => `<tr><td>${escapeHtml(product.productName)}</td><td>${product.quantity}</td></tr>`)
     .join('');
   const html = `
     <html>
       <body style="font-family: Arial, sans-serif; color: #111;">
         <h1>EstoqueGuard Offline</h1>
         <h2>Relatorio de estoque</h2>
-        <p>Periodo: ${summary.period}</p>
+        <p>Periodo: ${escapeHtml(summary.period)}</p>
         <ul>
           <li>Entradas: ${formatMoney(summary.entriesValueCents, summary.currency)}</li>
           <li>Saidas: ${formatMoney(summary.exitsValueCents, summary.currency)}</li>
