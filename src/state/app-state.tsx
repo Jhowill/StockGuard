@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { getSettings } from '@/database/repositories/settingsRepository';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type AppLanguage = 'system' | 'pt-BR' | 'en' | 'es';
@@ -15,6 +16,7 @@ type AppStateValue = {
   setLanguage: (language: AppLanguage) => void;
   setCurrency: (currency: CurrencyCode) => void;
   resetDemo: () => void;
+  hydrateFromSettings: () => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -24,6 +26,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>('system');
   const [language, setLanguage] = useState<AppLanguage>('system');
   const [currency, setCurrency] = useState<CurrencyCode>('BRL');
+
+  useEffect(() => {
+    void (async () => {
+      const settings = await getSettings();
+      setTheme(settings.theme);
+      setLanguage(settings.language);
+      setCurrency(settings.currency);
+    })();
+  }, []);
 
   const value = useMemo<AppStateValue>(
     () => ({
@@ -40,6 +51,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTheme('system');
         setLanguage('system');
         setCurrency('BRL');
+      },
+      hydrateFromSettings: async () => {
+        const settings = await getSettings();
+        setTheme(settings.theme);
+        setLanguage(settings.language);
+        setCurrency(settings.currency);
       },
     }),
     [currency, hasCompletedOnboarding, language, theme],
