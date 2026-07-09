@@ -18,6 +18,8 @@ const translations = {
       export: 'Exportar',
       search: 'Buscar',
       close: 'Fechar',
+      privacyMaskTitle: 'Conteudo protegido',
+      privacyMaskBody: 'A tela foi ocultada para proteger seus dados sensiveis.',
     },
     splash: {
       title: 'EstoqueGuard',
@@ -192,6 +194,8 @@ const translations = {
       export: 'Export',
       search: 'Search',
       close: 'Close',
+      privacyMaskTitle: 'Protected content',
+      privacyMaskBody: 'The screen was hidden to protect your sensitive data.',
     },
     splash: {
       title: 'EstoqueGuard',
@@ -366,6 +370,8 @@ const translations = {
       export: 'Exportar',
       search: 'Buscar',
       close: 'Cerrar',
+      privacyMaskTitle: 'Contenido protegido',
+      privacyMaskBody: 'La pantalla se ocultó para proteger tus datos sensibles.',
     },
     splash: {
       title: 'EstoqueGuard',

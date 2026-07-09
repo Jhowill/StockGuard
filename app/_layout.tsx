@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { LoadingState } from '@/components/ui/LoadingState';
+import { PrivacyMask } from '@/components/ui/PrivacyMask';
 import { AppProvider } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
@@ -61,6 +62,7 @@ export default function RootLayout() {
         <AppProvider>
           <AppStatusBar />
           <AppShell />
+          <PrivacyMask />
         </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
