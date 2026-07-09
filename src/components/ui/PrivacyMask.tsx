@@ -1,14 +1,52 @@
 import { useEffect, useState } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import type { AppStateStatus } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { usePreventScreenCapture } from 'expo-screen-capture';
+import {
+  allowScreenCaptureAsync,
+  disableAppSwitcherProtectionAsync,
+  enableAppSwitcherProtectionAsync,
+  preventScreenCaptureAsync,
+} from 'expo-screen-capture';
 import { useAppState } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/i18n';
 
-function ScreenCaptureShield() {
-  usePreventScreenCapture();
+function PrivacyCaptureGuard() {
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        await preventScreenCaptureAsync('global-privacy-mask');
+        if (active && Platform.OS === 'ios') {
+          await enableAppSwitcherProtectionAsync(0.55);
+        }
+      } catch {
+        // If screen capture protection is unavailable, keep the visual mask only.
+      }
+    })();
+
+    return () => {
+      active = false;
+      void (async () => {
+        try {
+          await allowScreenCaptureAsync('global-privacy-mask');
+        } catch {
+          // Best-effort cleanup.
+        }
+
+        if (Platform.OS === 'ios') {
+          try {
+            await disableAppSwitcherProtectionAsync();
+          } catch {
+            // Best-effort cleanup.
+          }
+        }
+      })();
+    };
+  }, []);
+
   return null;
 }
 
@@ -26,37 +64,39 @@ export function PrivacyMask() {
   const visible = !isReady || appState !== 'active';
 
   if (!visible) {
-    return null;
+    return <PrivacyCaptureGuard />;
   }
 
   return (
-    <View
-      pointerEvents="auto"
-      style={[
-        styles.root,
-        {
-          backgroundColor: palette.background,
-        },
-      ]}
-    >
-      <ScreenCaptureShield />
+    <>
+      <PrivacyCaptureGuard />
       <View
+        pointerEvents="auto"
         style={[
-          styles.card,
+          styles.root,
           {
-            backgroundColor: palette.surface,
-            borderColor: palette.border,
-            shadowColor: palette.shadow,
+            backgroundColor: palette.background,
           },
         ]}
       >
-        <View style={[styles.iconShell, { backgroundColor: palette.surfaceMuted }]}>
-          <Ionicons name="lock-closed-outline" size={28} color={palette.primary} />
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: palette.surface,
+              borderColor: palette.border,
+              shadowColor: palette.shadow,
+            },
+          ]}
+        >
+          <View style={[styles.iconShell, { backgroundColor: palette.surfaceMuted }]}>
+            <Ionicons name="lock-closed-outline" size={28} color={palette.primary} />
+          </View>
+          <Text style={[styles.title, { color: palette.text }]}>{t('common.privacyMaskTitle')}</Text>
+          <Text style={[styles.body, { color: palette.textMuted }]}>{t('common.privacyMaskBody')}</Text>
         </View>
-        <Text style={[styles.title, { color: palette.text }]}>{t('common.privacyMaskTitle')}</Text>
-        <Text style={[styles.body, { color: palette.textMuted }]}>{t('common.privacyMaskBody')}</Text>
       </View>
-    </View>
+    </>
   );
 }
 
