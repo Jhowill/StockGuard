@@ -1,0 +1,332 @@
+[
+  {
+    "file": "android/expo/adaptive-icon-background.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/expo/adaptive-icon-foreground.png",
+    "dimensions": "1024x1024",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/expo/icon.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/expo/splash-icon.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/playstore/feature_graphic_1024x500.png",
+    "dimensions": "1024x500",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/playstore/playstore_icon_512.png",
+    "dimensions": "512x512",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/drawable-nodpi/splash_hdpi_480x800.png",
+    "dimensions": "480x800",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/drawable-nodpi/splash_mdpi_320x480.png",
+    "dimensions": "320x480",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/drawable-nodpi/splash_xhdpi_720x1280.png",
+    "dimensions": "720x1280",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/drawable-nodpi/splash_xxhdpi_1080x1920.png",
+    "dimensions": "1080x1920",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/drawable-nodpi/splash_xxxhdpi_1440x2560.png",
+    "dimensions": "1440x2560",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "dimensions": "",
+    "mode": ""
+  },
+  {
+    "file": "android/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+    "dimensions": "",
+    "mode": ""
+  },
+  {
+    "file": "android/res/mipmap-hdpi/ic_launcher.png",
+    "dimensions": "72x72",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-hdpi/ic_launcher_background.png",
+    "dimensions": "162x162",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/mipmap-hdpi/ic_launcher_foreground.png",
+    "dimensions": "162x162",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-hdpi/ic_launcher_monochrome.png",
+    "dimensions": "162x162",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-hdpi/ic_launcher_round.png",
+    "dimensions": "72x72",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-mdpi/ic_launcher.png",
+    "dimensions": "48x48",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-mdpi/ic_launcher_background.png",
+    "dimensions": "108x108",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/mipmap-mdpi/ic_launcher_foreground.png",
+    "dimensions": "108x108",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-mdpi/ic_launcher_monochrome.png",
+    "dimensions": "108x108",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-mdpi/ic_launcher_round.png",
+    "dimensions": "48x48",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xhdpi/ic_launcher.png",
+    "dimensions": "96x96",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xhdpi/ic_launcher_background.png",
+    "dimensions": "216x216",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/mipmap-xhdpi/ic_launcher_foreground.png",
+    "dimensions": "216x216",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xhdpi/ic_launcher_monochrome.png",
+    "dimensions": "216x216",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xhdpi/ic_launcher_round.png",
+    "dimensions": "96x96",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxhdpi/ic_launcher.png",
+    "dimensions": "144x144",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxhdpi/ic_launcher_background.png",
+    "dimensions": "324x324",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/mipmap-xxhdpi/ic_launcher_foreground.png",
+    "dimensions": "324x324",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxhdpi/ic_launcher_monochrome.png",
+    "dimensions": "324x324",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxhdpi/ic_launcher_round.png",
+    "dimensions": "144x144",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxxhdpi/ic_launcher.png",
+    "dimensions": "192x192",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxxhdpi/ic_launcher_background.png",
+    "dimensions": "432x432",
+    "mode": "RGB"
+  },
+  {
+    "file": "android/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+    "dimensions": "432x432",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxxhdpi/ic_launcher_monochrome.png",
+    "dimensions": "432x432",
+    "mode": "RGBA"
+  },
+  {
+    "file": "android/res/mipmap-xxxhdpi/ic_launcher_round.png",
+    "dimensions": "192x192",
+    "mode": "RGBA"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Contents.json",
+    "dimensions": "",
+    "mode": ""
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-20x20@1x-ipad.png",
+    "dimensions": "20x20",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-20x20@2x-ipad.png",
+    "dimensions": "40x40",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-20x20@2x.png",
+    "dimensions": "40x40",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-20x20@3x.png",
+    "dimensions": "60x60",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-29x29@1x-ipad.png",
+    "dimensions": "29x29",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-29x29@2x-ipad.png",
+    "dimensions": "58x58",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-29x29@2x.png",
+    "dimensions": "58x58",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-29x29@3x.png",
+    "dimensions": "87x87",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-40x40@1x-ipad.png",
+    "dimensions": "40x40",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-40x40@2x-ipad.png",
+    "dimensions": "80x80",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-40x40@2x.png",
+    "dimensions": "80x80",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-40x40@3x.png",
+    "dimensions": "120x120",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-60x60@2x.png",
+    "dimensions": "120x120",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-60x60@3x.png",
+    "dimensions": "180x180",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-76x76@1x-ipad.png",
+    "dimensions": "76x76",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-76x76@2x-ipad.png",
+    "dimensions": "152x152",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/AppIcon.appiconset/Icon-App-83.5x83.5@2x-ipad.png",
+    "dimensions": "167x167",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/optional_ios18_variants/app_icon_dark_1024.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/optional_ios18_variants/app_icon_monochrome_1024.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "ios/store/appstore_icon_1024.png",
+    "dimensions": "1024x1024",
+    "mode": "RGB"
+  },
+  {
+    "file": "master/EstoqueGuard_foreground_transparent_2048.png",
+    "dimensions": "2048x2048",
+    "mode": "RGBA"
+  },
+  {
+    "file": "master/EstoqueGuard_master.svg",
+    "dimensions": "",
+    "mode": ""
+  },
+  {
+    "file": "master/EstoqueGuard_master_2048.png",
+    "dimensions": "2048x2048",
+    "mode": "RGBA"
+  },
+  {
+    "file": "master/EstoqueGuard_master_dark_2048.png",
+    "dimensions": "2048x2048",
+    "mode": "RGBA"
+  },
+  {
+    "file": "master/EstoqueGuard_master_monochrome_2048.png",
+    "dimensions": "2048x2048",
+    "mode": "RGBA"
+  },
+  {
+    "file": "previews/icon_package_preview.png",
+    "dimensions": "1400x900",
+    "mode": "RGB"
+  }
+]

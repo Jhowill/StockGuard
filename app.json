@@ -6,6 +6,21 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./icons/android/expo/icon.png",
+    "splash": {
+      "image": "./icons/android/expo/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0F14"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./icons/android/expo/adaptive-icon-foreground.png",
+        "backgroundImage": "./icons/android/expo/adaptive-icon-background.png"
+      }
+    },
+    "web": {
+      "favicon": "./icons/android/expo/icon.png"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],

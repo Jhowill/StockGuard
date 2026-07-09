@@ -27,5 +27,6 @@ Esta versão já inclui:
 - tema dinâmico com base em sistema, claro e escuro;
 - i18n local em `pt-BR`, `en` e `es`;
 - componentes visuais reutilizáveis.
+- pacote de ícones já aplicado pela pasta `icons/` na config do Expo.
 
 Banco local, anúncios, rewards e persistência ainda ficam para a próxima etapa.
