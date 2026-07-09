@@ -2,6 +2,8 @@ import { Redirect, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { AppProvider } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
@@ -15,6 +17,14 @@ function AppStatusBar() {
 function AppShell() {
   const pathname = usePathname();
   const { isReady, hasCompletedOnboarding, appLockEnabled, isUnlocked } = useAppState();
+
+  if (!isReady) {
+    return (
+      <ScreenContainer padded>
+        <LoadingState title="Inicializando app" description="Preparando dados locais e seguranca." />
+      </ScreenContainer>
+    );
+  }
 
   if (hasCompletedOnboarding && appLockEnabled && !isUnlocked && pathname !== '/unlock') {
     return <Redirect href="/unlock" />;

@@ -72,18 +72,22 @@ export default function NewProductScreen() {
   const canSave = useMemo(() => name.trim().length > 0 && !loading, [loading, name]);
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError('Permissao de imagens negada.');
-      return;
-    }
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setError('Permissao de imagens negada.');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setImageUri(result.assets[0]?.uri ?? '');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+      if (!result.canceled) {
+        setImageUri(result.assets[0]?.uri ?? '');
+      }
+    } catch {
+      setError('Nao foi possivel selecionar a imagem.');
     }
   };
 

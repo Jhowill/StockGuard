@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
@@ -11,6 +12,8 @@ import { useSettings } from '@/hooks/useSettings';
 export default function OnboardingDoneScreen() {
   const { palette } = useAppTheme();
   const { saveSettings } = useSettings();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
 
   return (
     <ScreenContainer scroll padded>
@@ -27,12 +30,26 @@ export default function OnboardingDoneScreen() {
       </AppCard>
 
       <AppButton
-        label="Entrar no app"
+        label={busy ? '...' : 'Entrar no app'}
+        disabled={busy}
         onPress={async () => {
-          await saveSettings({ onboardingCompleted: true });
-          router.replace('/(tabs)');
+          if (busy) {
+            return;
+          }
+
+          setBusy(true);
+          setError(undefined);
+          try {
+            await saveSettings({ onboardingCompleted: true });
+            router.replace('/(tabs)');
+          } catch {
+            setError('Nao foi possivel concluir a configuracao inicial.');
+          } finally {
+            setBusy(false);
+          }
         }}
       />
+      {error ? <Text style={[styles.heroBody, { color: palette.danger }]}>{error}</Text> : null}
     </ScreenContainer>
   );
 }

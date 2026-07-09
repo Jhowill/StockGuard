@@ -1,6 +1,7 @@
 import { getDatabase, withTransaction } from '@/database/db';
 import { createAuditLog } from '@/database/repositories/auditLogRepository';
 import { nowIso } from '@/utils/date';
+import { clearSecuritySecrets } from '@/services/securityService';
 
 export async function deleteAllUserData() {
   await withTransaction(async (db) => {
@@ -23,6 +24,8 @@ export async function deleteAllUserData() {
       nowIso(),
     );
   });
+
+  await clearSecuritySecrets();
 
   await createAuditLog({
     action: 'all_data_deleted',

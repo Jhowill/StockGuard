@@ -23,12 +23,16 @@ export default function BackupScreen() {
   const [success, setSuccess] = useState<string | undefined>();
 
   const pickBackupFile = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: 'application/json',
-      copyToCacheDirectory: true,
-    });
-    if (!result.canceled) {
-      setFileUri(result.assets[0]?.uri ?? '');
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled) {
+        setFileUri(result.assets[0]?.uri ?? '');
+      }
+    } catch {
+      setActionError('Nao foi possivel selecionar o arquivo.');
     }
   };
 

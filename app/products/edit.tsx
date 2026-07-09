@@ -107,17 +107,21 @@ export default function ProductEditScreen() {
   const canSave = useMemo(() => name.trim().length > 0 && !saving, [name, saving]);
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setActionError('Permissao de imagens negada.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setImageUri(result.assets[0]?.uri ?? '');
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setActionError('Permissao de imagens negada.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+      if (!result.canceled) {
+        setImageUri(result.assets[0]?.uri ?? '');
+      }
+    } catch {
+      setActionError('Nao foi possivel selecionar a imagem.');
     }
   };
 

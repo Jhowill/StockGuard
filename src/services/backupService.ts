@@ -171,9 +171,12 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
-  if ((parsed as Partial<EncryptedBackupEnvelope>).encrypted) {
+  const encryptedEnvelope = parsed as Partial<EncryptedBackupEnvelope>;
+  const isEncryptedEnvelope = encryptedEnvelope.encrypted === true && typeof encryptedEnvelope.payload === 'string';
+
+  if (isEncryptedEnvelope) {
     try {
-      parsed = decryptPayload(parsed as EncryptedBackupEnvelope, password);
+      parsed = decryptPayload(encryptedEnvelope as EncryptedBackupEnvelope, password);
     } catch (error) {
       if (error instanceof Error) {
         throw error;
@@ -183,7 +186,11 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
   }
 
   assertBackupPayload(parsed);
-  await exportBackupFile();
+  try {
+    await exportBackupFile();
+  } catch {
+    // If the safety backup cannot be created, continue with restore validation.
+  }
 
   const fallbackSettings = await getSettings();
   const nextSettings = parsed.appSettings && typeof parsed.appSettings === 'object'
@@ -345,11 +352,11 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
 
   const record = await createBackupRecord({
     type: 'import',
-    format: (raw.includes('"encrypted": true') ? 'encrypted_json' : 'json'),
+    format: isEncryptedEnvelope ? 'encrypted_json' : 'json',
     fileName: fileUri.split(/[/\\]/).pop(),
     fileUri,
     fileSizeBytes: ((await FileSystem.getInfoAsync(fileUri)) as { size?: number }).size,
-    encrypted: raw.includes('"encrypted": true'),
+    encrypted: isEncryptedEnvelope,
     status: 'success',
     createdAt: nowIso(),
   });

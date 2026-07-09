@@ -49,6 +49,14 @@ export async function disableBiometricLock() {
   await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
 }
 
+export async function clearSecuritySecrets() {
+  try {
+    await Promise.all([clearPin(), disableBiometricLock()]);
+  } catch {
+    // Best-effort cleanup; data wipe should not fail solely because SecureStore is unavailable.
+  }
+}
+
 export async function isBiometricEnabled() {
   try {
     return (await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY)) === '1';
