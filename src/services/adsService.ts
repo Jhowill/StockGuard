@@ -32,3 +32,13 @@ export async function showRewardedInterstitial(featureKey: string): Promise<Rewa
   // Real rewarded interstitial display stays centralized in this service.
   return { status: 'success', rewardType: 'feature_unlock' };
 }
+
+export async function showRequiredStockSaveInterstitial(): Promise<RewardedAdResult> {
+  await delay(300);
+  if (!hasRewardedInterstitialConfig()) {
+    return { status: 'failed', reason: 'ADS_NOT_CONFIGURED' };
+  }
+
+  // Mandatory interstitial for stock-saving actions.
+  return { status: 'success', rewardType: 'feature_unlock' };
+}

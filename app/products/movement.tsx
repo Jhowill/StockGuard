@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { createStockMovement } from '@/services/stockMovementService';
+import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { useProducts } from '@/hooks/useProducts';
 import { useAppState } from '@/state/app-state';
 import type { StockMovementType } from '@/types/stock';
@@ -65,6 +66,11 @@ export default function MovementScreen() {
     setError(undefined);
 
     try {
+      const adResult = await showRequiredStockSaveInterstitial();
+      if (adResult.status !== 'success') {
+        throw new Error(adResult.status === 'cancelled' ? 'Assista ao anuncio ate o final para salvar o estoque.' : adResult.reason);
+      }
+
       await createStockMovement({
         productId: selectedProduct.id,
         type,

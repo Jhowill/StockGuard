@@ -13,6 +13,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
 import { createProduct } from '@/database/repositories/productRepository';
 import { listSuppliers } from '@/database/repositories/supplierRepository';
+import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { createStockMovement } from '@/services/stockMovementService';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
@@ -128,6 +129,11 @@ export default function NewProductScreen() {
       });
 
       if (parsedQuantity > 0) {
+        const adResult = await showRequiredStockSaveInterstitial();
+        if (adResult.status !== 'success') {
+          throw new Error(adResult.status === 'cancelled' ? 'Assista ao anuncio ate o final para registrar o saldo inicial.' : adResult.reason);
+        }
+
         await createStockMovement({
           productId: product.id,
           type: 'initial_balance',
