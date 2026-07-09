@@ -95,6 +95,10 @@ function assertBackupPayload(payload: Partial<BackupPayload>) {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
+  if (payload.schemaVersion !== SCHEMA_VERSION) {
+    throw new Error('INCOMPATIBLE_BACKUP_SCHEMA');
+  }
+
   if (!Array.isArray(payload.products) || !Array.isArray(payload.categories) || !Array.isArray(payload.suppliers) || !Array.isArray(payload.stockMovements)) {
     throw new Error('INVALID_BACKUP_SCHEMA');
   }

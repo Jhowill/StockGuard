@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -34,11 +35,21 @@ export default function MovementScreen() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [confirmSave, setConfirmSave] = useState(false);
+
+  useEffect(() => {
+    setSelectedProductId(initialProductId);
+  }, [initialProductId]);
 
   const quantityToMove = parsePositiveNumber(quantity);
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
+  const resultingQuantity = selectedProduct
+    ? type === 'in' || type === 'return' || type === 'adjustment_positive'
+      ? selectedProduct.quantity + quantityToMove
+      : selectedProduct.quantity - quantityToMove
+    : null;
 
-  const canSave = Boolean(selectedProduct && quantityToMove > 0 && !saving);
+  const canSave = Boolean(selectedProduct && quantityToMove > 0 && !saving && (resultingQuantity == null || resultingQuantity >= 0));
 
   const handleSave = async () => {
     if (saving) {
@@ -46,7 +57,7 @@ export default function MovementScreen() {
     }
 
     if (!selectedProduct || !canSave) {
-      setError('Selecione um produto e informe uma quantidade valida.');
+      setError(resultingQuantity != null && resultingQuantity < 0 ? 'Saldo insuficiente para essa saida.' : 'Selecione um produto e informe uma quantidade valida.');
       return;
     }
 
@@ -128,8 +139,20 @@ export default function MovementScreen() {
         </AppCard>
       ) : null}
 
-      <AppButton label={saving ? '...' : 'Salvar'} disabled={!canSave} onPress={() => void handleSave()} />
+      <AppButton label={saving ? '...' : 'Salvar'} disabled={!canSave} onPress={() => setConfirmSave(true)} />
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
+
+      <ConfirmDialog
+        visible={confirmSave}
+        title="Confirmar movimentacao?"
+        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar esta alteracao."
+        confirmLabel="Salvar"
+        onCancel={() => setConfirmSave(false)}
+        onConfirm={async () => {
+          setConfirmSave(false);
+          await handleSave();
+        }}
+      />
     </ScreenContainer>
   );
 }
