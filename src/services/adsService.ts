@@ -1,11 +1,11 @@
 import { hasRewardedAdsConfig, hasRewardedInterstitialConfig } from '@/config/ads';
 
 export type RewardedAdResult =
-  | { status: 'success'; rewardType: 'temporary_ad_free' | 'feature_unlock' }
+  | { status: 'success'; rewardType: 'temporary_ad_free' | 'feature_unlock' | 'stock_save' }
   | { status: 'cancelled' }
   | { status: 'failed'; reason: string };
 
-type RewardedAdType = 'temporary_ad_free' | 'feature_unlock';
+type RewardedAdType = 'temporary_ad_free' | 'feature_unlock' | 'stock_save';
 
 function delay(ms: number) {
   return new Promise((resolve) => {
@@ -40,5 +40,5 @@ export async function showRequiredStockSaveInterstitial(): Promise<RewardedAdRes
   }
 
   // Mandatory interstitial for stock-saving actions.
-  return { status: 'success', rewardType: 'feature_unlock' };
+  return { status: 'success', rewardType: 'stock_save' };
 }

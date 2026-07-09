@@ -5,8 +5,10 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { useI18n } from '@/hooks/useI18n';
 import type { PremiumFeature } from '@/types/ads';
 
 const features: Array<{ key: PremiumFeature; label: string }> = [
@@ -21,6 +23,7 @@ const features: Array<{ key: PremiumFeature; label: string }> = [
 ];
 
 export default function PremiumScreen() {
+  const { t } = useI18n();
   const { isTemporaryAdFree, adFreeExpiresAt, grantTemporaryAdFree, grantFeatureUnlock, error: adsError } = useAdsAccess();
   const [selectedFeature, setSelectedFeature] = useState<PremiumFeature>('advanced_pdf_reports');
   const { state, refreshAccess, error: featureError } = useFeatureGate(selectedFeature);
@@ -68,7 +71,14 @@ export default function PremiumScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Recompensas e premium" subtitle="Libere recursos temporariamente por recompensa." />
+      <AppHeader title={t('premium.title')} subtitle={t('premium.subtitle')} />
+
+      <AdPolicyNotice
+        title={t('ads.premiumTitle')}
+        body={t('ads.premiumBody')}
+        icon="ribbon-outline"
+        tone="reward"
+      />
 
       {actionError || adsError || featureError ? (
         <EmptyState title="Recompensas" description={actionError ?? adsError ?? featureError ?? 'Nao foi possivel carregar recompensas.'} />

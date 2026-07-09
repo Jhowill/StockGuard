@@ -8,10 +8,12 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { createStockMovement } from '@/services/stockMovementService';
 import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { useProducts } from '@/hooks/useProducts';
 import { useAppState } from '@/state/app-state';
+import { useI18n } from '@/hooks/useI18n';
 import type { StockMovementType } from '@/types/stock';
 import { parsePositiveNumber } from '@/utils/validators';
 
@@ -27,6 +29,7 @@ const movementTypes: Array<{ value: StockMovementType; label: string }> = [
 export default function MovementScreen() {
   const { productId } = useLocalSearchParams<{ productId?: string }>();
   const initialProductId = useMemo(() => (Array.isArray(productId) ? productId[0] : productId) ?? '', [productId]);
+  const { t } = useI18n();
   const { currency } = useAppState();
   const { products, loading } = useProducts();
   const [selectedProductId, setSelectedProductId] = useState(initialProductId);
@@ -89,7 +92,14 @@ export default function MovementScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Nova movimentacao" subtitle="Entrada, saida ou ajuste de estoque." />
+      <AppHeader title={t('movement.title')} subtitle={t('movement.subtitle')} />
+
+      <AdPolicyNotice
+        title={t('ads.requiredTitle')}
+        body={t('ads.requiredBody')}
+        icon="alert-circle-outline"
+        tone="required"
+      />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Produto</AppCard.Title>
@@ -151,7 +161,7 @@ export default function MovementScreen() {
       <ConfirmDialog
         visible={confirmSave}
         title="Confirmar movimentacao?"
-        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar esta alteracao."
+        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar. O anuncio obrigatorio precisa terminar para concluir o salvamento."
         confirmLabel="Salvar"
         onCancel={() => setConfirmSave(false)}
         onConfirm={async () => {

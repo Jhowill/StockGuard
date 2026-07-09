@@ -8,6 +8,7 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
@@ -155,6 +156,13 @@ export default function NewProductScreen() {
     <ScreenContainer scroll padded>
       <AppHeader title={t('productNew.title')} subtitle={t('productNew.subtitle')} />
 
+      <AdPolicyNotice
+        title={t('ads.requiredTitle')}
+        body={t('ads.requiredBody')}
+        icon="alert-circle-outline"
+        tone="required"
+      />
+
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Identificacao</AppCard.Title>
         {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : null}
@@ -214,7 +222,7 @@ export default function NewProductScreen() {
       <ConfirmDialog
         visible={confirmExit}
         title="Descartar alteracoes?"
-        message="Existem dados preenchidos neste produto. Se voltar agora, eles serao perdidos."
+        message="Existem dados preenchidos neste produto. Se voltar agora, eles serao perdidos. Caso haja saldo inicial, o anuncio obrigatorio tambem precisara ser concluido para registrar o estoque."
         confirmLabel="Descartar"
         danger
         onCancel={() => setConfirmExit(false)}

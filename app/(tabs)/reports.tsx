@@ -8,8 +8,10 @@ import { MetricCard } from '@/components/ui/MetricCard';
 import { PremiumLock } from '@/components/ui/PremiumLock';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { useReports } from '@/hooks/useReports';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/state/app-state';
 import { exportReportCsv, exportReportPdf } from '@/services/exportService';
 import { showRewardedInterstitial } from '@/services/adsService';
@@ -25,6 +27,7 @@ const periods: Array<{ value: ReportPeriod; label: string }> = [
 ];
 
 export default function ReportsScreen() {
+  const { t } = useI18n();
   const { currency } = useAppState();
   const [period, setPeriod] = useState<ReportPeriod>('month');
   const [exporting, setExporting] = useState(false);
@@ -79,7 +82,14 @@ export default function ReportsScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Relatorios" subtitle="Resumo de entradas, saidas e lucro." />
+      <AppHeader title={t('reports.title')} subtitle={t('reports.subtitle')} />
+
+      <AdPolicyNotice
+        title={t('ads.rewardTitle')}
+        body={t('ads.rewardBody')}
+        icon="sparkles-outline"
+        tone="reward"
+      />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Periodo</AppCard.Title>
@@ -123,8 +133,8 @@ export default function ReportsScreen() {
           </AppCard>
 
           <AppCard style={{ gap: 12 }}>
-            <AppCard.Title>Visao geral</AppCard.Title>
-            <AppCard.Text>Relatorio local do estoque com dados reais do banco.</AppCard.Text>
+            <AppCard.Title>{t('reports.overview')}</AppCard.Title>
+            <AppCard.Text>{t('reports.overviewBody')}</AppCard.Text>
             <AppButton label={exporting ? '...' : 'Exportar CSV'} variant="secondary" disabled={exporting} onPress={() => void exportReport('csv')} />
             <AppButton label={exporting ? '...' : 'Gerar PDF'} disabled={exporting} onPress={() => void exportReport('pdf')} />
           </AppCard>
@@ -132,7 +142,7 @@ export default function ReportsScreen() {
           {lockedFeature ? (
             <PremiumLock
               title={lockedFeature === 'csv_export' ? 'CSV avancado bloqueado' : 'PDF avancado bloqueado'}
-              description="Assista a um anuncio para liberar este recurso temporariamente sem bloquear seus dados."
+              description={lockedFeature === 'csv_export' ? t('ads.rewardBody') : t('ads.reportBody')}
               busy={exporting}
               onUnlock={() => void unlockFeature(lockedFeature)}
             />

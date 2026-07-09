@@ -10,12 +10,15 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useBackup } from '@/hooks/useBackup';
+import { useI18n } from '@/hooks/useI18n';
 import { formatShortDateTime } from '@/utils/date-format';
 
 export default function BackupScreen() {
+  const { t } = useI18n();
   const { backups, loading, error, createBackup, restoreBackup, shareBackup } = useBackup();
   const { canUseFeature } = useFeatureGate('encrypted_backup');
   const { grantFeatureUnlock } = useAdsAccess();
@@ -86,19 +89,26 @@ export default function BackupScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Backup" subtitle="Exportacao e restauracao local." />
+      <AppHeader title={t('backup.title')} subtitle={t('backup.subtitle')} />
+
+      <AdPolicyNotice
+        title={t('ads.backupTitle')}
+        body={t('ads.backupBody')}
+        icon="lock-closed-outline"
+        tone="reward"
+      />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Criar backup</AppCard.Title>
-        <AppCard.Text>Gere um arquivo local com produtos, categorias, fornecedores, movimentacoes e configuracoes.</AppCard.Text>
+        <AppCard.Title>{t('backup.create')}</AppCard.Title>
+        <AppCard.Text>{t('backup.createBody')}</AppCard.Text>
         <AppInput label="Senha opcional" secureTextEntry value={password} onChangeText={setPassword} placeholder="Preencha para criptografar" />
         <AppButton label={busy ? '...' : 'Gerar backup simples'} disabled={busy} onPress={() => void handleCreate(false)} />
         <AppButton label={busy ? '...' : 'Gerar backup criptografado'} variant="secondary" disabled={busy || password.trim().length < 6} onPress={() => void handleCreate(true)} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Restaurar backup</AppCard.Title>
-        <AppCard.Text>A restauracao valida o arquivo e cria um backup automatico antes de substituir os dados atuais.</AppCard.Text>
+        <AppCard.Title>{t('backup.restore')}</AppCard.Title>
+        <AppCard.Text>{t('backup.restoreBody')}</AppCard.Text>
         <AppButton label="Selecionar arquivo" variant="secondary" disabled={busy} onPress={() => void pickBackupFile()} />
         <AppInput label="Caminho do arquivo" value={fileUri} onChangeText={setFileUri} />
         <AppInput label="Senha do backup criptografado" secureTextEntry value={password} onChangeText={setPassword} />
