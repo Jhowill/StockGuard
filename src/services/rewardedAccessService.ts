@@ -1,5 +1,6 @@
 import { featureDurations } from '@/constants/features';
 import { createEntitlement, expireOldEntitlements } from '@/database/repositories/adEntitlementRepository';
+import { consumeActiveEntitlementUse } from '@/database/repositories/adEntitlementRepository';
 import { incrementUsageLimit } from '@/database/repositories/featureUsageLimitRepository';
 import type { PremiumFeature } from '@/types/ads';
 import { nowIso } from '@/utils/date';
@@ -26,14 +27,22 @@ export async function grantFeatureUnlock(featureKey: PremiumFeature) {
     expiresAt,
     remainingUses,
   });
-
-  await incrementUsageLimit(featureKey, 1);
   return entitlement;
 }
 
 export async function consumeFeatureUse(featureKey: PremiumFeature) {
-  const next = await incrementUsageLimit(featureKey, 1);
-  return next;
+  const config = featureDurations[featureKey];
+
+  if (!config.uses) {
+    return null;
+  }
+
+  const consumedRewardUse = await consumeActiveEntitlementUse(featureKey);
+  if (consumedRewardUse) {
+    return consumedRewardUse;
+  }
+
+  return incrementUsageLimit(featureKey, 1);
 }
 
 export async function touchRewardUse() {

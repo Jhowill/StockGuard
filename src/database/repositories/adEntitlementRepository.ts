@@ -100,3 +100,34 @@ export async function expireOldEntitlements() {
     now,
   );
 }
+
+export async function consumeActiveEntitlementUse(featureKey: PremiumFeature) {
+  const db = await getDatabase();
+  const activeEntitlements = await findActiveEntitlements();
+  const entitlement = activeEntitlements.find((item) => item.featureKey === featureKey && (item.remainingUses ?? 0) > 0);
+
+  if (!entitlement) {
+    return null;
+  }
+
+  const nextRemainingUses = (entitlement.remainingUses ?? 0) - 1;
+  const nextStatus: AdEntitlement['status'] = nextRemainingUses > 0 ? 'active' : 'consumed';
+  const updatedAt = nowIso();
+
+  await db.runAsync(
+    `UPDATE ad_entitlements
+     SET remaining_uses = ?, status = ?, updated_at = ?
+     WHERE id = ?`,
+    nextRemainingUses > 0 ? nextRemainingUses : 0,
+    nextStatus,
+    updatedAt,
+    entitlement.id,
+  );
+
+  return {
+    ...entitlement,
+    remainingUses: nextRemainingUses > 0 ? nextRemainingUses : 0,
+    status: nextStatus,
+    updatedAt,
+  };
+}

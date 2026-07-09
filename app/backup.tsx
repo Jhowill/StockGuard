@@ -11,17 +11,16 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
-import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useBackup } from '@/hooks/useBackup';
 import { useI18n } from '@/hooks/useI18n';
+import { consumeFeatureUse, grantFeatureUnlock } from '@/services/rewardedAccessService';
 import { formatShortDateTime } from '@/utils/date-format';
 
 export default function BackupScreen() {
   const { t } = useI18n();
   const { backups, loading, error, createBackup, restoreBackup, shareBackup } = useBackup();
   const { canUseFeature } = useFeatureGate('encrypted_backup');
-  const { grantFeatureUnlock } = useAdsAccess();
   const [fileUri, setFileUri] = useState('');
   const [password, setPassword] = useState('');
   const [restoreStep, setRestoreStep] = useState<0 | 1 | 2>(0);
@@ -51,14 +50,14 @@ export default function BackupScreen() {
       if (encrypted) {
         const allowed = await canUseFeature('encrypted_backup');
         if (!allowed) {
-          const unlock = await grantFeatureUnlock('encrypted_backup');
-          if (unlock.status !== 'success') {
-            throw new Error(unlock.status === 'cancelled' ? 'Anuncio cancelado.' : unlock.reason);
-          }
+          await grantFeatureUnlock('encrypted_backup');
         }
       }
 
       const result = await createBackup(encrypted ? password : undefined);
+      if (encrypted) {
+        await consumeFeatureUse('encrypted_backup');
+      }
       setFileUri(result.fileUri);
       setSuccess(encrypted ? 'Backup criptografado criado.' : 'Backup criado.');
     } catch (nextError) {

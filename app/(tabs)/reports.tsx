@@ -15,7 +15,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/state/app-state';
 import { exportReportCsv, exportReportPdf } from '@/services/exportService';
 import { showRewardedInterstitial } from '@/services/adsService';
-import { grantFeatureUnlock } from '@/services/rewardedAccessService';
+import { consumeFeatureUse, grantFeatureUnlock } from '@/services/rewardedAccessService';
 import { formatMoney } from '@/utils/format';
 import type { ReportPeriod } from '@/services/reportService';
 import type { PremiumFeature } from '@/types/ads';
@@ -73,6 +73,8 @@ export default function ReportsScreen() {
       } else {
         await exportReportPdf(summary);
       }
+
+      await consumeFeatureUse(featureKey);
     } catch (nextError) {
       setExportError(nextError instanceof Error ? nextError.message : 'Nao foi possivel exportar o relatorio.');
     } finally {
