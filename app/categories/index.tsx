@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -19,6 +20,7 @@ export default function CategoriesScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
 
   const resolveIcon = (iconName?: string) => {
     if (iconName && iconName in Ionicons.glyphMap) {
@@ -61,6 +63,26 @@ export default function CategoriesScreen() {
       setSortOrder('0');
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a categoria.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!archiveId) {
+      return;
+    }
+
+    setBusy(true);
+    setActionError(undefined);
+    try {
+      await archive(archiveId);
+      setArchiveId(null);
+    } catch (nextError) {
+      const message = nextError instanceof Error && nextError.message === 'CATEGORY_HAS_PRODUCTS'
+        ? 'Esta categoria possui produtos vinculados. Mova os produtos antes de arquivar.'
+        : nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar a categoria.';
+      setActionError(message);
     } finally {
       setBusy(false);
     }
@@ -112,21 +134,20 @@ export default function CategoriesScreen() {
               label="Arquivar"
               variant="ghost"
               disabled={busy}
-              onPress={async () => {
-                setBusy(true);
-                setActionError(undefined);
-                try {
-                  await archive(category.id);
-                } catch (nextError) {
-                  setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar a categoria.');
-                } finally {
-                  setBusy(false);
-                }
-              }}
+              onPress={() => setArchiveId(category.id)}
             />
           </AppCard>
         ))
       )}
+      <ConfirmDialog
+        visible={Boolean(archiveId)}
+        title="Arquivar categoria?"
+        message="Categorias com produtos vinculados nao serao arquivadas ate que os produtos sejam movidos."
+        confirmLabel="Arquivar"
+        danger
+        onCancel={() => setArchiveId(null)}
+        onConfirm={() => void handleArchive()}
+      />
     </ScreenContainer>
   );
 }

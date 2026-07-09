@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import { getDatabase } from '../db';
+import { createAuditLog } from './auditLogRepository';
 import type { Supplier } from '@/types/supplier';
 import { nowIso } from '@/utils/date';
 
@@ -75,6 +76,13 @@ export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 
     supplier.updatedAt,
   );
 
+  await createAuditLog({
+    action: 'supplier_created',
+    entityType: 'supplier',
+    entityId: supplier.id,
+    metadataJson: JSON.stringify({ name: supplier.name }),
+  });
+
   return supplier;
 }
 
@@ -108,12 +116,32 @@ export async function updateSupplier(id: string, input: Partial<Omit<Supplier, '
     id,
   );
 
+  await createAuditLog({
+    action: 'supplier_updated',
+    entityType: 'supplier',
+    entityId: id,
+    metadataJson: JSON.stringify({ name: next.name, status: next.status }),
+  });
+
   return next;
 }
 
 export async function archiveSupplier(id: string) {
   const db = await getDatabase();
+  const linked = await db.getFirstAsync<{ total: number }>(
+    'SELECT COUNT(*) as total FROM products WHERE supplier_id = ? AND status = "active"',
+    id,
+  );
+  if ((linked?.total ?? 0) > 0) {
+    throw new Error('SUPPLIER_HAS_PRODUCTS');
+  }
   await db.runAsync('UPDATE suppliers SET status = ?, updated_at = ? WHERE id = ?', 'archived', nowIso(), id);
+  await createAuditLog({
+    action: 'supplier_updated',
+    entityType: 'supplier',
+    entityId: id,
+    metadataJson: JSON.stringify({ status: 'archived' }),
+  });
 }
 
 export async function getSupplierById(id: string) {

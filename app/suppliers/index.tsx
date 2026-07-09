@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -16,6 +17,7 @@ export default function SuppliersScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (busy) {
@@ -48,6 +50,26 @@ export default function SuppliersScreen() {
       setEmail('');
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar o fornecedor.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!archiveId) {
+      return;
+    }
+
+    setBusy(true);
+    setActionError(undefined);
+    try {
+      await archive(archiveId);
+      setArchiveId(null);
+    } catch (nextError) {
+      const message = nextError instanceof Error && nextError.message === 'SUPPLIER_HAS_PRODUCTS'
+        ? 'Este fornecedor possui produtos vinculados. Remova o vinculo antes de arquivar.'
+        : nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o fornecedor.';
+      setActionError(message);
     } finally {
       setBusy(false);
     }
@@ -97,21 +119,20 @@ export default function SuppliersScreen() {
               label="Arquivar"
               variant="ghost"
               disabled={busy}
-              onPress={async () => {
-                setBusy(true);
-                setActionError(undefined);
-                try {
-                  await archive(supplier.id);
-                } catch (nextError) {
-                  setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o fornecedor.');
-                } finally {
-                  setBusy(false);
-                }
-              }}
+              onPress={() => setArchiveId(supplier.id)}
             />
           </AppCard>
         ))
       )}
+      <ConfirmDialog
+        visible={Boolean(archiveId)}
+        title="Arquivar fornecedor?"
+        message="Fornecedores com produtos vinculados nao serao arquivados ate que o vinculo seja removido."
+        confirmLabel="Arquivar"
+        danger
+        onCancel={() => setArchiveId(null)}
+        onConfirm={() => void handleArchive()}
+      />
     </ScreenContainer>
   );
 }

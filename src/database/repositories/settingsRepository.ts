@@ -1,4 +1,5 @@
 import { getDatabase } from '../db';
+import { createAuditLog } from './auditLogRepository';
 import type { AppLanguage, CurrencyCode, ThemeMode, UsageType } from '@/types/settings';
 
 export type AppSettingsRecord = {
@@ -186,6 +187,13 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
     next.lastBackupAt ?? null,
     next.updatedAt,
   );
+
+  await createAuditLog({
+    action: 'settings_updated',
+    entityType: 'settings',
+    entityId: next.id,
+    metadataJson: JSON.stringify(Object.keys(input)),
+  });
 
   return next;
 }

@@ -24,14 +24,14 @@ export function useBackup() {
     void refresh();
   }, [refresh]);
 
-  const createBackup = useCallback(async () => {
-    const result = await exportBackupFile();
+  const createBackup = useCallback(async (password?: string) => {
+    const result = await exportBackupFile(password);
     await refresh();
     return result;
   }, [refresh]);
 
-  const restoreBackup = useCallback(async (fileUri: string) => {
-    const result = await restoreBackupFile(fileUri);
+  const restoreBackup = useCallback(async (fileUri: string, password?: string) => {
+    const result = await restoreBackupFile(fileUri, password);
     await refresh();
     return result;
   }, [refresh]);

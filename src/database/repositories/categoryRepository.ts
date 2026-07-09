@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import { getDatabase } from '../db';
+import { createAuditLog } from './auditLogRepository';
 import type { Category } from '@/types/category';
 import { nowIso } from '@/utils/date';
 
@@ -68,6 +69,13 @@ export async function createCategory(input: Omit<Category, 'id' | 'createdAt' | 
     category.updatedAt,
   );
 
+  await createAuditLog({
+    action: 'category_created',
+    entityType: 'category',
+    entityId: category.id,
+    metadataJson: JSON.stringify({ name: category.name }),
+  });
+
   return category;
 }
 
@@ -99,12 +107,32 @@ export async function updateCategory(id: string, input: Partial<Omit<Category, '
     id,
   );
 
+  await createAuditLog({
+    action: 'category_updated',
+    entityType: 'category',
+    entityId: id,
+    metadataJson: JSON.stringify({ name: next.name, status: next.status }),
+  });
+
   return next;
 }
 
 export async function archiveCategory(id: string) {
   const db = await getDatabase();
+  const linked = await db.getFirstAsync<{ total: number }>(
+    'SELECT COUNT(*) as total FROM products WHERE category_id = ? AND status = "active"',
+    id,
+  );
+  if ((linked?.total ?? 0) > 0) {
+    throw new Error('CATEGORY_HAS_PRODUCTS');
+  }
   await db.runAsync('UPDATE categories SET status = ?, updated_at = ? WHERE id = ?', 'archived', nowIso(), id);
+  await createAuditLog({
+    action: 'category_updated',
+    entityType: 'category',
+    entityId: id,
+    metadataJson: JSON.stringify({ status: 'archived' }),
+  });
 }
 
 export async function getCategoryById(id: string) {

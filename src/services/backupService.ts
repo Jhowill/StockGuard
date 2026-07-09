@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import CryptoJS from 'crypto-js';
 import { getDatabase, withTransaction } from '@/database/db';
 import { listProducts } from '@/database/repositories/productRepository';
 import { listCategories } from '@/database/repositories/categoryRepository';
@@ -7,6 +8,7 @@ import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { listMovements } from '@/database/repositories/stockMovementRepository';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
 import { createBackupRecord } from '@/database/repositories/backupRecordRepository';
+import { createAuditLog } from '@/database/repositories/auditLogRepository';
 import { SCHEMA_VERSION } from '@/database/schema';
 import { nowIso } from '@/utils/date';
 import type { AppSettingsRecord } from '@/database/repositories/settingsRepository';
@@ -27,6 +29,15 @@ export type BackupPayload = {
   stockMovements: StockMovementRecord[];
   appSettings: AppSettingsRecord;
   adEntitlements: AdEntitlement[];
+};
+
+type EncryptedBackupEnvelope = {
+  app: 'EstoqueGuard Offline';
+  encrypted: true;
+  format: 'encrypted_json';
+  schemaVersion: number;
+  exportedAt: string;
+  payload: string;
 };
 
 function backupFolder() {
@@ -79,32 +90,78 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
   };
 }
 
-export async function exportBackupFile() {
+function assertBackupPayload(payload: Partial<BackupPayload>) {
+  if (payload.app !== 'EstoqueGuard Offline') {
+    throw new Error('INVALID_BACKUP_FILE');
+  }
+
+  if (!Array.isArray(payload.products) || !Array.isArray(payload.categories) || !Array.isArray(payload.suppliers) || !Array.isArray(payload.stockMovements)) {
+    throw new Error('INVALID_BACKUP_SCHEMA');
+  }
+}
+
+function encryptPayload(payload: BackupPayload, password: string): EncryptedBackupEnvelope {
+  if (password.trim().length < 6) {
+    throw new Error('BACKUP_PASSWORD_TOO_SHORT');
+  }
+
+  return {
+    app: 'EstoqueGuard Offline',
+    encrypted: true,
+    format: 'encrypted_json',
+    schemaVersion: payload.schemaVersion,
+    exportedAt: payload.exportedAt,
+    payload: CryptoJS.AES.encrypt(JSON.stringify(payload), password).toString(),
+  };
+}
+
+function decryptPayload(envelope: EncryptedBackupEnvelope, password?: string) {
+  if (!password?.trim()) {
+    throw new Error('BACKUP_PASSWORD_REQUIRED');
+  }
+
+  const bytes = CryptoJS.AES.decrypt(envelope.payload, password);
+  const raw = bytes.toString(CryptoJS.enc.Utf8);
+  if (!raw) {
+    throw new Error('BACKUP_PASSWORD_INVALID');
+  }
+  return JSON.parse(raw) as BackupPayload;
+}
+
+export async function exportBackupFile(password?: string) {
   const payload = await buildBackupPayload();
+  const encrypted = Boolean(password?.trim());
+  const output = encrypted ? encryptPayload(payload, password ?? '') : payload;
   const folder = backupFolder();
-  const fileName = `estoqueguard-backup-${payload.exportedAt.replace(/[:.]/g, '-')}.json`;
+  const fileName = `estoqueguard-backup-${payload.exportedAt.replace(/[:.]/g, '-')}${encrypted ? '.encrypted' : ''}.json`;
   const fileUri = `${folder}${fileName}`;
   await ensureFolderExists(folder);
-  await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
+  await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(output, null, 2));
 
   const fileInfo = await FileSystem.getInfoAsync(fileUri);
   const fileSize = (fileInfo as { size?: number }).size;
   const record = await createBackupRecord({
     type: 'export',
-    format: 'json',
+    format: encrypted ? 'encrypted_json' : 'json',
     fileName,
     fileUri,
     fileSizeBytes: fileInfo.exists && !fileInfo.isDirectory ? fileSize : undefined,
-    encrypted: false,
+    encrypted,
     status: 'success',
     createdAt: nowIso(),
   });
 
   await updateSettings({ lastBackupAt: record.createdAt });
+  await createAuditLog({
+    action: 'backup_created',
+    entityType: 'backup',
+    entityId: record.id,
+    metadataJson: JSON.stringify({ encrypted, fileName }),
+  });
   return { fileUri, fileName, record, payload };
 }
 
-export async function restoreBackupFile(fileUri: string) {
+export async function restoreBackupFile(fileUri: string, password?: string) {
   const raw = await FileSystem.readAsStringAsync(fileUri);
   let parsed: Partial<BackupPayload>;
 
@@ -114,9 +171,19 @@ export async function restoreBackupFile(fileUri: string) {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
-  if (parsed.app !== 'EstoqueGuard Offline') {
-    throw new Error('INVALID_BACKUP_FILE');
+  if ((parsed as Partial<EncryptedBackupEnvelope>).encrypted) {
+    try {
+      parsed = decryptPayload(parsed as EncryptedBackupEnvelope, password);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('INVALID_BACKUP_FILE');
+    }
   }
+
+  assertBackupPayload(parsed);
+  await exportBackupFile();
 
   const fallbackSettings = await getSettings();
   const nextSettings = parsed.appSettings && typeof parsed.appSettings === 'object'
@@ -278,13 +345,20 @@ export async function restoreBackupFile(fileUri: string) {
 
   const record = await createBackupRecord({
     type: 'import',
-    format: 'json',
+    format: (raw.includes('"encrypted": true') ? 'encrypted_json' : 'json'),
     fileName: fileUri.split(/[/\\]/).pop(),
     fileUri,
     fileSizeBytes: ((await FileSystem.getInfoAsync(fileUri)) as { size?: number }).size,
-    encrypted: false,
+    encrypted: raw.includes('"encrypted": true'),
     status: 'success',
     createdAt: nowIso(),
+  });
+
+  await createAuditLog({
+    action: 'backup_restored',
+    entityType: 'backup',
+    entityId: record.id,
+    metadataJson: JSON.stringify({ fileUri, encrypted: record.encrypted }),
   });
 
   return { record, payload: parsed as BackupPayload };

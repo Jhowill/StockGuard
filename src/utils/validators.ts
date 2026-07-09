@@ -24,3 +24,17 @@ export function parsePositiveNumber(value: string, fallback = 0) {
 export function parseNonNegativeInteger(value: string, fallback = 0) {
   return Math.max(0, Math.round(parseFiniteNumber(value, fallback)));
 }
+
+export function parseMoneyToCents(value: string) {
+  const normalized = value.trim().replace(/\./g, '').replace(',', '.');
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return Math.round(parsed * 100);
+}

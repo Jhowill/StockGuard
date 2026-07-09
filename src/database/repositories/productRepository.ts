@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import { getDatabase } from '../db';
+import { createAuditLog } from './auditLogRepository';
 import type { ProductUnit } from '@/types/product';
 import { nowIso } from '@/utils/date';
 
@@ -132,6 +133,26 @@ function validateProduct(record: Pick<ProductRecord, 'name' | 'quantity' | 'minQ
   assertOptionalNonNegativeInteger(record.salePriceCents, 'INVALID_PRODUCT_SALE_PRICE');
 }
 
+async function assertUniqueBarcode(barcode: string | null | undefined, ignoreProductId?: string) {
+  if (!barcode?.trim()) {
+    return;
+  }
+
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM products
+     WHERE barcode = ? AND status = "active" AND (? IS NULL OR id != ?)
+     LIMIT 1`,
+    barcode.trim(),
+    ignoreProductId ?? null,
+    ignoreProductId ?? null,
+  );
+
+  if (row) {
+    throw new Error('PRODUCT_BARCODE_ALREADY_EXISTS');
+  }
+}
+
 export async function createProduct(input: CreateProductInput) {
   const db = await getDatabase();
   const now = nowIso();
@@ -160,6 +181,7 @@ export async function createProduct(input: CreateProductInput) {
     archivedAt: null,
   };
   validateProduct(product);
+  await assertUniqueBarcode(product.barcode);
 
   await db.runAsync(
     `INSERT INTO products (
@@ -192,6 +214,13 @@ export async function createProduct(input: CreateProductInput) {
     product.archivedAt ?? null,
   );
 
+  await createAuditLog({
+    action: 'product_created',
+    entityType: 'product',
+    entityId: product.id,
+    metadataJson: JSON.stringify({ name: product.name }),
+  });
+
   return product;
 }
 
@@ -209,6 +238,7 @@ export async function updateProduct(input: UpdateProductInput) {
     updatedAt: nowIso(),
   };
   validateProduct(next);
+  await assertUniqueBarcode(next.barcode, next.id);
 
   await db.runAsync(
     `UPDATE products SET
@@ -240,6 +270,13 @@ export async function updateProduct(input: UpdateProductInput) {
     next.id,
   );
 
+  await createAuditLog({
+    action: 'product_updated',
+    entityType: 'product',
+    entityId: next.id,
+    metadataJson: JSON.stringify({ name: next.name }),
+  });
+
   return next;
 }
 
@@ -253,6 +290,11 @@ export async function archiveProduct(productId: string) {
     now,
     productId,
   );
+  await createAuditLog({
+    action: 'product_archived',
+    entityType: 'product',
+    entityId: productId,
+  });
 }
 
 export async function findProductById(productId: string) {
@@ -275,9 +317,10 @@ export async function searchProducts(query: string) {
   const rows = await db.getAllAsync<ProductRow>(
     `SELECT * FROM products
      WHERE status = "active" AND (
-       name LIKE ? OR sku LIKE ? OR barcode LIKE ? OR location LIKE ?
+       name LIKE ? OR sku LIKE ? OR barcode LIKE ? OR location LIKE ? OR category_id LIKE ?
      )
      ORDER BY name ASC`,
+    like,
     like,
     like,
     like,

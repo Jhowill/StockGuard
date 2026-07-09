@@ -3,13 +3,20 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { MetricCard } from '@/components/ui/MetricCard';
+import { PremiumLock } from '@/components/ui/PremiumLock';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useReports } from '@/hooks/useReports';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useAppState } from '@/state/app-state';
+import { exportReportCsv, exportReportPdf } from '@/services/exportService';
+import { showRewardedInterstitial } from '@/services/adsService';
+import { grantFeatureUnlock } from '@/services/rewardedAccessService';
 import { formatMoney } from '@/utils/format';
 import type { ReportPeriod } from '@/services/reportService';
+import type { PremiumFeature } from '@/types/ads';
 
 const periods: Array<{ value: ReportPeriod; label: string }> = [
   { value: 'today', label: 'Hoje' },
@@ -20,7 +27,55 @@ const periods: Array<{ value: ReportPeriod; label: string }> = [
 export default function ReportsScreen() {
   const { currency } = useAppState();
   const [period, setPeriod] = useState<ReportPeriod>('month');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | undefined>();
+  const [lockedFeature, setLockedFeature] = useState<PremiumFeature | undefined>();
   const { summary, loading, error, refresh } = useReports(period);
+  const { canUseFeature } = useFeatureGate('csv_export');
+
+  const unlockFeature = async (featureKey: PremiumFeature) => {
+    setExporting(true);
+    setExportError(undefined);
+    try {
+      const result = await showRewardedInterstitial(featureKey);
+      if (result.status !== 'success') {
+        throw new Error(result.status === 'cancelled' ? 'Anuncio cancelado.' : result.reason);
+      }
+      await grantFeatureUnlock(featureKey);
+      setLockedFeature(undefined);
+    } catch (nextError) {
+      setExportError(nextError instanceof Error ? nextError.message : 'Nao foi possivel liberar o recurso.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportReport = async (format: 'csv' | 'pdf') => {
+    if (!summary || exporting) {
+      return;
+    }
+
+    const featureKey: PremiumFeature = format === 'csv' ? 'csv_export' : 'advanced_pdf_reports';
+    setExporting(true);
+    setExportError(undefined);
+    try {
+      const allowed = await canUseFeature(featureKey);
+      if (!allowed) {
+        setLockedFeature(featureKey);
+        return;
+      }
+
+      if (format === 'csv') {
+        await exportReportCsv(summary);
+      } else {
+        await exportReportPdf(summary);
+      }
+    } catch (nextError) {
+      setExportError(nextError instanceof Error ? nextError.message : 'Nao foi possivel exportar o relatorio.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <ScreenContainer scroll padded>
@@ -70,9 +125,20 @@ export default function ReportsScreen() {
           <AppCard style={{ gap: 12 }}>
             <AppCard.Title>Visao geral</AppCard.Title>
             <AppCard.Text>Relatorio local do estoque com dados reais do banco.</AppCard.Text>
-            <AppButton label="Exportar CSV" variant="secondary" />
-            <AppButton label="Gerar PDF" />
+            <AppButton label={exporting ? '...' : 'Exportar CSV'} variant="secondary" disabled={exporting} onPress={() => void exportReport('csv')} />
+            <AppButton label={exporting ? '...' : 'Gerar PDF'} disabled={exporting} onPress={() => void exportReport('pdf')} />
           </AppCard>
+
+          {lockedFeature ? (
+            <PremiumLock
+              title={lockedFeature === 'csv_export' ? 'CSV avancado bloqueado' : 'PDF avancado bloqueado'}
+              description="Assista a um anuncio para liberar este recurso temporariamente sem bloquear seus dados."
+              busy={exporting}
+              onUnlock={() => void unlockFeature(lockedFeature)}
+            />
+          ) : null}
+
+          {exportError ? <ErrorState title="Exportacao" description={exportError} /> : null}
         </>
       ) : null}
     </ScreenContainer>

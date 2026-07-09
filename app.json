@@ -28,7 +28,18 @@
       "expo-router",
       "expo-sqlite",
       "expo-secure-store",
-      "expo-localization"
-    ]
+      "expo-localization",
+      "expo-document-picker",
+      "expo-image-picker"
+    ],
+    "extra": {
+      "EXPO_PUBLIC_ADS_ENABLED": "false",
+      "EXPO_PUBLIC_ADMOB_ANDROID_APP_ID": "",
+      "EXPO_PUBLIC_ADMOB_IOS_APP_ID": "",
+      "EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID": "",
+      "EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID": "",
+      "EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID": "",
+      "EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID": ""
+    }
   }
 }
