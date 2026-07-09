@@ -124,10 +124,12 @@ export async function getRecentMovements(limit = 10) {
 
 export async function listMovements(limit = 200) {
   const db = await getDatabase();
-  const rows = await db.getAllAsync<StockMovementRow>(
-    `SELECT * FROM stock_movements ORDER BY created_at DESC LIMIT ?`,
-    limit,
-  );
+  const rows = typeof limit === 'number' && Number.isFinite(limit) && limit > 0
+    ? await db.getAllAsync<StockMovementRow>(
+        `SELECT * FROM stock_movements ORDER BY created_at DESC LIMIT ?`,
+        limit,
+      )
+    : await db.getAllAsync<StockMovementRow>(`SELECT * FROM stock_movements ORDER BY created_at DESC`);
   return rows.map(mapMovement);
 }
 

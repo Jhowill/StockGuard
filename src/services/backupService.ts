@@ -65,7 +65,7 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
     listProducts(true),
     listCategories(true),
     listSuppliers(true),
-    listMovements(1000),
+    listMovements(0),
     getSettings(),
   ]);
 

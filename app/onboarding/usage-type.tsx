@@ -18,6 +18,8 @@ const options: Array<{ value: UsageType; label: string; description: string }> =
 export default function UsageTypeScreen() {
   const { settings, saveSettings } = useSettings();
   const [selected, setSelected] = useState<UsageType>(settings?.usageType ?? 'other');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | undefined>();
 
   const canContinue = useMemo(() => Boolean(selected), [selected]);
 
@@ -36,13 +38,24 @@ export default function UsageTypeScreen() {
       ))}
 
       <AppButton
-        label="Proximo"
+        label={saving ? '...' : 'Proximo'}
+        disabled={saving}
         onPress={async () => {
-          if (!canContinue) return;
-          await saveSettings({ usageType: selected });
-          router.push('/onboarding/preferences');
+          if (!canContinue || saving) return;
+
+          setSaving(true);
+          setError(undefined);
+          try {
+            await saveSettings({ usageType: selected });
+            router.push('/onboarding/preferences');
+          } catch {
+            setError('Nao foi possivel salvar esta etapa.');
+          } finally {
+            setSaving(false);
+          }
         }}
       />
+      {error ? <AppCard><AppCard.Text>{error}</AppCard.Text></AppCard> : null}
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );

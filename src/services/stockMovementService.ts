@@ -28,6 +28,16 @@ function calculateNewQuantity(previousQuantity: number, movementType: StockMovem
   return quantity;
 }
 
+function assertOptionalMoney(value: number | undefined, field: string) {
+  if (value == null) {
+    return;
+  }
+
+  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    throw new Error(field);
+  }
+}
+
 export async function createStockMovement(input: CreateStockMovementInput) {
   if (!input.productId.trim()) {
     throw new Error('PRODUCT_ID_MISSING');
@@ -36,6 +46,9 @@ export async function createStockMovement(input: CreateStockMovementInput) {
   if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
     throw new Error('INVALID_QUANTITY');
   }
+
+  assertOptionalMoney(input.unitCostCents, 'INVALID_UNIT_COST');
+  assertOptionalMoney(input.unitSalePriceCents, 'INVALID_UNIT_SALE_PRICE');
 
   return withTransaction(async () => {
     const product = await findProductById(input.productId);

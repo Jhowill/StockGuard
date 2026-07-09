@@ -13,6 +13,8 @@ export default function PreferencesScreen() {
   const [theme, setTheme] = useState<ThemeMode>(settings?.theme ?? 'system');
   const [language, setLanguage] = useState<AppLanguage>(settings?.language ?? 'system');
   const [currency, setCurrency] = useState<CurrencyCode>(settings?.currency ?? 'BRL');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | undefined>();
 
   return (
     <ScreenContainer scroll padded>
@@ -58,12 +60,24 @@ export default function PreferencesScreen() {
       </AppCard>
 
       <AppButton
-        label="Proximo"
+        label={saving ? '...' : 'Proximo'}
+        disabled={saving}
         onPress={async () => {
-          await saveSettings({ theme, language, currency });
-          router.push('/onboarding/security');
+          if (saving) return;
+
+          setSaving(true);
+          setError(undefined);
+          try {
+            await saveSettings({ theme, language, currency });
+            router.push('/onboarding/security');
+          } catch {
+            setError('Nao foi possivel salvar as preferencias.');
+          } finally {
+            setSaving(false);
+          }
         }}
       />
+      {error ? <AppCard><AppCard.Text>{error}</AppCard.Text></AppCard> : null}
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );

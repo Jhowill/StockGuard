@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -22,6 +23,7 @@ export default function ProductDetailScreen() {
   const { product, movements, loading, error } = useProductDetail(productId);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
+  const [confirmArchive, setConfirmArchive] = useState(false);
 
   if (loading) {
     return (
@@ -97,9 +99,20 @@ export default function ProductDetailScreen() {
         label={t('common.archive')}
         variant="ghost"
         disabled={busy}
-        onPress={async () => {
+        onPress={() => setConfirmArchive(true)}
+      />
+
+      <ConfirmDialog
+        visible={confirmArchive}
+        title="Arquivar produto?"
+        message="O produto vai sair das listas principais, mas o historico e a auditoria continuam disponiveis."
+        confirmLabel="Arquivar"
+        danger
+        onCancel={() => setConfirmArchive(false)}
+        onConfirm={async () => {
           setBusy(true);
           setActionError(undefined);
+          setConfirmArchive(false);
           try {
             await archiveProduct(product.id);
             router.replace('/(tabs)/products');

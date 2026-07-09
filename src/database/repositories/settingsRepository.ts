@@ -74,6 +74,10 @@ function pickAllowed<T extends string>(value: string | null | undefined, allowed
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
+function normalizePositiveInteger(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.trunc(value) : fallback;
+}
+
 function mapRow(row: SettingsRow): AppSettingsRecord {
   return {
     id: 'default',
@@ -147,6 +151,12 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
   const next: AppSettingsRecord = {
     ...current,
     ...input,
+    theme: input.theme ? pickAllowed(input.theme, themeModes, current.theme) : current.theme,
+    language: input.language ? pickAllowed(input.language, languages, current.language) : current.language,
+    currency: input.currency ? pickAllowed(input.currency, currencies, current.currency) : current.currency,
+    usageType: input.usageType ? pickAllowed(input.usageType, usageTypes, current.usageType) : current.usageType,
+    personalizedAdsConsent: input.personalizedAdsConsent ? pickAllowed(input.personalizedAdsConsent, consentValues, current.personalizedAdsConsent) : current.personalizedAdsConsent,
+    expirationWarningDays: normalizePositiveInteger(input.expirationWarningDays, current.expirationWarningDays),
     updatedAt: new Date().toISOString(),
   };
 
