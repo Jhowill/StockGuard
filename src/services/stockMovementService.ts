@@ -29,6 +29,10 @@ function calculateNewQuantity(previousQuantity: number, movementType: StockMovem
 }
 
 export async function createStockMovement(input: CreateStockMovementInput) {
+  if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
+    throw new Error('INVALID_QUANTITY');
+  }
+
   return withTransaction(async () => {
     const product = await findProductById(input.productId);
     if (!product) {

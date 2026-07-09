@@ -3,6 +3,7 @@ export type BackupRecord = {
   type: 'export' | 'import';
   format: 'json' | 'csv' | 'encrypted_json';
   fileName?: string;
+  fileUri?: string;
   fileSizeBytes?: number;
   encrypted: boolean;
   status: 'success' | 'failed';

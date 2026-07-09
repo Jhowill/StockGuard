@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 4;
 
 export const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS products (
@@ -79,6 +79,7 @@ export const schemaStatements = [
     theme TEXT NOT NULL DEFAULT 'system',
     language TEXT NOT NULL DEFAULT 'system',
     currency TEXT NOT NULL DEFAULT 'BRL',
+    usage_type TEXT NOT NULL DEFAULT 'other',
     app_lock_enabled INTEGER NOT NULL DEFAULT 0,
     biometric_unlock_enabled INTEGER NOT NULL DEFAULT 0,
     hide_financial_values INTEGER NOT NULL DEFAULT 0,
@@ -130,6 +131,7 @@ export const schemaStatements = [
     type TEXT NOT NULL,
     format TEXT NOT NULL,
     file_name TEXT,
+    file_uri TEXT,
     file_size_bytes INTEGER,
     encrypted INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL,

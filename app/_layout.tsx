@@ -20,8 +20,13 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="onboarding/index" />
+            <Stack.Screen name="onboarding/usage-type" />
+            <Stack.Screen name="onboarding/preferences" />
+            <Stack.Screen name="onboarding/security" />
+            <Stack.Screen name="onboarding/done" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="products/[id]" />
+            <Stack.Screen name="products/edit" />
             <Stack.Screen name="products/new" />
             <Stack.Screen name="products/movement" />
             <Stack.Screen name="categories/index" />

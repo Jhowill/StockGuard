@@ -1,23 +1,82 @@
+import { useState } from 'react';
+import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
-import { demoSuppliers } from '@/data/demo';
-import { useI18n } from '@/hooks/useI18n';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useSuppliers } from '@/hooks/useSuppliers';
 
 export default function SuppliersScreen() {
-  const { t } = useI18n();
+  const { suppliers, loading, error, create, edit, archive } = useSuppliers();
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    const input = {
+      name: name.trim(),
+      phone: phone.trim() || undefined,
+      email: email.trim() || undefined,
+    };
+
+    if (!input.name) {
+      return;
+    }
+
+    if (editingId) {
+      await edit(editingId, input);
+      setEditingId(null);
+    } else {
+      await create(input);
+    }
+
+    setName('');
+    setPhone('');
+    setEmail('');
+  };
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('suppliers.title')} subtitle={t('suppliers.subtitle')} />
+      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." />
 
-      {demoSuppliers.length === 0 ? (
-        <EmptyState title={t('suppliers.emptyTitle')} description={t('suppliers.emptyBody')} />
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{editingId ? 'Editar fornecedor' : 'Novo fornecedor'}</AppCard.Title>
+        <AppInput label="Nome" value={name} onChangeText={setName} />
+        <AppInput label="Telefone" value={phone} onChangeText={setPhone} />
+        <AppInput label="E-mail" value={email} onChangeText={setEmail} />
+        <AppButton label={editingId ? 'Salvar' : 'Criar'} onPress={() => void handleSave()} />
+        {editingId ? <AppButton label="Cancelar" variant="ghost" onPress={() => setEditingId(null)} /> : null}
+      </AppCard>
+
+      {loading ? (
+        <EmptyState title="Fornecedores" description="Carregando..." />
+      ) : error ? (
+        <EmptyState title="Fornecedores" description={error} />
+      ) : suppliers.length === 0 ? (
+        <EmptyState title="Fornecedores" description="Nenhum fornecedor cadastrado." />
       ) : (
-        demoSuppliers.map((supplier) => (
+        suppliers.map((supplier) => (
           <AppCard key={supplier.id}>
-            <AppCard.Row icon="business-outline" title={supplier.name} subtitle={supplier.phone} />
+            <AppCard.Row
+              icon="business-outline"
+              title={supplier.name}
+              subtitle={supplier.phone ?? supplier.email ?? 'Sem contato'}
+              trailing={<StatusBadge tone={supplier.status === 'active' ? 'success' : 'info'} label={supplier.status} />}
+            />
+            <AppButton
+              label="Editar"
+              variant="secondary"
+              onPress={() => {
+                setEditingId(supplier.id);
+                setName(supplier.name);
+                setPhone(supplier.phone ?? '');
+                setEmail(supplier.email ?? '');
+              }}
+            />
+            <AppButton label="Arquivar" variant="ghost" onPress={() => void archive(supplier.id)} />
           </AppCard>
         ))
       )}

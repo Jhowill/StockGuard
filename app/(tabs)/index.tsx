@@ -10,28 +10,27 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/state/app-state';
 import { formatMoney } from '@/utils/format';
 import { formatShortDateTime } from '@/utils/date-format';
 
-function getMovementLabel(type: string, t: (key: string) => string) {
+function getMovementLabel(type: string) {
   switch (type) {
     case 'in':
-      return t('movement.typeIn');
+      return 'Entrada';
     case 'out':
-      return t('movement.typeOut');
+      return 'Saida';
     case 'loss':
-      return t('movement.typeLoss');
+      return 'Perda';
     case 'return':
-      return t('movement.typeReturn');
+      return 'Devolucao';
     case 'adjustment_positive':
     case 'adjustment_negative':
-      return t('movement.typeAdjustment');
+      return 'Ajuste';
     case 'initial_balance':
-      return t('movement.typeAdjustment');
+      return 'Ajuste inicial';
     default:
-      return t('movement.typeAdjustment');
+      return 'Ajuste';
   }
 }
 
@@ -51,41 +50,32 @@ function getMovementTone(type: string) {
 }
 
 export default function HomeScreen() {
-  const { t } = useI18n();
   const { currency } = useAppState();
   const { palette } = useAppTheme();
   const { summary, loading, error, refresh } = useDashboard();
 
   const lastActivity = summary.lastMovements[0]?.createdAt;
   const heroHint = loading
-    ? t('home.updatedToday')
+    ? 'Atualizado hoje'
     : lastActivity
-      ? `${t('home.lastUpdated')} · ${formatShortDateTime(lastActivity)}`
-      : t('home.noRecentMovements');
+      ? `Ultima atualizacao | ${formatShortDateTime(lastActivity)}`
+      : 'Nenhuma movimentacao recente';
 
   return (
     <ScreenContainer scroll padded>
       <View style={[styles.glow, styles.glowTop, { backgroundColor: palette.primary }]} />
       <View style={[styles.glow, styles.glowBottom, { backgroundColor: palette.premium }]} />
 
-      <AppHeader
-        title={t('home.title')}
-        subtitle={t('home.subtitle')}
-        rightAction={<StatusBadge tone="info" label={t('home.offlineBadge')} />}
-      />
+      <AppHeader title="Inicio" subtitle="Resumo rapido do seu estoque." rightAction={<StatusBadge tone="info" label="Offline first" />} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={styles.heroTop}>
           <View style={styles.heroCopy}>
-            <Text style={[styles.heroLabel, { color: palette.textMuted }]}>
-              {t('home.stockValue')}
-            </Text>
+            <Text style={[styles.heroLabel, { color: palette.textMuted }]}>Valor total em estoque</Text>
             <Text style={[styles.heroValue, { color: palette.text }]}>
               {loading ? '...' : formatMoney(summary.totalStockValueCents, currency)}
             </Text>
-            <Text style={[styles.heroHint, { color: palette.textMuted }]}>
-              {heroHint}
-            </Text>
+            <Text style={[styles.heroHint, { color: palette.textMuted }]}>{heroHint}</Text>
           </View>
 
           <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
@@ -94,126 +84,66 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.heroBadges}>
-          <StatusBadge
-            tone="success"
-            label={`${loading ? '—' : summary.activeProductsCount} ${t('home.products')}`}
-          />
-          <StatusBadge
-            tone="warning"
-            label={`${loading ? '—' : summary.lowStockCount} ${t('home.lowStock')}`}
-          />
+          <StatusBadge tone="success" label={`${loading ? '—' : summary.activeProductsCount} Produtos`} />
+          <StatusBadge tone="warning" label={`${loading ? '—' : summary.lowStockCount} Baixo estoque`} />
         </View>
       </AppCard>
 
       <View style={styles.metricRow}>
-        <MetricCard
-          compact
-          label={t('home.products')}
-          value={loading ? '—' : String(summary.activeProductsCount)}
-          hint={t('home.updatedToday')}
-        />
-        <MetricCard
-          compact
-          label={t('home.lowStock')}
-          value={loading ? '—' : String(summary.lowStockCount)}
-          hint={t('home.alerts')}
-        />
+        <MetricCard compact label="Produtos" value={loading ? '—' : String(summary.activeProductsCount)} hint="Atualizado hoje" />
+        <MetricCard compact label="Itens baixos" value={loading ? '—' : String(summary.lowStockCount)} hint="Itens criticos" />
       </View>
       <View style={styles.metricRow}>
-        <MetricCard
-          compact
-          label={t('home.zeroStock')}
-          value={loading ? '—' : String(summary.zeroStockCount)}
-          hint={t('home.alertsBody')}
-        />
-        <MetricCard
-          compact
-          label={t('home.expiringSoon')}
-          value={loading ? '—' : String(summary.expiringSoonCount)}
-          hint={t('home.alerts')}
-        />
+        <MetricCard compact label="Zerados" value={loading ? '—' : String(summary.zeroStockCount)} hint="Itens sem saldo" />
+        <MetricCard compact label="Vencendo" value={loading ? '—' : String(summary.expiringSoonCount)} hint="Proximos da validade" />
       </View>
 
       <AppCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.quickActions')}</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>
-              {t('home.offlineBadge')}
-            </Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Acoes rapidas</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Acoes rapidas para o dia a dia.</Text>
           </View>
           <Ionicons name="flash-outline" size={20} color={palette.primary} />
         </View>
 
-        <AppButton
-          label={t('home.addProduct')}
-          onPress={() => router.push('/products/new')}
-        />
-        <AppButton
-          label={t('home.makeMovement')}
-          variant="secondary"
-          onPress={() => router.push('/products/movement')}
-        />
+        <AppButton label="Adicionar produto" onPress={() => router.push('/products/new')} />
+        <AppButton label="Movimentar estoque" variant="secondary" onPress={() => router.push('/products/movement')} />
       </AppCard>
 
       <AppCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.recentMovements')}</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>
-              {t('home.recentMovementsBody')}
-            </Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Ultimas movimentacoes</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Veja as ultimas entradas e saidas registradas localmente.</Text>
           </View>
           <Ionicons name="time-outline" size={20} color={palette.primary} />
         </View>
 
         {error ? (
-          <EmptyState
-            title={t('home.noRecentMovements')}
-            description={error}
-            actionLabel={t('common.retry')}
-            onActionPress={() => void refresh()}
-          />
+          <EmptyState title="Nenhuma movimentacao recente" description={error} actionLabel="Tentar novamente" onActionPress={() => void refresh()} />
         ) : summary.lastMovements.length > 0 ? (
           <View style={styles.listGap}>
             {summary.lastMovements.map((movement) => (
               <AppCard.Row
                 key={movement.id}
-                icon={
-                  movement.type === 'in'
-                    ? 'arrow-up-outline'
-                    : movement.type === 'out'
-                      ? 'arrow-down-outline'
-                      : movement.type === 'loss'
-                        ? 'warning-outline'
-                        : 'swap-horizontal-outline'
-                }
+                icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : movement.type === 'loss' ? 'warning-outline' : 'swap-horizontal-outline'}
                 title={movement.productName}
-                subtitle={`${getMovementLabel(movement.type, t)} • ${formatShortDateTime(movement.createdAt)}`}
-                trailing={
-                  <StatusBadge
-                    tone={getMovementTone(movement.type)}
-                    label={`x${movement.quantity}`}
-                  />
-                }
+                subtitle={`${getMovementLabel(movement.type)} • ${formatShortDateTime(movement.createdAt)}`}
+                trailing={<StatusBadge tone={getMovementTone(movement.type)} label={`x${movement.quantity}`} />}
               />
             ))}
           </View>
         ) : (
-          <EmptyState
-            title={t('home.noRecentMovements')}
-            description={t('home.noRecentMovementsBody')}
-          />
+          <EmptyState title="Nenhuma movimentacao recente" description="Quando voce salvar entradas ou saidas, tudo aparece aqui." />
         )}
       </AppCard>
 
       <AppCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.alerts')}</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>
-              {t('home.alertsBody')}
-            </Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Alertas</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Reponha, revise ou ajuste os itens criticos.</Text>
           </View>
           <Ionicons name="alert-circle-outline" size={20} color={palette.warning} />
         </View>
@@ -221,32 +151,17 @@ export default function HomeScreen() {
         {summary.zeroStockCount > 0 || summary.lowStockCount > 0 || summary.expiringSoonCount > 0 ? (
           <View style={styles.listGap}>
             {summary.zeroStockCount > 0 ? (
-              <AppCard.Row
-                icon="alert-circle-outline"
-                title={t('home.zeroStock')}
-                subtitle={`${summary.zeroStockCount} ${t('home.zeroStock')}`}
-                trailing={<StatusBadge tone="danger" label="0" />}
-              />
+              <AppCard.Row icon="alert-circle-outline" title="Zerados" subtitle={`${summary.zeroStockCount} itens sem saldo`} trailing={<StatusBadge tone="danger" label="0" />} />
             ) : null}
             {summary.lowStockCount > 0 ? (
-              <AppCard.Row
-                icon="warning-outline"
-                title={t('home.lowStock')}
-                subtitle={`${summary.lowStockCount} ${t('home.lowStock')}`}
-                trailing={<StatusBadge tone="warning" label={String(summary.lowStockCount)} />}
-              />
+              <AppCard.Row icon="warning-outline" title="Baixo estoque" subtitle={`${summary.lowStockCount} itens no limite`} trailing={<StatusBadge tone="warning" label={String(summary.lowStockCount)} />} />
             ) : null}
             {summary.expiringSoonCount > 0 ? (
-              <AppCard.Row
-                icon="calendar-outline"
-                title={t('home.expiringSoon')}
-                subtitle={`${summary.expiringSoonCount} ${t('home.expiringSoon')}`}
-                trailing={<StatusBadge tone="info" label={String(summary.expiringSoonCount)} />}
-              />
+              <AppCard.Row icon="calendar-outline" title="Vencendo" subtitle={`${summary.expiringSoonCount} itens proximos da validade`} trailing={<StatusBadge tone="info" label={String(summary.expiringSoonCount)} />} />
             ) : null}
           </View>
         ) : (
-          <EmptyState title={t('home.noAlerts')} description={t('home.noAlertsBody')} />
+          <EmptyState title="Sem alertas agora" description="Quando algo sair do esperado, ele aparece aqui." />
         )}
       </AppCard>
     </ScreenContainer>

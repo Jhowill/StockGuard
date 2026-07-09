@@ -121,3 +121,24 @@ export async function getRecentMovements(limit = 10) {
   );
   return rows.map(mapMovement);
 }
+
+export async function listMovements(limit = 200) {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<StockMovementRow>(
+    `SELECT * FROM stock_movements ORDER BY created_at DESC LIMIT ?`,
+    limit,
+  );
+  return rows.map(mapMovement);
+}
+
+export async function findMovementsByDateRange(dateFrom: string, dateTo: string) {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<StockMovementRow>(
+    `SELECT * FROM stock_movements
+     WHERE created_at >= ? AND created_at <= ?
+     ORDER BY created_at DESC`,
+    dateFrom,
+    dateTo,
+  );
+  return rows.map(mapMovement);
+}

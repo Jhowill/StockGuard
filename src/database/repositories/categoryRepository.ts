@@ -66,7 +66,40 @@ export async function createCategory(input: Omit<Category, 'id' | 'createdAt' | 
   return category;
 }
 
+export async function updateCategory(id: string, input: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>) {
+  const db = await getDatabase();
+  const current = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', id);
+  if (!current) {
+    return null;
+  }
+
+  const next: Category = {
+    ...mapCategory(current),
+    ...input,
+    updatedAt: nowIso(),
+  };
+
+  await db.runAsync(
+    `UPDATE categories SET name = ?, color_token = ?, icon_name = ?, sort_order = ?, status = ?, updated_at = ? WHERE id = ?`,
+    next.name,
+    next.colorToken ?? null,
+    next.iconName ?? null,
+    next.sortOrder,
+    next.status,
+    next.updatedAt,
+    id,
+  );
+
+  return next;
+}
+
 export async function archiveCategory(id: string) {
   const db = await getDatabase();
   await db.runAsync('UPDATE categories SET status = ?, updated_at = ? WHERE id = ?', 'archived', nowIso(), id);
+}
+
+export async function getCategoryById(id: string) {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', id);
+  return row ? mapCategory(row) : null;
 }

@@ -72,3 +72,43 @@ export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 
 
   return supplier;
 }
+
+export async function updateSupplier(id: string, input: Partial<Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>>) {
+  const db = await getDatabase();
+  const current = await db.getFirstAsync<SupplierRow>('SELECT * FROM suppliers WHERE id = ?', id);
+  if (!current) {
+    return null;
+  }
+
+  const next: Supplier = {
+    ...mapSupplier(current),
+    ...input,
+    updatedAt: nowIso(),
+  };
+
+  await db.runAsync(
+    `UPDATE suppliers SET name = ?, phone = ?, email = ?, document = ?, address = ?, notes = ?, status = ?, updated_at = ? WHERE id = ?`,
+    next.name,
+    next.phone ?? null,
+    next.email ?? null,
+    next.document ?? null,
+    next.address ?? null,
+    next.notes ?? null,
+    next.status,
+    next.updatedAt,
+    id,
+  );
+
+  return next;
+}
+
+export async function archiveSupplier(id: string) {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE suppliers SET status = ?, updated_at = ? WHERE id = ?', 'archived', nowIso(), id);
+}
+
+export async function getSupplierById(id: string) {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<SupplierRow>('SELECT * FROM suppliers WHERE id = ?', id);
+  return row ? mapSupplier(row) : null;
+}

@@ -3,7 +3,22 @@ import { useAppState } from '@/state/app-state';
 
 const translations = {
   'pt-BR': {
-    common: { save: 'Salvar', retry: 'Tentar novamente', back: 'Voltar' },
+    common: {
+      save: 'Salvar',
+      retry: 'Tentar novamente',
+      back: 'Voltar',
+      add: 'Adicionar',
+      edit: 'Editar',
+      create: 'Criar',
+      cancel: 'Cancelar',
+      archive: 'Arquivar',
+      delete: 'Excluir',
+      share: 'Compartilhar',
+      import: 'Importar',
+      export: 'Exportar',
+      search: 'Buscar',
+      close: 'Fechar',
+    },
     splash: {
       title: 'EstoqueGuard',
       subtitle: 'Controle de estoque offline, seguro e privado.',
@@ -162,7 +177,22 @@ const translations = {
     },
   },
   en: {
-    common: { save: 'Save', retry: 'Try again', back: 'Back' },
+    common: {
+      save: 'Save',
+      retry: 'Try again',
+      back: 'Back',
+      add: 'Add',
+      edit: 'Edit',
+      create: 'Create',
+      cancel: 'Cancel',
+      archive: 'Archive',
+      delete: 'Delete',
+      share: 'Share',
+      import: 'Import',
+      export: 'Export',
+      search: 'Search',
+      close: 'Close',
+    },
     splash: {
       title: 'EstoqueGuard',
       subtitle: 'Offline stock control, secure and private.',
@@ -321,7 +351,22 @@ const translations = {
     },
   },
   es: {
-    common: { save: 'Guardar', retry: 'Reintentar', back: 'Volver' },
+    common: {
+      save: 'Guardar',
+      retry: 'Reintentar',
+      back: 'Volver',
+      add: 'Agregar',
+      edit: 'Editar',
+      create: 'Crear',
+      cancel: 'Cancelar',
+      archive: 'Archivar',
+      delete: 'Eliminar',
+      share: 'Compartir',
+      import: 'Importar',
+      export: 'Exportar',
+      search: 'Buscar',
+      close: 'Cerrar',
+    },
     splash: {
       title: 'EstoqueGuard',
       subtitle: 'Control de stock offline, seguro y privado.',

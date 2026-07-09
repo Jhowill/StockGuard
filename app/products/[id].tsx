@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { archiveProduct } from '@/database/repositories/productRepository';
 import { useProductDetail } from '@/hooks/useProductDetail';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
@@ -30,12 +31,17 @@ export default function ProductDetailScreen() {
     return (
       <ScreenContainer padded>
         <AppHeader title={t('productDetail.title')} subtitle={t('products.emptyTitle')} />
-        <EmptyState title={t('products.emptyTitle')} description={error ?? t('products.emptyBody')} actionLabel={t('common.back')} onActionPress={() => router.back()} />
+        <EmptyState
+          title={t('products.emptyTitle')}
+          description={error ?? t('products.emptyBody')}
+          actionLabel={t('common.back')}
+          onActionPress={() => router.back()}
+        />
       </ScreenContainer>
     );
   }
 
-  const statusTone =
+  const stockTone =
     product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success';
 
   return (
@@ -47,8 +53,9 @@ export default function ProductDetailScreen() {
           icon="cube-outline"
           title={product.name}
           subtitle={product.categoryId ?? product.location ?? product.unit}
-          trailing={<StatusBadge tone={statusTone} label={product.status} />}
+          trailing={<StatusBadge tone={stockTone} label={product.status} />}
         />
+        <AppCard.Text>{product.notes ?? t('home.noAlertsBody')}</AppCard.Text>
       </AppCard>
 
       <AppCard style={{ flexDirection: 'row', gap: 12 }}>
@@ -62,25 +69,32 @@ export default function ProductDetailScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>{t('productDetail.title')}</AppCard.Title>
-        <AppCard.Text>{movements.length > 0 ? t('home.recentMovements') : t('home.noAlertsBody')}</AppCard.Text>
+        <AppCard.Title>{t('home.recentMovements')}</AppCard.Title>
         {movements.length > 0 ? (
           movements.map((movement) => (
             <AppCard.Row
               key={movement.id}
-              icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : 'sync-outline'}
+              icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : 'swap-horizontal-outline'}
               title={movement.reason}
               subtitle={formatShortDateTime(movement.createdAt)}
               trailing={<StatusBadge tone={movement.type === 'in' ? 'success' : movement.type === 'out' ? 'warning' : 'info'} label={String(movement.quantity)} />}
             />
           ))
         ) : (
-          <EmptyState title={t('home.noAlerts')} description={t('home.noAlertsBody')} />
+          <EmptyState title={t('home.noRecentMovements')} description={t('home.noRecentMovementsBody')} />
         )}
       </AppCard>
 
-      <AppButton label={t('productDetail.move')} onPress={() => router.push('/products/movement')} />
-      <AppButton label={t('productDetail.edit')} variant="secondary" onPress={() => router.push('/products/new')} />
+      <AppButton label={t('productDetail.move')} onPress={() => router.push({ pathname: '/products/movement', params: { productId: product.id } })} />
+      <AppButton label={t('productDetail.edit')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
+      <AppButton
+        label={t('common.archive')}
+        variant="ghost"
+        onPress={async () => {
+          await archiveProduct(product.id);
+          router.replace('/(tabs)/products');
+        }}
+      />
     </ScreenContainer>
   );
 }

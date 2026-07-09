@@ -1,11 +1,12 @@
 import { getDatabase } from '../db';
-import type { AppLanguage, CurrencyCode, ThemeMode } from '@/types/settings';
+import type { AppLanguage, CurrencyCode, ThemeMode, UsageType } from '@/types/settings';
 
 export type AppSettingsRecord = {
   id: 'default';
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
+  usageType: UsageType;
   onboardingCompleted: boolean;
   appLockEnabled: boolean;
   biometricUnlockEnabled: boolean;
@@ -26,6 +27,7 @@ type SettingsRow = {
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
+  usage_type: UsageType;
   onboarding_completed: number;
   app_lock_enabled: number;
   biometric_unlock_enabled: number;
@@ -46,6 +48,7 @@ const DEFAULT_SETTINGS: AppSettingsRecord = {
   theme: 'system',
   language: 'system',
   currency: 'BRL',
+  usageType: 'other',
   onboardingCompleted: false,
   appLockEnabled: false,
   biometricUnlockEnabled: false,
@@ -66,6 +69,7 @@ function mapRow(row: SettingsRow): AppSettingsRecord {
     theme: row.theme,
     language: row.language,
     currency: row.currency,
+    usageType: row.usage_type,
     onboardingCompleted: row.onboarding_completed === 1,
     appLockEnabled: row.app_lock_enabled === 1,
     biometricUnlockEnabled: row.biometric_unlock_enabled === 1,
@@ -99,15 +103,16 @@ export async function ensureDefaultSettings() {
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO app_settings (
-      id, theme, language, currency, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
+      id, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
       hide_financial_values, ads_enabled, personalized_ads_consent,
       expiration_warning_days, low_stock_warning_enabled, expiration_warning_enabled,
       backup_reminder_enabled, last_backup_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     DEFAULT_SETTINGS.id,
     DEFAULT_SETTINGS.theme,
     DEFAULT_SETTINGS.language,
     DEFAULT_SETTINGS.currency,
+    DEFAULT_SETTINGS.usageType,
     0,
     0,
     0,
@@ -140,6 +145,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
       theme = ?,
       language = ?,
       currency = ?,
+      usage_type = ?,
       onboarding_completed = ?,
       app_lock_enabled = ?,
       biometric_unlock_enabled = ?,
@@ -156,6 +162,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
     next.theme,
     next.language,
     next.currency,
+    next.usageType,
     next.onboardingCompleted ? 1 : 0,
     next.appLockEnabled ? 1 : 0,
     next.biometricUnlockEnabled ? 1 : 0,

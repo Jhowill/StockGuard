@@ -1,28 +1,32 @@
+import { router } from 'expo-router';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { demoAlerts } from '@/data/demo';
-import { useI18n } from '@/hooks/useI18n';
+import { useAlerts } from '@/hooks/useAlerts';
 
 export default function AlertsScreen() {
-  const { t } = useI18n();
+  const { alerts, loading, error } = useAlerts();
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('alerts.title')} subtitle={t('alerts.subtitle')} />
+      <AppHeader title="Alertas" subtitle="Itens que precisam de atencao." />
 
-      {demoAlerts.length === 0 ? (
-        <EmptyState title={t('alerts.emptyTitle')} description={t('alerts.emptyBody')} />
+      {loading ? (
+        <EmptyState title="Alertas" description="Carregando..." />
+      ) : error ? (
+        <EmptyState title="Alertas" description={error} />
+      ) : alerts.length === 0 ? (
+        <EmptyState title="Tudo em ordem" description="Nenhum alerta no momento." />
       ) : (
-        demoAlerts.map((alert) => (
-          <AppCard key={alert.id}>
+        alerts.map((alert) => (
+          <AppCard key={alert.id} onPress={() => router.push('/(tabs)/products')}>
             <AppCard.Row
-              icon="alert-circle-outline"
-              title={alert.title}
-              subtitle={alert.subtitle}
-              trailing={<StatusBadge tone={alert.tone} label={alert.count} />}
+              icon={alert.kind === 'zero' ? 'alert-circle-outline' : alert.kind === 'low' ? 'warning-outline' : 'calendar-outline'}
+              title={alert.kind}
+              subtitle={`${alert.count} produtos`}
+              trailing={<StatusBadge tone={alert.tone} label={String(alert.count)} />}
             />
           </AppCard>
         ))
