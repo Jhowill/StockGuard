@@ -5,5 +5,5 @@ dist
 coverage
 *.log
 .DS_Store
-android
-ios
+/android/
+/ios/
