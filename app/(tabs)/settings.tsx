@@ -6,9 +6,11 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useSettings } from '@/hooks/useSettings';
+import { useAppState } from '@/state/app-state';
 
 export default function SettingsScreen() {
   const { settings, loading, error, saveSettings } = useSettings();
+  const { appLockEnabled, biometricUnlockEnabled, hideFinancialValues } = useAppState();
 
   return (
     <ScreenContainer scroll padded>
@@ -46,18 +48,10 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Seguranca</AppCard.Title>
-        <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? 'PIN ativo' : 'PIN desativado'} />
-        <AppButton label={settings?.appLockEnabled ? 'Desativar PIN' : 'Ativar PIN'} onPress={() => void saveSettings({ appLockEnabled: !settings?.appLockEnabled })} />
-        <AppButton
-          label={settings?.biometricUnlockEnabled ? 'Desativar biometria' : 'Ativar biometria'}
-          variant="secondary"
-          onPress={() => void saveSettings({ biometricUnlockEnabled: !settings?.biometricUnlockEnabled })}
-        />
-        <AppButton
-          label={settings?.hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'}
-          variant="ghost"
-          onPress={() => void saveSettings({ hideFinancialValues: !settings?.hideFinancialValues })}
-        />
+        <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? 'PIN ativo' : 'PIN desativado'} />
+        <AppButton label={appLockEnabled ? 'Gerenciar PIN' : 'Ativar PIN'} onPress={() => router.push('/security/pin')} />
+        <AppButton label={biometricUnlockEnabled ? 'Gerenciar biometria' : 'Ativar biometria'} variant="secondary" onPress={() => router.push('/security/biometric')} />
+        <AppButton label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'} variant="ghost" onPress={() => void saveSettings({ hideFinancialValues: !hideFinancialValues })} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
@@ -74,6 +68,9 @@ export default function SettingsScreen() {
               language: 'system',
               currency: 'BRL',
               usageType: 'other',
+              appLockEnabled: false,
+              biometricUnlockEnabled: false,
+              hideFinancialValues: false,
             })
           }
         />

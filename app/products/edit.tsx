@@ -34,24 +34,29 @@ export default function ProductEditScreen() {
         return;
       }
 
-      const product = await findProductById(id);
-      if (!product) {
-        setLoading(false);
-        setError('PRODUCT_NOT_FOUND');
-        return;
-      }
+      try {
+        const product = await findProductById(id);
+        if (!product) {
+          setLoading(false);
+          setError('PRODUCT_NOT_FOUND');
+          return;
+        }
 
-      setName(product.name);
-      setSku(product.sku ?? '');
-      setBarcode(product.barcode ?? '');
-      setCategoryId(product.categoryId ?? '');
-      setSupplierId(product.supplierId ?? '');
-      setMinQuantity(String(product.minQuantity));
-      setCostPriceCents(product.costPriceCents ? String(product.costPriceCents) : '');
-      setSalePriceCents(product.salePriceCents ? String(product.salePriceCents) : '');
-      setLocation(product.location ?? '');
-      setNotes(product.notes ?? '');
-      setLoading(false);
+        setName(product.name);
+        setSku(product.sku ?? '');
+        setBarcode(product.barcode ?? '');
+        setCategoryId(product.categoryId ?? '');
+        setSupplierId(product.supplierId ?? '');
+        setMinQuantity(String(product.minQuantity));
+        setCostPriceCents(product.costPriceCents ? String(product.costPriceCents) : '');
+        setSalePriceCents(product.salePriceCents ? String(product.salePriceCents) : '');
+        setLocation(product.location ?? '');
+        setNotes(product.notes ?? '');
+        setLoading(false);
+      } catch {
+        setLoading(false);
+        setError('PRODUCT_LOAD_FAILED');
+      }
     })();
   }, [id]);
 
@@ -101,6 +106,8 @@ export default function ProductEditScreen() {
       }
 
       router.replace(`/products/${id}`);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'PRODUCT_UPDATE_FAILED');
     } finally {
       setSaving(false);
     }
@@ -129,8 +136,11 @@ export default function ProductEditScreen() {
         variant="secondary"
         onPress={async () => {
           if (!id) return;
-          await archiveProduct(id);
-          router.replace('/(tabs)/products');
+          try {
+            await archiveProduct(id);
+          } finally {
+            router.replace('/(tabs)/products');
+          }
         }}
       />
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />

@@ -4,7 +4,17 @@ import type { AppSettingsRecord } from '@/database/repositories/settingsReposito
 import { useAppState } from '@/state/app-state';
 
 export function useSettings() {
-  const { setThemeMode, setLanguage, setCurrency, setUsageType, setOnboardingCompleted } = useAppState();
+  const {
+    setThemeMode,
+    setLanguage,
+    setCurrency,
+    setUsageType,
+    setOnboardingCompleted,
+    setHideFinancialValues,
+    setAppLockEnabled,
+    setBiometricUnlockEnabled,
+    unlockApp,
+  } = useAppState();
   const [settings, setSettings] = useState<AppSettingsRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
@@ -20,12 +30,18 @@ export function useSettings() {
       setCurrency(result.currency);
       setUsageType(result.usageType);
       setOnboardingCompleted(result.onboardingCompleted);
+      setHideFinancialValues(result.hideFinancialValues);
+      setAppLockEnabled(result.appLockEnabled);
+      setBiometricUnlockEnabled(result.biometricUnlockEnabled);
+      if (!result.appLockEnabled) {
+        unlockApp();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'SETTINGS_LOAD_FAILED');
     } finally {
       setLoading(false);
     }
-  }, [setCurrency, setLanguage, setThemeMode]);
+  }, [setCurrency, setHideFinancialValues, setLanguage, setOnboardingCompleted, setThemeMode, setUsageType, setAppLockEnabled, setBiometricUnlockEnabled, unlockApp]);
 
   useEffect(() => {
     void refresh();
@@ -40,9 +56,27 @@ export function useSettings() {
       setCurrency(next.currency);
       setUsageType(next.usageType);
       setOnboardingCompleted(next.onboardingCompleted);
+      setHideFinancialValues(next.hideFinancialValues);
+      setAppLockEnabled(next.appLockEnabled);
+      setBiometricUnlockEnabled(next.biometricUnlockEnabled);
+      if (!next.appLockEnabled) {
+        unlockApp();
+      }
       return next;
     },
-    [setCurrency, setLanguage, setOnboardingCompleted, setThemeMode, setUsageType],
+    [
+      setAppLockEnabled,
+      setBiometricUnlockEnabled,
+      setCurrency,
+      setHideFinancialValues,
+      setLanguage,
+      setOnboardingCompleted,
+      setThemeMode,
+      setUsageType,
+      setAppLockEnabled,
+      setBiometricUnlockEnabled,
+      unlockApp,
+    ],
   );
 
   return {

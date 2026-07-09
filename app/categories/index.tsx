@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -15,6 +16,14 @@ export default function CategoriesScreen() {
   const [iconName, setIconName] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const resolveIcon = (iconName?: string) => {
+    if (iconName && iconName in Ionicons.glyphMap) {
+      return iconName as keyof typeof Ionicons.glyphMap;
+    }
+
+    return 'layers-outline' as keyof typeof Ionicons.glyphMap;
+  };
 
   const handleSave = async () => {
     const input = {
@@ -65,7 +74,7 @@ export default function CategoriesScreen() {
         categories.map((category) => (
           <AppCard key={category.id}>
             <AppCard.Row
-              icon={(category.iconName ?? 'layers-outline') as any}
+              icon={resolveIcon(category.iconName)}
               title={category.name}
               subtitle={category.colorToken ?? 'Sem cor'}
               trailing={<StatusBadge tone={category.status === 'active' ? 'success' : 'info'} label={String(category.sortOrder)} />}

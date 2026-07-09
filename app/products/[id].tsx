@@ -1,4 +1,5 @@
 import { useLocalSearchParams, router } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -17,7 +18,9 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useI18n();
   const { currency } = useAppState();
-  const { product, movements, loading, error } = useProductDetail(id);
+  const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
+  const { product, movements, loading, error } = useProductDetail(productId);
+  const [busy, setBusy] = useState(false);
 
   if (loading) {
     return (
@@ -91,9 +94,17 @@ export default function ProductDetailScreen() {
         label={t('common.archive')}
         variant="ghost"
         onPress={async () => {
-          await archiveProduct(product.id);
-          router.replace('/(tabs)/products');
+          setBusy(true);
+          try {
+            await archiveProduct(product.id);
+            router.replace('/(tabs)/products');
+          } catch {
+            router.replace('/(tabs)/products');
+          } finally {
+            setBusy(false);
+          }
         }}
+        style={{ opacity: busy ? 0.7 : 1 }}
       />
     </ScreenContainer>
   );

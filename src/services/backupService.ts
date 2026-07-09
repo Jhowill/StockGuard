@@ -127,6 +127,14 @@ export async function restoreBackupFile(fileUri: string) {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
+  const fallbackSettings = await getSettings();
+  const nextSettings = parsed.appSettings && typeof parsed.appSettings === 'object' ? parsed.appSettings : fallbackSettings;
+  const categories = Array.isArray(parsed.categories) ? parsed.categories : [];
+  const suppliers = Array.isArray(parsed.suppliers) ? parsed.suppliers : [];
+  const products = Array.isArray(parsed.products) ? parsed.products : [];
+  const stockMovements = Array.isArray(parsed.stockMovements) ? parsed.stockMovements : [];
+  const adEntitlements = Array.isArray(parsed.adEntitlements) ? parsed.adEntitlements : [];
+
   await withTransaction(async (db) => {
     await db.execAsync('DELETE FROM stock_movements;');
     await db.execAsync('DELETE FROM products;');
@@ -137,7 +145,7 @@ export async function restoreBackupFile(fileUri: string) {
     await db.execAsync('DELETE FROM audit_logs;');
     await db.execAsync('DELETE FROM app_settings;');
 
-    for (const category of parsed.categories ?? []) {
+    for (const category of categories) {
       await db.runAsync(
         `INSERT INTO categories (id, name, color_token, icon_name, sort_order, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -152,7 +160,7 @@ export async function restoreBackupFile(fileUri: string) {
       );
     }
 
-    for (const supplier of parsed.suppliers ?? []) {
+    for (const supplier of suppliers) {
       await db.runAsync(
         `INSERT INTO suppliers (id, name, phone, email, document, address, notes, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -169,7 +177,7 @@ export async function restoreBackupFile(fileUri: string) {
       );
     }
 
-    for (const product of parsed.products ?? []) {
+    for (const product of products) {
       await db.runAsync(
         `INSERT INTO products (
           id, name, description, sku, barcode, category_id, supplier_id, quantity,
@@ -202,7 +210,7 @@ export async function restoreBackupFile(fileUri: string) {
       );
     }
 
-    for (const movement of parsed.stockMovements ?? []) {
+    for (const movement of stockMovements) {
       await db.runAsync(
         `INSERT INTO stock_movements (
           id, product_id, type, reason, quantity, previous_quantity, new_quantity,
@@ -226,7 +234,7 @@ export async function restoreBackupFile(fileUri: string) {
       );
     }
 
-    for (const entitlement of parsed.adEntitlements ?? []) {
+    for (const entitlement of adEntitlements) {
       await db.runAsync(
         `INSERT INTO ad_entitlements (
           id, type, source, feature_key, started_at, expires_at, remaining_uses,
@@ -247,7 +255,6 @@ export async function restoreBackupFile(fileUri: string) {
       );
     }
 
-    const settings = parsed.appSettings ?? (await getSettings());
     await db.runAsync(
       `INSERT INTO app_settings (
         id, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
@@ -255,24 +262,24 @@ export async function restoreBackupFile(fileUri: string) {
         expiration_warning_days, low_stock_warning_enabled, expiration_warning_enabled,
         backup_reminder_enabled, last_backup_at, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      settings.id,
-      settings.theme,
-      settings.language,
-      settings.currency,
-      settings.usageType,
-      settings.onboardingCompleted ? 1 : 0,
-      settings.appLockEnabled ? 1 : 0,
-      settings.biometricUnlockEnabled ? 1 : 0,
-      settings.hideFinancialValues ? 1 : 0,
-      settings.adsEnabled ? 1 : 0,
-      settings.personalizedAdsConsent,
-      settings.expirationWarningDays,
-      settings.lowStockWarningEnabled ? 1 : 0,
-      settings.expirationWarningEnabled ? 1 : 0,
-      settings.backupReminderEnabled ? 1 : 0,
-      settings.lastBackupAt ?? null,
-      settings.createdAt,
-      settings.updatedAt,
+      nextSettings.id,
+      nextSettings.theme,
+      nextSettings.language,
+      nextSettings.currency,
+      nextSettings.usageType,
+      nextSettings.onboardingCompleted ? 1 : 0,
+      nextSettings.appLockEnabled ? 1 : 0,
+      nextSettings.biometricUnlockEnabled ? 1 : 0,
+      nextSettings.hideFinancialValues ? 1 : 0,
+      nextSettings.adsEnabled ? 1 : 0,
+      nextSettings.personalizedAdsConsent,
+      nextSettings.expirationWarningDays,
+      nextSettings.lowStockWarningEnabled ? 1 : 0,
+      nextSettings.expirationWarningEnabled ? 1 : 0,
+      nextSettings.backupReminderEnabled ? 1 : 0,
+      nextSettings.lastBackupAt ?? null,
+      nextSettings.createdAt,
+      nextSettings.updatedAt,
     );
   });
 
