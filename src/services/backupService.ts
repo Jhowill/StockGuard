@@ -129,7 +129,20 @@ function decryptPayload(envelope: EncryptedBackupEnvelope, password?: string) {
   if (!raw) {
     throw new Error('BACKUP_PASSWORD_INVALID');
   }
-  return JSON.parse(raw) as BackupPayload;
+
+  try {
+    return JSON.parse(raw) as BackupPayload;
+  } catch {
+    throw new Error('INVALID_BACKUP_FILE');
+  }
+}
+
+function normalizeRestoreProducts(products: ProductRecord[], categoryIds: Set<string>, supplierIds: Set<string>) {
+  return products.map((product) => ({
+    ...product,
+    categoryId: product.categoryId && categoryIds.has(product.categoryId) ? product.categoryId : null,
+    supplierId: product.supplierId && supplierIds.has(product.supplierId) ? product.supplierId : null,
+  }));
 }
 
 export async function exportBackupFile(password?: string) {
@@ -202,7 +215,9 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
     : fallbackSettings;
   const categories = Array.isArray(parsed.categories) ? parsed.categories : [];
   const suppliers = Array.isArray(parsed.suppliers) ? parsed.suppliers : [];
-  const products = Array.isArray(parsed.products) ? parsed.products : [];
+  const categoryIds = new Set(categories.map((category) => category.id).filter((id): id is string => typeof id === 'string' && id.trim().length > 0));
+  const supplierIds = new Set(suppliers.map((supplier) => supplier.id).filter((id): id is string => typeof id === 'string' && id.trim().length > 0));
+  const products = Array.isArray(parsed.products) ? normalizeRestoreProducts(parsed.products, categoryIds, supplierIds) : [];
   const stockMovements = Array.isArray(parsed.stockMovements) ? parsed.stockMovements : [];
   const adEntitlements = Array.isArray(parsed.adEntitlements) ? parsed.adEntitlements : [];
 
