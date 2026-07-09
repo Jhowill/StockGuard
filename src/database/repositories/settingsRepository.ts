@@ -1,5 +1,4 @@
-import * as Crypto from 'expo-crypto';
-import { getDatabase, withDatabase } from '../db';
+import { getDatabase } from '../db';
 import type { AppLanguage, CurrencyCode, ThemeMode } from '@/types/settings';
 
 export type AppSettingsRecord = {
@@ -7,6 +6,7 @@ export type AppSettingsRecord = {
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
+  onboardingCompleted: boolean;
   appLockEnabled: boolean;
   biometricUnlockEnabled: boolean;
   hideFinancialValues: boolean;
@@ -26,6 +26,7 @@ type SettingsRow = {
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
+  onboarding_completed: number;
   app_lock_enabled: number;
   biometric_unlock_enabled: number;
   hide_financial_values: number;
@@ -45,6 +46,7 @@ const DEFAULT_SETTINGS: AppSettingsRecord = {
   theme: 'system',
   language: 'system',
   currency: 'BRL',
+  onboardingCompleted: false,
   appLockEnabled: false,
   biometricUnlockEnabled: false,
   hideFinancialValues: false,
@@ -64,6 +66,7 @@ function mapRow(row: SettingsRow): AppSettingsRecord {
     theme: row.theme,
     language: row.language,
     currency: row.currency,
+    onboardingCompleted: row.onboarding_completed === 1,
     appLockEnabled: row.app_lock_enabled === 1,
     biometricUnlockEnabled: row.biometric_unlock_enabled === 1,
     hideFinancialValues: row.hide_financial_values === 1,
@@ -96,15 +99,16 @@ export async function ensureDefaultSettings() {
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO app_settings (
-      id, theme, language, currency, app_lock_enabled, biometric_unlock_enabled,
+      id, theme, language, currency, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
       hide_financial_values, ads_enabled, personalized_ads_consent,
       expiration_warning_days, low_stock_warning_enabled, expiration_warning_enabled,
       backup_reminder_enabled, last_backup_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     DEFAULT_SETTINGS.id,
     DEFAULT_SETTINGS.theme,
     DEFAULT_SETTINGS.language,
     DEFAULT_SETTINGS.currency,
+    0,
     0,
     0,
     0,
@@ -136,6 +140,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
       theme = ?,
       language = ?,
       currency = ?,
+      onboarding_completed = ?,
       app_lock_enabled = ?,
       biometric_unlock_enabled = ?,
       hide_financial_values = ?,
@@ -151,6 +156,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
     next.theme,
     next.language,
     next.currency,
+    next.onboardingCompleted ? 1 : 0,
     next.appLockEnabled ? 1 : 0,
     next.biometricUnlockEnabled ? 1 : 0,
     next.hideFinancialValues ? 1 : 0,

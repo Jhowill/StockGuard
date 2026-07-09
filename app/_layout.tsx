@@ -3,13 +3,20 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider } from '@/state/app-state';
+import { useAppTheme } from '@/hooks/useAppTheme';
+
+function AppStatusBar() {
+  const { mode } = useAppTheme();
+
+  return <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />;
+}
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
-          <StatusBar style="light" />
+          <AppStatusBar />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="onboarding/index" />

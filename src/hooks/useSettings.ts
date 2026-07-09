@@ -4,7 +4,7 @@ import type { AppSettingsRecord } from '@/database/repositories/settingsReposito
 import { useAppState } from '@/state/app-state';
 
 export function useSettings() {
-  const { setThemeMode, setLanguage, setCurrency } = useAppState();
+  const { setThemeMode, setLanguage, setCurrency, setOnboardingCompleted } = useAppState();
   const [settings, setSettings] = useState<AppSettingsRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
@@ -18,6 +18,7 @@ export function useSettings() {
       setThemeMode(result.theme);
       setLanguage(result.language);
       setCurrency(result.currency);
+      setOnboardingCompleted(result.onboardingCompleted);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'SETTINGS_LOAD_FAILED');
     } finally {
@@ -36,9 +37,10 @@ export function useSettings() {
       setThemeMode(next.theme);
       setLanguage(next.language);
       setCurrency(next.currency);
+      setOnboardingCompleted(next.onboardingCompleted);
       return next;
     },
-    [setCurrency, setLanguage, setThemeMode],
+    [setCurrency, setLanguage, setOnboardingCompleted, setThemeMode],
   );
 
   return {

@@ -6,4 +6,5 @@ export type AppSettingsDraft = {
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
+  onboardingCompleted?: boolean;
 };

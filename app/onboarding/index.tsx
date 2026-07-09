@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
@@ -10,10 +11,20 @@ import { useAppState } from '@/state/app-state';
 export default function OnboardingScreen() {
   const { t } = useI18n();
   const { completeOnboarding } = useAppState();
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleStart = () => {
-    completeOnboarding();
-    router.replace('/(tabs)');
+  const handleStart = async () => {
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await completeOnboarding();
+      router.replace('/(tabs)');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

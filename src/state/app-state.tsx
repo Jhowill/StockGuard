@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { getSettings } from '@/database/repositories/settingsRepository';
+import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type AppLanguage = 'system' | 'pt-BR' | 'en' | 'es';
@@ -8,14 +8,16 @@ export type CurrencyCode = 'BRL' | 'USD' | 'EUR';
 
 type AppStateValue = {
   hasCompletedOnboarding: boolean;
+  isReady: boolean;
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
-  completeOnboarding: () => void;
+  setOnboardingCompleted: (completed: boolean) => void;
+  completeOnboarding: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => void;
   setLanguage: (language: AppLanguage) => void;
   setCurrency: (currency: CurrencyCode) => void;
-  resetDemo: () => void;
+  resetDemo: () => Promise<void>;
   hydrateFromSettings: () => Promise<void>;
 };
 
@@ -23,30 +25,47 @@ const AppStateContext = createContext<AppStateValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>('system');
   const [language, setLanguage] = useState<AppLanguage>('system');
   const [currency, setCurrency] = useState<CurrencyCode>('BRL');
 
   useEffect(() => {
     void (async () => {
-      const settings = await getSettings();
-      setTheme(settings.theme);
-      setLanguage(settings.language);
-      setCurrency(settings.currency);
+      try {
+        const settings = await getSettings();
+        setTheme(settings.theme);
+        setLanguage(settings.language);
+        setCurrency(settings.currency);
+        setHasCompletedOnboarding(settings.onboardingCompleted);
+      } finally {
+        setIsReady(true);
+      }
     })();
   }, []);
 
   const value = useMemo<AppStateValue>(
     () => ({
       hasCompletedOnboarding,
+      isReady,
       theme,
       language,
       currency,
-      completeOnboarding: () => setHasCompletedOnboarding(true),
+      setOnboardingCompleted: setHasCompletedOnboarding,
+      completeOnboarding: async () => {
+        await updateSettings({ onboardingCompleted: true });
+        setHasCompletedOnboarding(true);
+      },
       setThemeMode: setTheme,
       setLanguage,
       setCurrency,
-      resetDemo: () => {
+      resetDemo: async () => {
+        await updateSettings({
+          onboardingCompleted: false,
+          theme: 'system',
+          language: 'system',
+          currency: 'BRL',
+        });
         setHasCompletedOnboarding(false);
         setTheme('system');
         setLanguage('system');
@@ -57,9 +76,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTheme(settings.theme);
         setLanguage(settings.language);
         setCurrency(settings.currency);
+        setHasCompletedOnboarding(settings.onboardingCompleted);
       },
     }),
-    [currency, hasCompletedOnboarding, language, theme],
+    [currency, hasCompletedOnboarding, isReady, language, theme],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

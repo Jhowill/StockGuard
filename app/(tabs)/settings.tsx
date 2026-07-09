@@ -40,7 +40,11 @@ export default function SettingsScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('settings.data')}</AppCard.Title>
         <StatusBadge tone="success" label={settings?.currency ?? 'BRL'} />
-        <AppButton label={t('settings.restartDemo')} variant="secondary" onPress={() => void saveSettings({ theme: 'system', language: 'system', currency: 'BRL' })} />
+        <AppButton
+          label={t('settings.restartDemo')}
+          variant="secondary"
+          onPress={() => void saveSettings({ onboardingCompleted: false, theme: 'system', language: 'system', currency: 'BRL' })}
+        />
       </AppCard>
     </ScreenContainer>
   );

@@ -51,11 +51,11 @@ async function initializeDatabase() {
   if (!settings) {
     await db.runAsync(
       `INSERT INTO app_settings (
-        id, theme, language, currency, app_lock_enabled, biometric_unlock_enabled,
+        id, theme, language, currency, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
         hide_financial_values, ads_enabled, personalized_ads_consent,
         expiration_warning_days, low_stock_warning_enabled, expiration_warning_enabled,
         backup_reminder_enabled, last_backup_at, created_at, updated_at
-      ) VALUES (?, 'system', 'system', 'BRL', 0, 0, 0, 1, 'unknown', 7, 1, 1, 0, NULL, ?, ?)`,
+      ) VALUES (?, 'system', 'system', 'BRL', 0, 0, 0, 0, 1, 'unknown', 7, 1, 1, 0, NULL, ?, ?)`,
       'default',
       new Date().toISOString(),
       new Date().toISOString(),

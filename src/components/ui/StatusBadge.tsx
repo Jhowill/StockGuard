@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 type Tone = 'success' | 'warning' | 'danger' | 'info';
 
@@ -7,29 +8,46 @@ type Props = {
   tone?: Tone;
 };
 
-const tones: Record<Tone, { backgroundColor: string; color: string }> = {
-  success: { backgroundColor: '#143221', color: '#7EE19A' },
-  warning: { backgroundColor: '#33280D', color: '#FFD166' },
-  danger: { backgroundColor: '#33161A', color: '#FF8677' },
-  info: { backgroundColor: '#132033', color: '#79BEFF' },
-};
-
 export function StatusBadge({ label, tone = 'info' }: Props) {
-  const colors = tones[tone];
+  const { palette } = useAppTheme();
+  const color = {
+    success: palette.success,
+    warning: palette.warning,
+    danger: palette.danger,
+    info: palette.info,
+  }[tone];
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.backgroundColor }]}>
-      <Text style={[styles.label, { color: colors.color }]}>{label}</Text>
+    <View
+      style={[
+        styles.root,
+        {
+          backgroundColor: palette.surfaceMuted,
+          borderColor: palette.border,
+        },
+      ]}
+      >
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <Text style={[styles.label, { color }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
   },
   label: {
     fontSize: 12,
