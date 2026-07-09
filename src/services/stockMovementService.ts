@@ -1,6 +1,6 @@
 import { withTransaction } from '@/database/db';
 import { createAuditLog } from '@/database/repositories/auditLogRepository';
-import { findProductById, updateProduct } from '@/database/repositories/productRepository';
+import { findProductById, setProductQuantity } from '@/database/repositories/productRepository';
 import { createMovement, type StockMovementRecord } from '@/database/repositories/stockMovementRepository';
 import type { CurrencyCode } from '@/types/settings';
 import type { StockMovementType } from '@/types/stock';
@@ -79,10 +79,7 @@ export async function createStockMovement(input: CreateStockMovementInput) {
       note: input.note ?? null,
     });
 
-    await updateProduct({
-      id: product.id,
-      quantity: newQuantity,
-    });
+    await setProductQuantity(product.id, newQuantity);
 
     await createAuditLog({
       action: 'stock_movement_created',

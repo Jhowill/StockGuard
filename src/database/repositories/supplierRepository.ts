@@ -32,6 +32,18 @@ function mapSupplier(row: SupplierRow): Supplier {
   };
 }
 
+function assertValidEmail(email: string | undefined) {
+  if (!email?.trim()) {
+    return;
+  }
+
+  const normalized = email.trim();
+  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+  if (!isValid) {
+    throw new Error('INVALID_SUPPLIER_EMAIL');
+  }
+}
+
 export async function listSuppliers(includeArchived = false) {
   const db = await getDatabase();
   const rows = await db.getAllAsync<SupplierRow>(
@@ -52,7 +64,7 @@ export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 
     id: Crypto.randomUUID(),
     name,
     phone: input.phone,
-    email: input.email,
+    email: input.email !== undefined ? input.email.trim() || undefined : undefined,
     document: input.document,
     address: input.address,
     notes: input.notes,
@@ -60,6 +72,7 @@ export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 
     createdAt: now,
     updatedAt: now,
   };
+  assertValidEmail(supplier.email);
 
   await db.runAsync(
     `INSERT INTO suppliers (id, name, phone, email, document, address, notes, status, created_at, updated_at)
@@ -97,11 +110,13 @@ export async function updateSupplier(id: string, input: Partial<Omit<Supplier, '
     ...mapSupplier(current),
     ...input,
     name: input.name?.trim() ?? current.name,
+    email: input.email !== undefined ? input.email.trim() || undefined : current.email ?? undefined,
     updatedAt: nowIso(),
   };
   if (!next.name) {
     throw new Error('SUPPLIER_NAME_REQUIRED');
   }
+  assertValidEmail(next.email);
 
   await db.runAsync(
     `UPDATE suppliers SET name = ?, phone = ?, email = ?, document = ?, address = ?, notes = ?, status = ?, updated_at = ? WHERE id = ?`,

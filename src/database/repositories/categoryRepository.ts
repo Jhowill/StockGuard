@@ -28,6 +28,23 @@ function mapCategory(row: CategoryRow): Category {
   };
 }
 
+async function assertUniqueCategoryName(name: string, ignoreCategoryId?: string) {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM categories
+     WHERE status = "active" AND lower(name) = lower(?)
+       AND (? IS NULL OR id != ?)
+     LIMIT 1`,
+    name.trim(),
+    ignoreCategoryId ?? null,
+    ignoreCategoryId ?? null,
+  );
+
+  if (row) {
+    throw new Error('CATEGORY_ALREADY_EXISTS');
+  }
+}
+
 export async function listCategories(includeArchived = false) {
   const db = await getDatabase();
   const rows = await db.getAllAsync<CategoryRow>(
@@ -55,6 +72,7 @@ export async function createCategory(input: Omit<Category, 'id' | 'createdAt' | 
     createdAt: now,
     updatedAt: now,
   };
+  await assertUniqueCategoryName(category.name);
 
   await db.runAsync(
     `INSERT INTO categories (id, name, color_token, icon_name, sort_order, status, created_at, updated_at)
@@ -95,6 +113,7 @@ export async function updateCategory(id: string, input: Partial<Omit<Category, '
   if (!next.name) {
     throw new Error('CATEGORY_NAME_REQUIRED');
   }
+  await assertUniqueCategoryName(next.name, id);
 
   await db.runAsync(
     `UPDATE categories SET name = ?, color_token = ?, icon_name = ?, sort_order = ?, status = ?, updated_at = ? WHERE id = ?`,

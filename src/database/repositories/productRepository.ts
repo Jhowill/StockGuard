@@ -75,7 +75,7 @@ export type CreateProductInput = {
   notes?: string | null;
 };
 
-export type UpdateProductInput = Partial<Omit<CreateProductInput, 'initialQuantity'>> & {
+export type UpdateProductInput = Partial<Omit<CreateProductInput, 'initialQuantity' | 'quantity'>> & {
   id: string;
 };
 
@@ -153,6 +153,26 @@ async function assertUniqueBarcode(barcode: string | null | undefined, ignorePro
   }
 }
 
+async function assertUniqueSku(sku: string | null | undefined, ignoreProductId?: string) {
+  if (!sku?.trim()) {
+    return;
+  }
+
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM products
+     WHERE sku = ? AND status = "active" AND (? IS NULL OR id != ?)
+     LIMIT 1`,
+    sku.trim(),
+    ignoreProductId ?? null,
+    ignoreProductId ?? null,
+  );
+
+  if (row) {
+    throw new Error('PRODUCT_SKU_ALREADY_EXISTS');
+  }
+}
+
 async function assertActiveCategoryExists(categoryId: string | null | undefined) {
   if (!categoryId?.trim()) {
     return;
@@ -214,6 +234,7 @@ export async function createProduct(input: CreateProductInput) {
   };
   validateProduct(product);
   await assertUniqueBarcode(product.barcode);
+  await assertUniqueSku(product.sku);
   await assertActiveCategoryExists(product.categoryId);
   await assertActiveSupplierExists(product.supplierId);
 
@@ -273,6 +294,7 @@ export async function updateProduct(input: UpdateProductInput) {
   };
   validateProduct(next);
   await assertUniqueBarcode(next.barcode, next.id);
+  await assertUniqueSku(next.sku, next.id);
   await assertActiveCategoryExists(next.categoryId);
   await assertActiveSupplierExists(next.supplierId);
 
@@ -338,6 +360,18 @@ export async function archiveProduct(productId: string) {
   });
 }
 
+export async function setProductQuantity(productId: string, quantity: number) {
+  const db = await getDatabase();
+  const now = nowIso();
+  await db.runAsync(
+    'UPDATE products SET quantity = ?, updated_at = ? WHERE id = ?',
+    quantity,
+    now,
+    productId,
+  );
+  return { quantity, updatedAt: now };
+}
+
 export async function findProductById(productId: string) {
   const db = await getDatabase();
   const row = await db.getFirstAsync<ProductRow>('SELECT * FROM products WHERE id = ?', productId);
@@ -356,11 +390,13 @@ export async function searchProducts(query: string) {
   const db = await getDatabase();
   const like = `%${query.trim()}%`;
   const rows = await db.getAllAsync<ProductRow>(
-    `SELECT * FROM products
-     WHERE status = "active" AND (
-       name LIKE ? OR sku LIKE ? OR barcode LIKE ? OR location LIKE ? OR category_id LIKE ?
+    `SELECT p.*
+     FROM products p
+     LEFT JOIN categories c ON c.id = p.category_id
+     WHERE p.status = "active" AND (
+       p.name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ? OR p.location LIKE ? OR c.name LIKE ?
      )
-     ORDER BY name ASC`,
+     ORDER BY p.name ASC`,
     like,
     like,
     like,
