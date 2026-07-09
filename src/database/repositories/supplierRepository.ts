@@ -128,6 +128,10 @@ export async function updateSupplier(id: string, input: Partial<Omit<Supplier, '
 
 export async function archiveSupplier(id: string) {
   const db = await getDatabase();
+  const current = await db.getFirstAsync<SupplierRow>('SELECT * FROM suppliers WHERE id = ?', id);
+  if (!current) {
+    throw new Error('SUPPLIER_NOT_FOUND');
+  }
   const linked = await db.getFirstAsync<{ total: number }>(
     'SELECT COUNT(*) as total FROM products WHERE supplier_id = ? AND status = "active"',
     id,

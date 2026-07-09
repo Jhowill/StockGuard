@@ -153,6 +153,38 @@ async function assertUniqueBarcode(barcode: string | null | undefined, ignorePro
   }
 }
 
+async function assertActiveCategoryExists(categoryId: string | null | undefined) {
+  if (!categoryId?.trim()) {
+    return;
+  }
+
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM categories WHERE id = ? AND status = "active" LIMIT 1',
+    categoryId.trim(),
+  );
+
+  if (!row) {
+    throw new Error('CATEGORY_NOT_FOUND');
+  }
+}
+
+async function assertActiveSupplierExists(supplierId: string | null | undefined) {
+  if (!supplierId?.trim()) {
+    return;
+  }
+
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM suppliers WHERE id = ? AND status = "active" LIMIT 1',
+    supplierId.trim(),
+  );
+
+  if (!row) {
+    throw new Error('SUPPLIER_NOT_FOUND');
+  }
+}
+
 export async function createProduct(input: CreateProductInput) {
   const db = await getDatabase();
   const now = nowIso();
@@ -182,6 +214,8 @@ export async function createProduct(input: CreateProductInput) {
   };
   validateProduct(product);
   await assertUniqueBarcode(product.barcode);
+  await assertActiveCategoryExists(product.categoryId);
+  await assertActiveSupplierExists(product.supplierId);
 
   await db.runAsync(
     `INSERT INTO products (
@@ -239,6 +273,8 @@ export async function updateProduct(input: UpdateProductInput) {
   };
   validateProduct(next);
   await assertUniqueBarcode(next.barcode, next.id);
+  await assertActiveCategoryExists(next.categoryId);
+  await assertActiveSupplierExists(next.supplierId);
 
   await db.runAsync(
     `UPDATE products SET
@@ -282,6 +318,11 @@ export async function updateProduct(input: UpdateProductInput) {
 
 export async function archiveProduct(productId: string) {
   const db = await getDatabase();
+  const current = await findProductById(productId);
+  if (!current) {
+    throw new Error('PRODUCT_NOT_FOUND');
+  }
+
   const now = nowIso();
   await db.runAsync(
     'UPDATE products SET status = ?, archived_at = ?, updated_at = ? WHERE id = ?',

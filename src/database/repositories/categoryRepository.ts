@@ -119,6 +119,10 @@ export async function updateCategory(id: string, input: Partial<Omit<Category, '
 
 export async function archiveCategory(id: string) {
   const db = await getDatabase();
+  const current = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', id);
+  if (!current) {
+    throw new Error('CATEGORY_NOT_FOUND');
+  }
   const linked = await db.getFirstAsync<{ total: number }>(
     'SELECT COUNT(*) as total FROM products WHERE category_id = ? AND status = "active"',
     id,

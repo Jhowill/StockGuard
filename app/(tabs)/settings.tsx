@@ -50,9 +50,21 @@ export default function SettingsScreen() {
     try {
       await deleteAllUserData();
       await saveSettings({
+        theme: 'system',
+        language: 'system',
+        currency: 'BRL',
         onboardingCompleted: false,
+        appLockEnabled: false,
+        biometricUnlockEnabled: false,
         usageType: 'other',
         hideFinancialValues: false,
+        adsEnabled: true,
+        personalizedAdsConsent: 'unknown',
+        expirationWarningDays: 7,
+        lowStockWarningEnabled: true,
+        expirationWarningEnabled: true,
+        backupReminderEnabled: false,
+        lastBackupAt: null,
       });
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel apagar os dados.');

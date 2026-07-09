@@ -11,18 +11,9 @@ export async function deleteAllUserData() {
     await db.execAsync('DELETE FROM suppliers;');
     await db.execAsync('DELETE FROM ad_entitlements;');
     await db.execAsync('DELETE FROM feature_usage_limits;');
+    await db.execAsync('DELETE FROM audit_logs;');
     await db.execAsync('DELETE FROM backup_records;');
-    await db.runAsync(
-      `UPDATE app_settings SET
-        onboarding_completed = 0,
-        usage_type = 'other',
-        hide_financial_values = 0,
-        ads_enabled = 1,
-        last_backup_at = NULL,
-        updated_at = ?
-       WHERE id = 'default'`,
-      nowIso(),
-    );
+    await db.execAsync('DELETE FROM app_settings;');
   });
 
   await clearSecuritySecrets();

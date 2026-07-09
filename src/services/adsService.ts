@@ -16,7 +16,7 @@ function delay(ms: number) {
 export async function showRewardedAd(rewardType: RewardedAdType): Promise<RewardedAdResult> {
   await delay(300);
   if (!hasRewardedAdsConfig()) {
-    return { status: 'success', rewardType };
+    return { status: 'failed', reason: 'ADS_NOT_CONFIGURED' };
   }
 
   // Real AdMob SDK can be wired here after store IDs and units are provided.
@@ -26,7 +26,7 @@ export async function showRewardedAd(rewardType: RewardedAdType): Promise<Reward
 export async function showRewardedInterstitial(featureKey: string): Promise<RewardedAdResult> {
   await delay(300);
   if (!hasRewardedInterstitialConfig()) {
-    return { status: 'success', rewardType: 'feature_unlock' };
+    return { status: 'failed', reason: 'ADS_NOT_CONFIGURED' };
   }
 
   // Real rewarded interstitial display stays centralized in this service.
