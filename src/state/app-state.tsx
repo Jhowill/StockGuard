@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
+import { resetDatabaseCache } from '@/database/db';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type AppLanguage = 'system' | 'pt-BR' | 'en' | 'es';
@@ -11,6 +12,7 @@ export type UsageType = 'store' | 'workshop' | 'personal' | 'service' | 'other';
 type AppStateValue = {
   hasCompletedOnboarding: boolean;
   isReady: boolean;
+  initializationError?: string;
   userName?: string | null;
   theme: ThemeMode;
   language: AppLanguage;
@@ -34,6 +36,7 @@ type AppStateValue = {
   lockApp: () => void;
   resetDemo: () => Promise<void>;
   hydrateFromSettings: () => Promise<void>;
+  retryInitialization: () => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -41,6 +44,7 @@ const AppStateContext = createContext<AppStateValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | undefined>();
   const [userName, setUserName] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeMode>('system');
   const [language, setLanguage] = useState<AppLanguage>('system');
@@ -51,8 +55,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hideFinancialValues, setHideFinancialValues] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(true);
 
-  useEffect(() => {
-    void (async () => {
+  const initialize = async () => {
+      setIsReady(false);
+      setInitializationError(undefined);
       try {
         const settings = await getSettings();
         setUserName(settings.userName ?? null);
@@ -65,10 +70,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setHideFinancialValues(settings.hideFinancialValues);
         setHasCompletedOnboarding(settings.onboardingCompleted);
         setIsUnlocked(!settings.appLockEnabled);
+      } catch (error) {
+        setInitializationError(error instanceof Error ? error.message : 'DATABASE_INITIALIZATION_FAILED');
       } finally {
         setIsReady(true);
       }
-    })();
+  };
+
+  useEffect(() => {
+    void initialize();
   }, []);
 
   useEffect(() => {
@@ -85,6 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       hasCompletedOnboarding,
       isReady,
+      initializationError,
       userName,
       theme,
       language,
@@ -152,6 +163,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setHasCompletedOnboarding(settings.onboardingCompleted);
         setIsUnlocked(!settings.appLockEnabled);
       },
+      retryInitialization: async () => {
+        await resetDatabaseCache();
+        await initialize();
+      },
     }),
     [
       appLockEnabled,
@@ -159,6 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currency,
       hasCompletedOnboarding,
       isReady,
+      initializationError,
       isUnlocked,
       hideFinancialValues,
       language,

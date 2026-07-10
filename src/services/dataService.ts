@@ -1,6 +1,4 @@
 import { getDatabase, withTransaction } from '@/database/db';
-import { createAuditLog } from '@/database/repositories/auditLogRepository';
-import { nowIso } from '@/utils/date';
 import { clearSecuritySecrets } from '@/services/securityService';
 
 export async function deleteAllUserData() {
@@ -18,12 +16,6 @@ export async function deleteAllUserData() {
 
   await clearSecuritySecrets();
 
-  await createAuditLog({
-    action: 'all_data_deleted',
-    entityType: 'app',
-    entityId: 'default',
-    metadataJson: JSON.stringify({ source: 'settings' }),
-  });
 }
 
 export async function countProductsByCategory(categoryId: string) {

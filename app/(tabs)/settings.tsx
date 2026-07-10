@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 import { getAdsConfig } from '@/config/ads';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -21,6 +21,10 @@ import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
 import { useAppState, type AppLanguage, type CurrencyCode, type ThemeMode } from '@/state/app-state';
 import { deleteAllUserData } from '@/services/dataService';
+import { showPrivacyOptions } from '@/services/adsService';
+
+const PRIVACY_POLICY_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/PRIVACY_POLICY.md';
+const TERMS_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/TERMS_OF_USE.md';
 
 function getThemeLabel(theme: ThemeMode, t: (key: string) => string) {
   switch (theme) {
@@ -123,6 +127,26 @@ export default function SettingsScreen() {
       });
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : t('settings.deleteFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openExternalUrl = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.linkFailed'));
+    }
+  };
+
+  const manageAdPrivacy = async () => {
+    setSaving(true);
+    setActionError(undefined);
+    try {
+      await showPrivacyOptions();
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.adsPrivacyFailed'));
     } finally {
       setSaving(false);
     }
@@ -259,12 +283,15 @@ export default function SettingsScreen() {
         <AppCard.Title>{t('settings.ads')}</AppCard.Title>
         <AppCard.Text>{t('settings.adsBody')}</AppCard.Text>
         <StatusBadge tone={adsConfig.enabled ? 'success' : 'info'} label={adsConfig.enabled ? t('settings.adsConfigured') : t('settings.adsWaiting')} />
+        <AppButton label={t('settings.manageAdPrivacy')} variant="secondary" disabled={saving || !adsConfig.enabled} onPress={() => void manageAdPrivacy()} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('settings.about')}</AppCard.Title>
-        <AppCard.Text>{t('settings.version', { version: Application.nativeApplicationVersion ?? '0.1.0', build: Application.nativeBuildVersion ?? 'dev' })}</AppCard.Text>
+        <AppCard.Text>{t('settings.version', { version: Application.nativeApplicationVersion ?? '1.0.0', build: Application.nativeBuildVersion ?? 'dev' })}</AppCard.Text>
         <AppCard.Text>{t('settings.privacyNote')}</AppCard.Text>
+        <AppButton label={t('settings.privacyPolicy')} variant="ghost" onPress={() => void openExternalUrl(PRIVACY_POLICY_URL)} />
+        <AppButton label={t('settings.termsOfUse')} variant="ghost" onPress={() => void openExternalUrl(TERMS_URL)} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>

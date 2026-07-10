@@ -84,7 +84,11 @@ async function initializeDatabase() {
 
 export async function getDatabase() {
   if (!dbPromise) {
-    dbPromise = initializeDatabase();
+    dbPromise = initializeDatabase().catch((error) => {
+      // A transient open/migration failure must not poison every subsequent retry.
+      dbPromise = null;
+      throw error;
+    });
   }
 
   return dbPromise;

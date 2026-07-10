@@ -58,6 +58,13 @@ const translations = {
       featureGateLoadFailed: 'Nao foi possivel carregar as recompensas.',
       productDetailLoadFailed: 'Nao foi possivel carregar o detalhe do produto.',
       adsNotConfigured: 'Anuncios ainda nao configurados.',
+      adsNativeModuleUnavailable: 'Os anuncios exigem uma versao instalada do app e nao funcionam no Expo Go.',
+      adsConsentRequired: 'Nao foi possivel concluir as preferencias de privacidade dos anuncios.',
+      adsPlatformUnsupported: 'Anuncios nao estao disponiveis nesta plataforma.',
+      adsLoadTimeout: 'O anuncio demorou demais para carregar. Verifique sua conexao e tente novamente.',
+      adsUnavailable: 'O anuncio nao esta disponivel agora. Tente novamente mais tarde.',
+      databaseInitializationTitle: 'Nao foi possivel abrir seus dados',
+      databaseInitializationBody: 'O banco local nao iniciou corretamente. Seus dados nao foram alterados. Tente novamente.',
       backupFolderUnavailable: 'A pasta de backup nao esta disponivel.',
       invalidBackupFile: 'O arquivo selecionado nao parece ser um backup valido.',
       incompatibleBackupSchema: 'Esse backup veio de uma versao diferente do app.',
@@ -274,7 +281,12 @@ const translations = {
       adsWaiting: 'Aguardando IDs de anuncios',
       about: 'Sobre',
       version: 'Versao {{version}} ({{build}})',
-      privacyNote: 'Politica de privacidade e termos de uso devem ser publicados antes da loja. Nenhum dado e enviado para servidor nesta V1 offline.',
+      privacyNote: 'Seus dados de estoque ficam no aparelho. O AdMob pode tratar dados tecnicos conforme suas escolhas de privacidade.',
+      privacyPolicy: 'Politica de privacidade',
+      termsOfUse: 'Termos de uso',
+      manageAdPrivacy: 'Gerenciar privacidade dos anuncios',
+      adsPrivacyFailed: 'Nao foi possivel abrir as opcoes de privacidade dos anuncios.',
+      linkFailed: 'Nao foi possivel abrir este link.',
       dangerZone: 'Zona de perigo',
       dangerBody: 'Apenas se voce quiser recomecar do zero neste aparelho.',
       dangerDetails: 'Apaga produtos, movimentacoes, categorias, fornecedores, backups registrados e recompensas locais.',
@@ -836,7 +848,7 @@ const enSupplemental: Record<string, any> = {
     adsWaiting: 'Waiting for ad IDs',
     about: 'About',
     version: 'Version {{version}} ({{build}})',
-    privacyNote: 'Privacy policy and terms must be published before store release. No data is sent to a server in this offline V1.',
+    privacyNote: 'Your inventory data stays on the device. AdMob may process technical data according to your privacy choices.',
     dangerZone: 'Danger zone',
     dangerBody: 'Only if you want to start over on this device.',
     dangerDetails: 'Deletes products, movements, categories, suppliers, backups and local rewards.',
@@ -1027,7 +1039,7 @@ const esSupplemental: Record<string, any> = {
     adsWaiting: 'Esperando IDs de anuncios',
     about: 'Acerca de',
     version: 'Version {{version}} ({{build}})',
-    privacyNote: 'La politica de privacidad y los terminos deben publicarse antes de la tienda. Ningun dato se envia a un servidor en esta V1 offline.',
+    privacyNote: 'Tus datos de inventario permanecen en el dispositivo. AdMob puede tratar datos tecnicos segun tus opciones de privacidad.',
     dangerZone: 'Zona de peligro',
     dangerBody: 'Solo si quieres empezar de cero en este dispositivo.',
     dangerDetails: 'Elimina productos, movimientos, categorias, proveedores, backups y recompensas locales.',
@@ -1103,7 +1115,7 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     products: { ...translations['pt-BR'].products, title: 'Products', subtitle: 'List and search', filters: 'Quick filters', all: 'All', low: 'Low stock', zero: 'Zero stock', expiring: 'Expiring', emptyTitle: 'No products yet', emptyBody: 'Add the first item to start.' },
     alerts: { ...translations['pt-BR'].alerts, title: 'Alerts', subtitle: 'Items that need attention.', emptyTitle: 'All clear', emptyBody: 'No alerts right now.', zero: 'Out of stock', low: 'Low stock', expiring: 'Expiration' },
     reports: { ...translations['pt-BR'].reports, title: 'Reports', subtitle: 'Entry and exit summary', period: 'Period', today: 'Today', week: '7 days', month: '30 days', custom: 'Custom', entries: 'Entries', exits: 'Exits', profit: 'Estimated profit', products: 'Products', exportCsv: 'Export CSV', generatePdf: 'Generate PDF', exportBrand: 'StockGuard Offline', exportTitle: 'Stock report', exportGeneratedAt: 'Generated at', exportPeriod: 'Period', exportCurrency: 'Currency', exportEntries: 'Entries', exportExits: 'Exits', exportProfit: 'Estimated profit', exportProductsMoved: 'Moved products', exportTopProducts: 'Top products', exportTableProduct: 'Product', exportTableQuantity: 'Quantity', exportEmpty: 'No data for this period.', exportFooter: 'Report generated locally. No data was sent to external servers.' },
-    settings: { ...translations['pt-BR'].settings, title: 'Settings', profile: 'Profile', appearance: 'Appearance', theme: 'Theme', language: 'Language', currency: 'Currency', security: 'Security', data: 'Data', about: 'About', dangerZone: 'Danger zone', deleteAll: 'Delete all data', saveFailed: 'Could not save the setting.', deleteFailed: 'Could not delete the data.' },
+    settings: { ...translations['pt-BR'].settings, title: 'Settings', profile: 'Profile', appearance: 'Appearance', theme: 'Theme', language: 'Language', currency: 'Currency', security: 'Security', data: 'Data', about: 'About', dangerZone: 'Danger zone', deleteAll: 'Delete all data', privacyPolicy: 'Privacy policy', termsOfUse: 'Terms of use', manageAdPrivacy: 'Manage ad privacy', adsPrivacyFailed: 'Could not open ad privacy options.', linkFailed: 'Could not open this link.', saveFailed: 'Could not save the setting.', deleteFailed: 'Could not delete the data.' },
     productNew: { ...translations['pt-BR'].productNew, title: 'New product', name: 'Product name', namePlaceholder: 'Ex: Bolt 3/16', organization: 'Organization', category: 'Category', supplier: 'Supplier', stockValues: 'Stock and values', cost: 'Cost', sale: 'Sale', skuPlaceholder: 'Ex: PAR316', barcodePlaceholder: 'Ex: 789...', moneyPlaceholder: '0.00', moneyExample: 'Example: {{example}}', expirationPlaceholder: 'YYYY-MM-DD', locationPlaceholder: 'Drawer A1', unit: 'Unit', unitEach: 'Unit', unitBox: 'Box', unitPack: 'Pack', unitPair: 'Pair', nameRequired: 'Enter the product name.', imageDenied: 'Image permission denied.', imageFailed: 'Could not select the image.', createFailed: 'Could not create the product.', loadRelationsFailed: 'Could not load categories and suppliers.', barcodeExists: 'A product with this barcode already exists.', skuExists: 'A product with this SKU already exists.', categoryMissing: 'The selected category is no longer available.', supplierMissing: 'The selected supplier is no longer available.', discardBody: 'There is data filled in for this product. If you go back now, it will be lost. If there is an initial balance, the required ad must also be completed to record the stock.' },
     productDetail: { ...translations['pt-BR'].productDetail, title: 'Product details', product: 'Product', noImage: 'No image', noImageBody: 'Add a photo to highlight the product.', addImage: 'Add image', quantity: 'Quantity', minQuantity: 'Minimum', value: 'Value', location: 'Location', details: 'Details', supplier: 'Supplier', expiration: 'Expiration', batch: 'Batch', noExpiration: 'No expiration', noBatch: 'No batch', move: 'Move', edit: 'Edit', archiveFailed: 'Could not archive the product.', missing: 'Product not informed.', notFound: 'Product not found.', loadFailed: 'Could not load the product.', saveFailed: 'Could not save the product.', noNotes: 'No notes registered.', categoryLine: 'Category: {{value}}', supplierLine: 'Supplier: {{value}}', skuLine: 'SKU: {{value}}', locationLine: 'Location: {{value}}', expirationLine: 'Expiration: {{value}}', batchLine: 'Batch: {{value}}' },
     movement: { ...translations['pt-BR'].movement, title: 'New movement', subtitle: 'Entry, exit or adjustment', mainInTitle: 'Stock added', mainInBody: 'Purchase, restock or received balance.', mainOutTitle: 'Stock removed', mainOutBody: 'Sale, internal use or withdrawal.', supportTitle: 'Other situations', returnTitle: 'Return', returnBody: 'Item came back to stock.', lossTitle: 'Loss or damage', lossBody: 'Write-off due to damage, expiry or loss.', adjustUpTitle: 'Adjust upward', adjustUpBody: 'Manual adjustment to increase balance.', adjustDownTitle: 'Adjust downward', adjustDownBody: 'Manual adjustment to reduce balance.', productStep: '1. Product', productStepBody: 'Confirm which item will move.', chooseProduct: 'Choose product', changeProduct: 'Change product', whatHappened: '2. What happened?', whatHappenedBody: 'Choose by the real stock impact.', quantityDetails: '3. Quantity and details', quantity: 'Quantity', reason: 'Reason', reasonPlaceholder: 'Purchase, sale, loss, adjustment...', notes: 'Note', notesPlaceholder: 'Type a note', preview: '4. Stock preview', current: 'Current', change: 'Change', newBalance: 'New balance', selectedType: 'Selected type: {{type}}', impactText: '{{product}} will {{action}} {{quantity}} {{unit}}.', actionReceive: 'receive', actionReturn: 'receive back', actionLoss: 'reduce', actionUp: 'adjust up by', actionDown: 'adjust down by', actionOut: 'remove', entry: 'Entry', exit: 'Exit', loss: 'Loss', return: 'Return', adjustmentPositive: 'Adjustment +', adjustmentNegative: 'Adjustment -', initialBalance: 'Initial balance', insufficient: 'Insufficient stock for this exit.', invalid: 'Select a product and enter a valid quantity.', adRequired: 'Watch the ad until the end to save stock.', saveFailed: 'Could not save the movement.', save: 'Save movement', confirmTitle: 'Confirm movement?', confirmBody: 'Review the type, quantity and stock impact before saving. The required ad must finish to complete the save.' },
@@ -1128,7 +1140,7 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     products: { ...translations['pt-BR'].products, title: 'Productos', subtitle: 'Lista y busqueda', filters: 'Filtros rapidos', all: 'Todos', low: 'Stock bajo', zero: 'Sin stock', expiring: 'Por vencer', emptyTitle: 'Sin productos', emptyBody: 'Agrega el primer item para empezar.' },
     alerts: { ...translations['pt-BR'].alerts, title: 'Alertas', subtitle: 'Items que necesitan atencion.', emptyTitle: 'Todo en orden', emptyBody: 'No hay alertas ahora.', zero: 'Sin stock', low: 'Stock bajo', expiring: 'Vencimiento' },
     reports: { ...translations['pt-BR'].reports, title: 'Informes', subtitle: 'Resumen de entradas y salidas', period: 'Periodo', today: 'Hoy', week: '7 dias', month: '30 dias', custom: 'Personalizado', entries: 'Entradas', exits: 'Salidas', profit: 'Ganancia estimada', products: 'Productos', exportCsv: 'Exportar CSV', generatePdf: 'Generar PDF', exportBrand: 'StockGuard Offline', exportTitle: 'Informe de stock', exportGeneratedAt: 'Generado en', exportPeriod: 'Periodo', exportCurrency: 'Moneda', exportEntries: 'Entradas', exportExits: 'Salidas', exportProfit: 'Ganancia estimada', exportProductsMoved: 'Productos movidos', exportTopProducts: 'Productos principales', exportTableProduct: 'Producto', exportTableQuantity: 'Cantidad', exportEmpty: 'No hay datos para este periodo.', exportFooter: 'El informe se genero localmente. No se envio ningun dato a servidores externos.' },
-    settings: { ...translations['pt-BR'].settings, title: 'Ajustes', profile: 'Perfil', appearance: 'Apariencia', theme: 'Tema', language: 'Idioma', currency: 'Moneda', security: 'Seguridad', data: 'Datos', about: 'Acerca de', dangerZone: 'Zona de peligro', deleteAll: 'Borrar todos los datos', saveFailed: 'No fue posible guardar la configuracion.', deleteFailed: 'No fue posible borrar los datos.' },
+    settings: { ...translations['pt-BR'].settings, title: 'Ajustes', profile: 'Perfil', appearance: 'Apariencia', theme: 'Tema', language: 'Idioma', currency: 'Moneda', security: 'Seguridad', data: 'Datos', about: 'Acerca de', dangerZone: 'Zona de peligro', deleteAll: 'Borrar todos los datos', privacyPolicy: 'Politica de privacidad', termsOfUse: 'Terminos de uso', manageAdPrivacy: 'Gestionar privacidad de anuncios', adsPrivacyFailed: 'No fue posible abrir las opciones de privacidad de anuncios.', linkFailed: 'No fue posible abrir este enlace.', saveFailed: 'No fue posible guardar la configuracion.', deleteFailed: 'No fue posible borrar los datos.' },
     productNew: { ...translations['pt-BR'].productNew, title: 'Nuevo producto', name: 'Nombre del producto', namePlaceholder: 'Ej.: Tornillo 3/16', organization: 'Organizacion', category: 'Categoria', supplier: 'Proveedor', stockValues: 'Stock y valores', cost: 'Costo', sale: 'Venta', skuPlaceholder: 'Ej.: PAR316', barcodePlaceholder: 'Ej.: 789...', moneyPlaceholder: '0,00', moneyExample: 'Ej.: {{example}}', expirationPlaceholder: 'AAAA-MM-DD', locationPlaceholder: 'Cajon A1', unit: 'Unidad', unitEach: 'Unidad', unitBox: 'Caja', unitPack: 'Paquete', unitPair: 'Par', nameRequired: 'Ingresa el nombre del producto.', imageDenied: 'Permiso de imagenes denegado.', imageFailed: 'No fue posible seleccionar la imagen.', createFailed: 'No fue posible crear el producto.', loadRelationsFailed: 'No fue posible cargar categorias y proveedores.', barcodeExists: 'Ya existe un producto con este codigo de barras.', skuExists: 'Ya existe un producto con este SKU.', categoryMissing: 'La categoria seleccionada ya no esta disponible.', supplierMissing: 'El proveedor seleccionado ya no esta disponible.', discardBody: 'Hay datos completados en este producto. Si vuelves ahora, se perderan. Si existe un saldo inicial, tambien sera necesario completar el anuncio obligatorio para registrar el stock.' },
     productDetail: { ...translations['pt-BR'].productDetail, title: 'Detalles del producto', product: 'Producto', noImage: 'Sin imagen', noImageBody: 'Agrega una foto para destacar el producto.', addImage: 'Agregar imagen', quantity: 'Cantidad', minQuantity: 'Minimo', value: 'Valor', location: 'Ubicacion', details: 'Detalles', supplier: 'Proveedor', expiration: 'Vencimiento', batch: 'Lote', noExpiration: 'Sin vencimiento', noBatch: 'Sin lote', move: 'Mover', edit: 'Editar', archiveFailed: 'No fue posible archivar el producto.', missing: 'Producto no informado.', notFound: 'Producto no encontrado.', loadFailed: 'No fue posible cargar el producto.', saveFailed: 'No fue posible guardar el producto.', noNotes: 'Sin observaciones registradas.', categoryLine: 'Categoria: {{value}}', supplierLine: 'Proveedor: {{value}}', skuLine: 'SKU: {{value}}', locationLine: 'Ubicacion: {{value}}', expirationLine: 'Vencimiento: {{value}}', batchLine: 'Lote: {{value}}' },
     movement: { ...translations['pt-BR'].movement, title: 'Nueva movimentacion', subtitle: 'Entrada, salida o ajuste', mainInTitle: 'Stock agregado', mainInBody: 'Compra, reposicion o saldo recibido.', mainOutTitle: 'Stock retirado', mainOutBody: 'Venta, uso interno o retiro.', supportTitle: 'Otras situaciones', returnTitle: 'Devolucion', returnBody: 'El item volvio al stock.', lossTitle: 'Perdida o dano', lossBody: 'Baja por dano, vencimiento o extravio.', adjustUpTitle: 'Corregir hacia arriba', adjustUpBody: 'Ajuste manual para aumentar saldo.', adjustDownTitle: 'Corregir hacia abajo', adjustDownBody: 'Ajuste manual para reducir saldo.', productStep: '1. Producto', productStepBody: 'Confirma que item sera movimentado.', chooseProduct: 'Elegir producto', changeProduct: 'Cambiar producto', whatHappened: '2. Que paso?', whatHappenedBody: 'Elige por el impacto real en el stock.', quantityDetails: '3. Cantidad y detalle', quantity: 'Cantidad', reason: 'Motivo', reasonPlaceholder: 'Compra, venta, perdida, ajuste...', notes: 'Nota', notesPlaceholder: 'Escribe una nota', preview: '4. Vista previa del stock', current: 'Actual', change: 'Cambio', newBalance: 'Nuevo saldo', selectedType: 'Tipo seleccionado: {{type}}', impactText: '{{product}} va a {{action}} {{quantity}} {{unit}}.', actionReceive: 'recibir', actionReturn: 'recibir de vuelta', actionLoss: 'rebajar', actionUp: 'ajustar hacia arriba en', actionDown: 'ajustar hacia abajo en', actionOut: 'quitar', entry: 'Entrada', exit: 'Salida', loss: 'Perdida', return: 'Devolucion', adjustmentPositive: 'Ajuste +', adjustmentNegative: 'Ajuste -', initialBalance: 'Saldo inicial', insufficient: 'Stock insuficiente para esta salida.', invalid: 'Selecciona un producto e ingresa una cantidad valida.', adRequired: 'Mira el anuncio hasta el final para guardar el stock.', saveFailed: 'No fue posible guardar la movimentacion.', save: 'Guardar movimentacion', confirmTitle: 'Confirmar movimentacion?', confirmBody: 'Revisa el tipo, la cantidad y el impacto en el stock antes de guardar. El anuncio obligatorio debe terminar para completar el guardado.' },
@@ -1143,6 +1155,46 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     ...esSupplemental,
   },
 };
+
+Object.assign(translationsWithFallback.en.errors, {
+  adsNativeModuleUnavailable: 'Ads require an installed app build and are unavailable in Expo Go.',
+  adsConsentRequired: 'Could not complete ad privacy preferences.',
+  adsPlatformUnsupported: 'Ads are unavailable on this platform.',
+  adsLoadTimeout: 'The ad took too long to load. Check your connection and try again.',
+  adsUnavailable: 'The ad is unavailable right now. Try again later.',
+  databaseInitializationTitle: 'Could not open your data',
+  databaseInitializationBody: 'The local database did not start correctly. Your data was not changed. Try again.',
+});
+
+Object.assign(translationsWithFallback.es.errors, {
+  adsNativeModuleUnavailable: 'Los anuncios requieren una version instalada y no funcionan en Expo Go.',
+  adsConsentRequired: 'No fue posible completar las preferencias de privacidad de anuncios.',
+  adsPlatformUnsupported: 'Los anuncios no estan disponibles en esta plataforma.',
+  adsLoadTimeout: 'El anuncio tardo demasiado en cargar. Revisa tu conexion e intentalo de nuevo.',
+  adsUnavailable: 'El anuncio no esta disponible ahora. Intentalo mas tarde.',
+  databaseInitializationTitle: 'No fue posible abrir tus datos',
+  databaseInitializationBody: 'La base local no inicio correctamente. Tus datos no fueron modificados. Intentalo de nuevo.',
+});
+
+Object.assign(translationsWithFallback['pt-BR'].productNew, {
+  discardBody: 'Existem dados preenchidos neste produto. Se voltar agora, eles serao perdidos.',
+});
+Object.assign(translationsWithFallback.en.productNew, {
+  discardBody: 'There is data filled in for this product. If you go back now, it will be lost.',
+});
+Object.assign(translationsWithFallback.es.productNew, {
+  discardBody: 'Hay datos completados en este producto. Si vuelves ahora, se perderan.',
+});
+
+Object.assign(translationsWithFallback['pt-BR'].movement, {
+  confirmBody: 'Revise o tipo, a quantidade e o impacto no estoque antes de salvar.',
+});
+Object.assign(translationsWithFallback.en.movement, {
+  confirmBody: 'Review the type, quantity and stock impact before saving.',
+});
+Object.assign(translationsWithFallback.es.movement, {
+  confirmBody: 'Revisa el tipo, la cantidad y el impacto en el stock antes de guardar.',
+});
 
 function getValue(tree: TranslationTree, path: string) {
   if (typeof path !== 'string' || !path.trim()) {

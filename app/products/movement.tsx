@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { MovementTypePicker } from '@/components/movement/MovementTypePicker';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -17,7 +16,6 @@ import { useAppState } from '@/state/app-state';
 import { useCategories } from '@/hooks/useCategories';
 import { useI18n } from '@/hooks/useI18n';
 import { useProducts } from '@/hooks/useProducts';
-import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { createStockMovement } from '@/services/stockMovementService';
 import type { StockMovementType } from '@/types/stock';
 import { parsePositiveNumber } from '@/utils/validators';
@@ -96,11 +94,6 @@ export default function MovementScreen() {
     setError(undefined);
 
     try {
-      const adResult = await showRequiredStockSaveInterstitial();
-      if (adResult.status !== 'success') {
-        throw new Error(adResult.status === 'cancelled' ? t('movement.adRequired') : adResult.reason);
-      }
-
       await createStockMovement({
         productId: selectedProduct.id,
         type,
@@ -129,13 +122,6 @@ export default function MovementScreen() {
             <Ionicons name="swap-horizontal-outline" size={18} color={palette.text} />
           </View>
         }
-      />
-
-      <AdPolicyNotice
-        title={t('ads.requiredTitle')}
-        body={t('ads.requiredBody')}
-        icon="alert-circle-outline"
-        tone="required"
       />
 
       <View style={styles.sectionHeader}>

@@ -9,14 +9,12 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { QuickCreateRelation } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
 import { createProduct } from '@/database/repositories/productRepository';
 import { listSuppliers } from '@/database/repositories/supplierRepository';
-import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { createStockMovement } from '@/services/stockMovementService';
 import { useAppState } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -170,11 +168,6 @@ export default function NewProductScreen() {
       });
 
       if (parsedQuantity > 0) {
-        const adResult = await showRequiredStockSaveInterstitial();
-        if (adResult.status !== 'success') {
-        throw new Error(adResult.status === 'cancelled' ? t('movement.adRequired') : adResult.reason);
-        }
-
         await createStockMovement({
           productId: product.id,
           type: 'initial_balance',
@@ -208,13 +201,6 @@ export default function NewProductScreen() {
             <Ionicons name="checkmark" size={20} color={palette.primaryText} />
           </Pressable>
         }
-      />
-
-      <AdPolicyNotice
-        title={t('ads.requiredTitle')}
-        body={t('ads.requiredBody')}
-        icon="alert-circle-outline"
-        tone="required"
       />
 
       <AppCard style={{ gap: 12 }}>
