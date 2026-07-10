@@ -66,5 +66,5 @@ export function translateAppError(error: unknown, t: TranslateFn) {
     return t(key);
   }
 
-  return code;
+  return t('errors.genericBody');
 }
