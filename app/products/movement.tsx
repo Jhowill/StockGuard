@@ -133,7 +133,7 @@ export default function MovementScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppInput label="Quantidade" placeholder="0" keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
+        <AppInput label="Quantidade" placeholder="0" keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={quantity} onChangeText={setQuantity} />
         <AppInput label="Motivo" placeholder="Selecione uma categoria" value={reason} onChangeText={setReason} />
         <AppInput label="Observacao" placeholder="Digite uma observacao" multiline value={notes} onChangeText={setNotes} />
       </AppCard>

@@ -1,9 +1,11 @@
+import { normalizeGeneralNumber, normalizeMoneyNumber } from '@/utils/input-format';
+
 export function isNonEmptyString(value: string | undefined | null) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function parseFiniteNumber(value: string, fallback = 0) {
-  const normalized = value.trim().replace(',', '.');
+  const normalized = normalizeGeneralNumber(value);
   if (!normalized) {
     return fallback;
   }
@@ -26,7 +28,7 @@ export function parseNonNegativeInteger(value: string, fallback = 0) {
 }
 
 export function parseMoneyToCents(value: string) {
-  const normalized = value.trim().replace(/\./g, '').replace(',', '.');
+  const normalized = normalizeMoneyNumber(value);
   if (!normalized) {
     return null;
   }

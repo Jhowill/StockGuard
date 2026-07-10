@@ -192,12 +192,12 @@ export default function NewProductScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Estoque e valores</AppCard.Title>
         <View style={styles.row}>
-          <AppInput label={t('productNew.quantity')} keyboardType="numeric" value={quantity} onChangeText={setQuantity} style={styles.flex} />
-          <AppInput label={t('productNew.minQuantity')} keyboardType="numeric" value={minQuantity} onChangeText={setMinQuantity} style={styles.flex} />
+          <AppInput label={t('productNew.quantity')} keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={quantity} onChangeText={setQuantity} style={styles.flex} />
+          <AppInput label={t('productNew.minQuantity')} keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} style={styles.flex} />
         </View>
         <View style={styles.row}>
-          <AppInput label="Custo" keyboardType="decimal-pad" value={costPrice} onChangeText={setCostPrice} style={styles.flex} />
-          <AppInput label="Venda" keyboardType="decimal-pad" value={salePrice} onChangeText={setSalePrice} style={styles.flex} />
+          <AppInput label="Custo" keyboardType="decimal-pad" mask="money" value={costPrice} onChangeText={setCostPrice} style={styles.flex} />
+          <AppInput label="Venda" keyboardType="decimal-pad" mask="money" value={salePrice} onChangeText={setSalePrice} style={styles.flex} />
         </View>
       </AppCard>
 
@@ -206,7 +206,7 @@ export default function NewProductScreen() {
         <AppButton label={advancedOpen ? 'Ocultar avancados' : 'Mostrar avancados'} variant="ghost" onPress={() => setAdvancedOpen((current) => !current)} />
         {advancedOpen ? (
           <>
-            <AppInput label="Validade" placeholder="AAAA-MM-DD" value={expirationDate} onChangeText={setExpirationDate} />
+            <AppInput label="Validade" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
             <AppInput label="Lote" value={batchCode} onChangeText={setBatchCode} />
             <AppInput label={t('productNew.location')} placeholder="Gaveta A1" value={location} onChangeText={setLocation} />
             <AppInput label={t('productNew.notes')} placeholder={t('productNew.notesPlaceholder')} multiline value={notes} onChangeText={setNotes} />

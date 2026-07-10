@@ -18,6 +18,7 @@ import { useAppState } from '@/state/app-state';
 import type { Category } from '@/types/category';
 import type { ProductUnit } from '@/types/product';
 import type { Supplier } from '@/types/supplier';
+import { formatDecimalInput, formatMoneyInputFromCents } from '@/utils/input-format';
 import { parseMoneyToCents, parseNonNegativeNumber } from '@/utils/validators';
 
 const unitOptions: Array<{ value: ProductUnit; label: string }> = [
@@ -30,10 +31,6 @@ const unitOptions: Array<{ value: ProductUnit; label: string }> = [
   { value: 'pack', label: 'Pacote' },
   { value: 'pair', label: 'Par' },
 ];
-
-function centsToInput(value?: number | null) {
-  return value == null ? '' : String(value / 100).replace('.', ',');
-}
 
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -88,9 +85,9 @@ export default function ProductEditScreen() {
         setCategoryId(product.categoryId ?? '');
         setSupplierId(product.supplierId ?? '');
         setUnit(product.unit);
-        setMinQuantity(String(product.minQuantity));
-        setCostPrice(centsToInput(product.costPriceCents));
-        setSalePrice(centsToInput(product.salePriceCents));
+        setMinQuantity(formatDecimalInput(String(product.minQuantity)));
+        setCostPrice(formatMoneyInputFromCents(product.costPriceCents));
+        setSalePrice(formatMoneyInputFromCents(product.salePriceCents));
         setExpirationDate(product.expirationDate ?? '');
         setBatchCode(product.batchCode ?? '');
         setLocation(product.location ?? '');
@@ -231,10 +228,10 @@ export default function ProductEditScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Estoque, valores e avancados</AppCard.Title>
-        <AppInput label="Estoque minimo" keyboardType="numeric" value={minQuantity} onChangeText={setMinQuantity} />
-        <AppInput label="Custo" keyboardType="decimal-pad" value={costPrice} onChangeText={setCostPrice} />
-        <AppInput label="Venda" keyboardType="decimal-pad" value={salePrice} onChangeText={setSalePrice} />
-        <AppInput label="Validade" placeholder="AAAA-MM-DD" value={expirationDate} onChangeText={setExpirationDate} />
+        <AppInput label="Estoque minimo" keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
+        <AppInput label="Custo" keyboardType="decimal-pad" mask="money" value={costPrice} onChangeText={setCostPrice} />
+        <AppInput label="Venda" keyboardType="decimal-pad" mask="money" value={salePrice} onChangeText={setSalePrice} />
+        <AppInput label="Validade" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
         <AppInput label="Lote" value={batchCode} onChangeText={setBatchCode} />
         <AppInput label="Localizacao" value={location} onChangeText={setLocation} />
         <AppInput label="Observacoes" multiline value={notes} onChangeText={setNotes} />
