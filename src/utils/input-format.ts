@@ -90,7 +90,17 @@ function formatDecimalNumberInput(value: string, maxFractionDigits: number, useG
 }
 
 export function formatMoneyInput(value: string) {
-  return formatDecimalNumberInput(value, 2, true);
+  const digits = value.replace(/\D/g, '');
+  if (!digits) {
+    return '';
+  }
+
+  const normalized = digits.length <= 2 ? digits.padStart(3, '0') : digits;
+  const integerDigits = normalized.slice(0, -2) || '0';
+  const fractionDigits = normalized.slice(-2);
+  const formattedInteger = formatGroupedInteger(integerDigits);
+
+  return `${formattedInteger || '0'},${fractionDigits}`;
 }
 
 export function formatDecimalInput(value: string, maxFractionDigits = 3) {
@@ -123,16 +133,26 @@ export function normalizeGeneralNumber(value: string) {
 }
 
 export function normalizeMoneyNumber(value: string) {
-  const parts = splitNumericValue(value);
-  if (!parts.hasDecimalSeparator && !parts.integerDigits && !parts.fractionDigits) {
+  const cleaned = trimNumericDigits(value);
+  if (!cleaned) {
     return '';
   }
 
-  if (!parts.hasDecimalSeparator) {
-    return parts.integerDigits;
+  const parts = splitNumericValue(value);
+  if (parts.hasDecimalSeparator) {
+    const integer = parts.integerDigits || '0';
+    const fraction = parts.fractionDigits;
+    return fraction.length > 0 ? `${integer}.${fraction}` : integer;
   }
 
-  const integer = parts.integerDigits || '0';
-  const fraction = parts.fractionDigits;
-  return fraction.length > 0 ? `${integer}.${fraction}` : integer;
+  const digitsOnly = cleaned.replace(/\D/g, '');
+  if (!digitsOnly) {
+    return '';
+  }
+
+  if (digitsOnly.length <= 2) {
+    return `0.${digitsOnly.padStart(2, '0')}`;
+  }
+
+  return `${digitsOnly.slice(0, -2)}.${digitsOnly.slice(-2)}`;
 }

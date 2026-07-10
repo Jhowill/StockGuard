@@ -32,6 +32,18 @@ const unitOptions: Array<{ value: ProductUnit; label: string }> = [
   { value: 'pair', label: 'Par' },
 ];
 
+function getCurrencyPrefix(currency: string) {
+  if (currency === 'USD') {
+    return 'US$';
+  }
+
+  if (currency === 'EUR') {
+    return '€';
+  }
+
+  return 'R$';
+}
+
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
@@ -229,8 +241,24 @@ export default function ProductEditScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Estoque, valores e avancados</AppCard.Title>
         <AppInput label="Estoque minimo" keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
-        <AppInput label="Custo" keyboardType="decimal-pad" mask="money" value={costPrice} onChangeText={setCostPrice} />
-        <AppInput label="Venda" keyboardType="decimal-pad" mask="money" value={salePrice} onChangeText={setSalePrice} />
+        <AppInput
+          label="Custo"
+          prefix={getCurrencyPrefix(currency)}
+          placeholder="0,00"
+          keyboardType="decimal-pad"
+          mask="money"
+          value={costPrice}
+          onChangeText={setCostPrice}
+        />
+        <AppInput
+          label="Venda"
+          prefix={getCurrencyPrefix(currency)}
+          placeholder="0,00"
+          keyboardType="decimal-pad"
+          mask="money"
+          value={salePrice}
+          onChangeText={setSalePrice}
+        />
         <AppInput label="Validade" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
         <AppInput label="Lote" value={batchCode} onChangeText={setBatchCode} />
         <AppInput label="Localizacao" value={location} onChangeText={setLocation} />

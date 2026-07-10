@@ -34,6 +34,18 @@ const unitOptions: Array<{ value: ProductUnit; label: string }> = [
   { value: 'pair', label: 'Par' },
 ];
 
+function getCurrencyPrefix(currency: string) {
+  if (currency === 'USD') {
+    return 'US$';
+  }
+
+  if (currency === 'EUR') {
+    return '€';
+  }
+
+  return 'R$';
+}
+
 export default function NewProductScreen() {
   const { t } = useI18n();
   const { currency } = useAppState();
@@ -196,8 +208,26 @@ export default function NewProductScreen() {
           <AppInput label={t('productNew.minQuantity')} keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} style={styles.flex} />
         </View>
         <View style={styles.row}>
-          <AppInput label="Custo" keyboardType="decimal-pad" mask="money" value={costPrice} onChangeText={setCostPrice} style={styles.flex} />
-          <AppInput label="Venda" keyboardType="decimal-pad" mask="money" value={salePrice} onChangeText={setSalePrice} style={styles.flex} />
+          <AppInput
+            label="Custo"
+            prefix={getCurrencyPrefix(currency)}
+            placeholder="0,00"
+            keyboardType="decimal-pad"
+            mask="money"
+            value={costPrice}
+            onChangeText={setCostPrice}
+            style={styles.flex}
+          />
+          <AppInput
+            label="Venda"
+            prefix={getCurrencyPrefix(currency)}
+            placeholder="0,00"
+            keyboardType="decimal-pad"
+            mask="money"
+            value={salePrice}
+            onChangeText={setSalePrice}
+            style={styles.flex}
+          />
         </View>
       </AppCard>
 
