@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -15,6 +16,7 @@ import { createStockMovement } from '@/services/stockMovementService';
 import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
 import { parsePositiveNumber } from '@/utils/validators';
@@ -38,6 +40,7 @@ export default function MovementScreen() {
   const { productId } = useLocalSearchParams<{ productId?: string }>();
   const initialProductId = useMemo(() => (Array.isArray(productId) ? productId[0] : productId) ?? '', [productId]);
   const { t } = useI18n();
+  const { palette } = useAppTheme();
   const { currency } = useAppState();
   const { products, loading } = useProducts();
   const { categories } = useCategories();
@@ -100,7 +103,17 @@ export default function MovementScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('movement.title')} subtitle={t('movement.subtitle')} />
+      <AppHeader
+        title={t('movement.title')}
+        subtitle={t('movement.subtitle')}
+        variant="page"
+        onBackPress={() => router.back()}
+        rightAction={
+          <View style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+            <Ionicons name="search" size={18} color={palette.text} />
+          </View>
+        }
+      />
 
       <AdPolicyNotice
         title={t('ads.requiredTitle')}
@@ -226,5 +239,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 88,
     gap: 6,
+  },
+  headerAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

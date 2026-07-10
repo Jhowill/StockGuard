@@ -1,7 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, StyleSheet } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -14,6 +15,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
 import { archiveProduct, findProductById, updateProduct } from '@/database/repositories/productRepository';
 import { listSuppliers } from '@/database/repositories/supplierRepository';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
 import type { Category } from '@/types/category';
 import type { ProductUnit } from '@/types/product';
@@ -48,6 +50,7 @@ export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
   const { currency } = useAppState();
+  const { palette } = useAppTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,7 +205,7 @@ export default function ProductEditScreen() {
   if (error) {
     return (
       <ScreenContainer padded>
-        <AppHeader title="Editar produto" subtitle="Atualize os dados do item." />
+        <AppHeader title="Editar produto" subtitle="Atualize os dados do item." variant="page" onBackPress={() => router.back()} />
         <ErrorState description={error} actionLabel="Voltar" onActionPress={() => router.back()} />
       </ScreenContainer>
     );
@@ -210,12 +213,31 @@ export default function ProductEditScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Editar produto" subtitle="Atualize os dados do item." />
+      <AppHeader
+        title="Editar produto"
+        subtitle="Atualize os dados do item."
+        variant="page"
+        onBackPress={() => router.back()}
+        rightAction={
+          <Pressable onPress={() => void handleSave()} hitSlop={10} style={[styles.headerAction, { backgroundColor: '#B7F34D' }]}>
+            <Ionicons name="checkmark" size={20} color="#0B0F14" />
+          </Pressable>
+        }
+      />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Identificacao</AppCard.Title>
-        {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : null}
-        <AppButton label={imageUri ? 'Trocar foto' : 'Adicionar foto'} variant="secondary" onPress={() => void pickImage()} />
+        <AppCard variant="hero" onPress={() => void pickImage()} style={styles.photoCard}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.photoImage} />
+          ) : (
+            <View style={[styles.photoPlaceholder, { backgroundColor: palette.background }]}>
+              <Ionicons name="camera-outline" size={34} color={palette.primary} />
+              <Text style={[styles.photoTitle, { color: palette.text }]}>Adicionar foto</Text>
+              <Text style={[styles.photoSubtitle, { color: palette.textMuted }]}>Toque para escolher uma imagem da galeria.</Text>
+            </View>
+          )}
+        </AppCard>
         <AppInput label="Nome" value={name} onChangeText={setName} />
         <AppInput label="SKU" value={sku} onChangeText={setSku} />
         <AppInput label="Codigo de barras" value={barcode} onChangeText={setBarcode} />
@@ -289,9 +311,38 @@ export default function ProductEditScreen() {
 }
 
 const styles = StyleSheet.create({
-  image: {
+  photoCard: {
+    gap: 0,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  photoImage: {
     width: '100%',
-    height: 180,
-    borderRadius: 18,
+    height: 188,
+  },
+  photoPlaceholder: {
+    width: '100%',
+    height: 188,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+  },
+  photoTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  photoSubtitle: {
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  headerAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
   },
 });

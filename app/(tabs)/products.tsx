@@ -21,7 +21,7 @@ export default function ProductsScreen() {
       <AppHeader
         title={t('products.title')}
         subtitle={t('products.subtitle')}
-        actionLabel="Novo"
+        actionLabel="+"
         onActionPress={() => router.push('/products/new')}
       />
 

@@ -1,4 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -88,7 +89,7 @@ export default function BackupScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('backup.title')} subtitle={t('backup.subtitle')} />
+      <AppHeader title={t('backup.title')} subtitle={t('backup.subtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AdPolicyNotice
         title={t('ads.backupTitle')}

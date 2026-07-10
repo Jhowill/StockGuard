@@ -83,7 +83,7 @@ export default function SuppliersScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." actionLabel="Novo" onActionPress={resetForm} />
+      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." actionLabel="+" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? 'Editar fornecedor' : 'Novo fornecedor'}</AppCard.Title>

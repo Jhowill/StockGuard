@@ -74,7 +74,7 @@ export default function BiometricSecurityScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Biometria" subtitle="Use a biometria do aparelho para desbloquear." />
+      <AppHeader title="Biometria" subtitle="Use a biometria do aparelho para desbloquear." variant="page" onBackPress={() => router.back()} />
 
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.biometricUnlockEnabled ? 'success' : 'info'} label={settings?.biometricUnlockEnabled ? 'Ativada' : 'Desativada'} />

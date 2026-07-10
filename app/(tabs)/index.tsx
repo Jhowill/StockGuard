@@ -1,7 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
-import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -66,7 +64,16 @@ export default function HomeScreen() {
       <View style={[styles.glow, styles.glowTop, { backgroundColor: palette.primary }]} />
       <View style={[styles.glow, styles.glowBottom, { backgroundColor: palette.premium }]} />
 
-      <AppHeader title="Inicio" subtitle="Resumo rapido do seu estoque." rightAction={<StatusBadge tone="info" label="Offline first" />} />
+      <AppHeader
+        title="Olá, João! 👋"
+        subtitle="Aqui está o resumo do seu estoque"
+        rightAction={
+          <View style={styles.headerAction}>
+            <Ionicons name="notifications-outline" size={22} color={palette.text} />
+            <View style={[styles.notificationDot, { backgroundColor: palette.danger }]} />
+          </View>
+        }
+      />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={styles.heroTop}>
@@ -93,23 +100,6 @@ export default function HomeScreen() {
         <MetricCard compact label="Produtos" value={loading ? '—' : String(summary.activeProductsCount)} hint="Atualizado hoje" />
         <MetricCard compact label="Itens baixos" value={loading ? '—' : String(summary.lowStockCount)} hint="Itens criticos" />
       </View>
-      <View style={styles.metricRow}>
-        <MetricCard compact label="Zerados" value={loading ? '—' : String(summary.zeroStockCount)} hint="Itens sem saldo" />
-        <MetricCard compact label="Vencendo" value={loading ? '—' : String(summary.expiringSoonCount)} hint="Proximos da validade" />
-      </View>
-
-      <AppCard style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Acoes rapidas</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Acoes rapidas para o dia a dia.</Text>
-          </View>
-          <Ionicons name="flash-outline" size={20} color={palette.primary} />
-        </View>
-
-        <AppButton label="Adicionar produto" onPress={() => router.push('/products/new')} />
-        <AppButton label="Movimentar estoque" variant="secondary" onPress={() => router.push('/products/movement')} />
-      </AppCard>
 
       <AppCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
@@ -171,6 +161,21 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   heroCard: {
     gap: 18,
+  },
+  headerAction: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 7,
+    height: 7,
+    borderRadius: 999,
   },
   heroTop: {
     flexDirection: 'row',

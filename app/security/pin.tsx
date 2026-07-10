@@ -65,7 +65,7 @@ export default function PinSecurityScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="PIN" subtitle="Configure a trava principal do app." />
+      <AppHeader title="PIN" subtitle="Configure a trava principal do app." variant="page" onBackPress={() => router.back()} />
 
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? 'Ativado' : 'Desativado'} />

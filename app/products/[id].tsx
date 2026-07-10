@@ -1,5 +1,7 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -12,6 +14,7 @@ import { archiveProduct } from '@/database/repositories/productRepository';
 import { useCategories } from '@/hooks/useCategories';
 import { useProductDetail } from '@/hooks/useProductDetail';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
 import { formatMoney } from '@/utils/format';
@@ -21,6 +24,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useI18n();
   const { currency } = useAppState();
+  const { palette } = useAppTheme();
   const { categories } = useCategories();
   const { suppliers } = useSuppliers();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
@@ -42,7 +46,7 @@ export default function ProductDetailScreen() {
   if (error || !product) {
     return (
       <ScreenContainer padded>
-        <AppHeader title={t('productDetail.title')} subtitle={t('products.emptyTitle')} />
+        <AppHeader title={t('productDetail.title')} subtitle={t('products.emptyTitle')} variant="page" onBackPress={() => router.back()} />
         <EmptyState
           title={t('products.emptyTitle')}
           description={error ?? t('products.emptyBody')}
@@ -59,33 +63,73 @@ export default function ProductDetailScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('productDetail.title')} subtitle={product.name} />
+      <AppHeader title={t('productDetail.title')} subtitle={product.name} variant="page" onBackPress={() => router.back()} />
+
+      <AppCard variant="hero" style={styles.heroCard}>
+        {product.imageUri ? (
+          <Image source={{ uri: product.imageUri }} style={styles.heroImage} />
+        ) : (
+          <View style={[styles.heroImage, styles.heroPlaceholder, { backgroundColor: palette.background }]}>
+            <Ionicons name="cube-outline" size={42} color={palette.primary} />
+            <Text style={[styles.heroPlaceholderTitle, { color: palette.text }]}>Sem imagem</Text>
+            <Text style={[styles.heroPlaceholderText, { color: palette.textMuted }]}>Adicione uma foto para destacar o produto.</Text>
+          </View>
+        )}
+
+        <View style={styles.heroBody}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroCopy}>
+              <Text style={[styles.heroLabel, { color: palette.textMuted }]}>Produto</Text>
+              <Text style={[styles.heroTitle, { color: palette.text }]}>{product.name}</Text>
+              <Text style={[styles.heroSubtitle, { color: palette.textMuted }]}>
+                {categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
+              </Text>
+            </View>
+            <StatusBadge tone={stockTone} label={product.status} />
+          </View>
+
+          <View style={styles.heroMeta}>
+            <StatusBadge tone="info" label={product.unit} />
+            <StatusBadge tone="success" label={product.sku ?? 'Sem SKU'} />
+          </View>
+          <AppCard.Text>{product.notes ?? t('home.noAlertsBody')}</AppCard.Text>
+        </View>
+      </AppCard>
+
+      <View style={styles.metricsGrid}>
+        <View style={styles.metricsRow}>
+          <MetricCard compact label={t('productDetail.quantity')} value={String(product.quantity)} />
+          <MetricCard compact label={t('productDetail.minQuantity')} value={String(product.minQuantity)} />
+        </View>
+        <View style={styles.metricsRow}>
+          <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency)} />
+          <MetricCard compact label={t('productDetail.location')} value={product.location ?? '-'} />
+        </View>
+      </View>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Row
-          icon="cube-outline"
-          title={product.name}
-          subtitle={categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
-          trailing={<StatusBadge tone={stockTone} label={product.status} />}
+          icon="information-circle-outline"
+          title="Detalhes"
+          subtitle={`Categoria: ${categoryNames.get(product.categoryId ?? '') ?? 'Sem categoria'}`}
         />
-        <AppCard.Text>{product.notes ?? t('home.noAlertsBody')}</AppCard.Text>
-        <AppCard.Text>
-          Categoria: {categoryNames.get(product.categoryId ?? '') ?? 'Sem categoria'}
-        </AppCard.Text>
-        <AppCard.Text>
-          Fornecedor: {supplierNames.get(product.supplierId ?? '') ?? 'Sem fornecedor'}
-        </AppCard.Text>
+        <AppCard.Text>Fornecedor: {supplierNames.get(product.supplierId ?? '') ?? 'Sem fornecedor'}</AppCard.Text>
+        <AppCard.Text>SKU: {product.sku ?? 'Sem SKU'}</AppCard.Text>
+        <AppCard.Text>Localizacao: {product.location ?? 'Sem localizacao'}</AppCard.Text>
       </AppCard>
 
-      <AppCard style={{ flexDirection: 'row', gap: 12 }}>
-        <MetricCard compact label={t('productDetail.quantity')} value={String(product.quantity)} />
-        <MetricCard compact label={t('productDetail.minQuantity')} value={String(product.minQuantity)} />
-      </AppCard>
-
-      <AppCard style={{ flexDirection: 'row', gap: 12 }}>
-        <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency)} />
-        <MetricCard compact label={t('productDetail.location')} value={product.location ?? '-'} />
-      </AppCard>
+      <View style={styles.actionsGrid}>
+        <View style={styles.actionsRow}>
+          <AppButton label={t('productDetail.move')} style={styles.flexAction} onPress={() => router.push({ pathname: '/products/movement', params: { productId: product.id } })} />
+          <AppButton label={t('productDetail.edit')} variant="secondary" style={styles.flexAction} onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
+        </View>
+        <AppButton
+          label={t('common.archive')}
+          variant="danger"
+          disabled={busy}
+          onPress={() => setConfirmArchive(true)}
+        />
+      </View>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('home.recentMovements')}</AppCard.Title>
@@ -105,15 +149,6 @@ export default function ProductDetailScreen() {
       </AppCard>
 
       {actionError ? <EmptyState title={t('productDetail.title')} description={actionError} /> : null}
-
-      <AppButton label={t('productDetail.move')} onPress={() => router.push({ pathname: '/products/movement', params: { productId: product.id } })} />
-      <AppButton label={t('productDetail.edit')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
-      <AppButton
-        label={t('common.archive')}
-        variant="danger"
-        disabled={busy}
-        onPress={() => setConfirmArchive(true)}
-      />
 
       <ConfirmDialog
         visible={confirmArchive}
@@ -139,3 +174,81 @@ export default function ProductDetailScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  heroCard: {
+    gap: 0,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  heroImage: {
+    width: '100%',
+    height: 180,
+  },
+  heroPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+  },
+  heroBody: {
+    gap: 14,
+    padding: 16,
+  },
+  heroPlaceholderTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  heroPlaceholderText: {
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  heroTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  heroCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  heroLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.4,
+  },
+  heroSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  heroMeta: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  metricsGrid: {
+    gap: 12,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionsGrid: {
+    gap: 12,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  flexAction: {
+    flex: 1,
+  },
+});

@@ -1,7 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -17,6 +18,7 @@ import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { createStockMovement } from '@/services/stockMovementService';
 import { useAppState } from '@/state/app-state';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import type { ProductUnit } from '@/types/product';
 import type { Category } from '@/types/category';
@@ -49,6 +51,7 @@ function getCurrencyPrefix(currency: string) {
 export default function NewProductScreen() {
   const { t } = useI18n();
   const { currency } = useAppState();
+  const { palette } = useAppTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [name, setName] = useState('');
@@ -166,7 +169,21 @@ export default function NewProductScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('productNew.title')} subtitle={t('productNew.subtitle')} />
+      <AppHeader
+        title={t('productNew.title')}
+        subtitle={t('productNew.subtitle')}
+        variant="page"
+        onBackPress={handleBack}
+        rightAction={
+          <Pressable
+            onPress={() => void handleSave()}
+            hitSlop={10}
+            style={[styles.headerAction, { backgroundColor: '#B7F34D' }]}
+          >
+            <Ionicons name="checkmark" size={20} color="#0B0F14" />
+          </Pressable>
+        }
+      />
 
       <AdPolicyNotice
         title={t('ads.requiredTitle')}
@@ -177,8 +194,17 @@ export default function NewProductScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Identificacao</AppCard.Title>
-        {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : null}
-        <AppButton label={imageUri ? 'Trocar foto' : 'Adicionar foto'} variant="secondary" onPress={() => void pickImage()} />
+        <AppCard variant="hero" onPress={() => void pickImage()} style={styles.photoCard}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.photoImage} />
+          ) : (
+            <View style={[styles.photoPlaceholder, { backgroundColor: palette.background }]}>
+              <Ionicons name="camera-outline" size={34} color={palette.primary} />
+              <Text style={[styles.photoTitle, { color: palette.text }]}>Adicionar foto</Text>
+              <Text style={[styles.photoSubtitle, { color: palette.textMuted }]}>Toque para escolher uma imagem da galeria.</Text>
+            </View>
+          )}
+        </AppCard>
         <AppInput label={t('productNew.name')} placeholder={t('productNew.namePlaceholder')} value={name} onChangeText={setName} />
         <AppInput label={t('productNew.sku')} placeholder="Ex: PAR316" value={sku} onChangeText={setSku} />
         <AppInput label={t('productNew.barcode')} placeholder="Ex: 789..." value={barcode} onChangeText={setBarcode} />
@@ -285,10 +311,31 @@ export default function NewProductScreen() {
 }
 
 const styles = StyleSheet.create({
-  image: {
+  photoCard: {
+    gap: 0,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  photoImage: {
     width: '100%',
-    height: 180,
-    borderRadius: 18,
+    height: 188,
+  },
+  photoPlaceholder: {
+    width: '100%',
+    height: 188,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+  },
+  photoTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  photoSubtitle: {
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
@@ -296,5 +343,12 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  headerAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

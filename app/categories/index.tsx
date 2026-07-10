@@ -96,7 +96,7 @@ export default function CategoriesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." actionLabel="Novo" onActionPress={resetForm} />
+      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." actionLabel="+" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? 'Editar categoria' : 'Nova categoria'}</AppCard.Title>
