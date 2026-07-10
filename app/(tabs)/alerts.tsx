@@ -15,7 +15,7 @@ function getAlertLabel(kind: string) {
       return 'Sem estoque';
     case 'low':
       return 'Baixo estoque';
-    case 'expiration':
+    case 'expiring':
       return 'Vencimento';
     default:
       return kind;
@@ -53,7 +53,7 @@ export default function AlertsScreen() {
         <EmptyState title="Tudo em ordem" description="Nenhum alerta no momento." />
       ) : (
         alerts.map((alert) => (
-          <AppCard key={alert.id} onPress={() => router.push('/(tabs)/products')}>
+          <AppCard key={alert.id} onPress={() => router.push({ pathname: '/(tabs)/products', params: { filter: alert.kind } })}>
             <AppCard.Row
               icon={alert.kind === 'zero' ? 'alert-circle-outline' : alert.kind === 'low' ? 'warning-outline' : 'calendar-outline'}
               title={getAlertLabel(alert.kind)}

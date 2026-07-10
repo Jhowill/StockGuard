@@ -10,6 +10,7 @@ import { AppInput } from '@/components/ui/AppInput';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
+import { QuickCreateRelation } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
@@ -46,6 +47,25 @@ function getCurrencyPrefix(currency: string) {
   }
 
   return 'R$';
+}
+
+function getProductCreateErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) {
+    return 'Nao foi possivel criar o produto.';
+  }
+
+  switch (error.message) {
+    case 'PRODUCT_BARCODE_ALREADY_EXISTS':
+      return 'Ja existe um produto com este codigo de barras.';
+    case 'PRODUCT_SKU_ALREADY_EXISTS':
+      return 'Ja existe um produto com este SKU.';
+    case 'CATEGORY_NOT_FOUND':
+      return 'A categoria selecionada nao esta mais disponivel.';
+    case 'SUPPLIER_NOT_FOUND':
+      return 'O fornecedor selecionado nao esta mais disponivel.';
+    default:
+      return error.message;
+  }
 }
 
 export default function NewProductScreen() {
@@ -161,7 +181,7 @@ export default function NewProductScreen() {
 
       router.replace(`/products/${product.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'PRODUCT_CREATE_FAILED');
+      setError(getProductCreateErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -226,6 +246,18 @@ export default function NewProductScreen() {
           value={supplierId}
           options={[{ value: '', label: 'Sem fornecedor' }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
+        />
+        <QuickCreateRelation
+          disabled={loading}
+          onError={setError}
+          onCategoryCreated={(category) => {
+            setCategories((current) => [category, ...current]);
+            setCategoryId(category.id);
+          }}
+          onSupplierCreated={(supplier) => {
+            setSuppliers((current) => [supplier, ...current]);
+            setSupplierId(supplier.id);
+          }}
         />
       </AppCard>
 

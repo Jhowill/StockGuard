@@ -96,7 +96,7 @@ export default function CategoriesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." actionLabel="+" onActionPress={resetForm} />
+      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." actionLabel="Nova" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? 'Editar categoria' : 'Nova categoria'}</AppCard.Title>
@@ -141,7 +141,7 @@ export default function CategoriesScreen() {
                 }}
               />
               <AppButton
-                label="Excluir"
+                label="Arquivar"
                 variant="danger"
                 style={{ flex: 1 }}
                 disabled={busy}
@@ -153,9 +153,9 @@ export default function CategoriesScreen() {
       )}
       <ConfirmDialog
         visible={Boolean(archiveId)}
-        title="Excluir categoria?"
+        title="Arquivar categoria?"
         message="A exclusao arquiva a categoria sem apagar o historico. Categorias com produtos vinculados precisam ser liberadas antes."
-        confirmLabel="Excluir"
+        confirmLabel="Arquivar"
         danger
         onCancel={() => setArchiveId(null)}
         onConfirm={() => void handleArchive()}

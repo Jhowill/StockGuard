@@ -83,7 +83,7 @@ export default function SuppliersScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." actionLabel="+" onActionPress={resetForm} />
+      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." actionLabel="Novo" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? 'Editar fornecedor' : 'Novo fornecedor'}</AppCard.Title>
@@ -111,7 +111,7 @@ export default function SuppliersScreen() {
               icon="business-outline"
               title={supplier.name}
               subtitle={supplier.phone ?? supplier.email ?? 'Sem contato'}
-              trailing={<StatusBadge tone={supplier.status === 'active' ? 'success' : 'info'} label={supplier.status} />}
+              trailing={<StatusBadge tone={supplier.status === 'active' ? 'success' : 'info'} label={supplier.status === 'active' ? 'Ativo' : 'Arquivado'} />}
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <AppButton
@@ -126,7 +126,7 @@ export default function SuppliersScreen() {
                 }}
               />
               <AppButton
-                label="Excluir"
+                label="Arquivar"
                 variant="danger"
                 style={{ flex: 1 }}
                 disabled={busy}
@@ -138,9 +138,9 @@ export default function SuppliersScreen() {
       )}
       <ConfirmDialog
         visible={Boolean(archiveId)}
-        title="Excluir fornecedor?"
+        title="Arquivar fornecedor?"
         message="A exclusao arquiva o fornecedor sem apagar o historico. Fornecedores com produtos vinculados precisam ser liberados antes."
-        confirmLabel="Excluir"
+        confirmLabel="Arquivar"
         danger
         onCancel={() => setArchiveId(null)}
         onConfirm={() => void handleArchive()}

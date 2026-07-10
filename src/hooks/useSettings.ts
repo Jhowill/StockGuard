@@ -6,6 +6,7 @@ import { useAppState } from '@/state/app-state';
 export function useSettings() {
   const {
     setThemeMode,
+    setUserName,
     setLanguage,
     setCurrency,
     setUsageType,
@@ -25,6 +26,7 @@ export function useSettings() {
     try {
       const result = await getSettings();
       setSettings(result);
+      setUserName(result.userName ?? null);
       setThemeMode(result.theme);
       setLanguage(result.language);
       setCurrency(result.currency);
@@ -41,7 +43,7 @@ export function useSettings() {
     } finally {
       setLoading(false);
     }
-  }, [setCurrency, setHideFinancialValues, setLanguage, setOnboardingCompleted, setThemeMode, setUsageType, setAppLockEnabled, setBiometricUnlockEnabled, unlockApp]);
+  }, [setCurrency, setHideFinancialValues, setLanguage, setOnboardingCompleted, setThemeMode, setUsageType, setAppLockEnabled, setBiometricUnlockEnabled, setUserName, unlockApp]);
 
   useEffect(() => {
     void refresh();
@@ -51,6 +53,7 @@ export function useSettings() {
     async (input: Partial<AppSettingsRecord>) => {
       const next = await updateSettings(input);
       setSettings(next);
+      setUserName(next.userName ?? null);
       setThemeMode(next.theme);
       setLanguage(next.language);
       setCurrency(next.currency);
@@ -73,6 +76,7 @@ export function useSettings() {
       setOnboardingCompleted,
       setThemeMode,
       setUsageType,
+      setUserName,
       unlockApp,
     ],
   );

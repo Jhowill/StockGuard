@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Application from 'expo-application';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getAdsConfig } from '@/config/ads';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { AppInput } from '@/components/ui/AppInput';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -26,11 +27,17 @@ export default function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
+  const [profileName, setProfileName] = useState('');
   const adsConfig = getAdsConfig();
 
   const currentTheme = (settings?.theme ?? 'system') as ThemeMode;
   const currentLanguage = (settings?.language ?? 'system') as AppLanguage;
   const currentCurrency = (settings?.currency ?? 'BRL') as CurrencyCode;
+  const currentUserName = settings?.userName ?? '';
+
+  useEffect(() => {
+    setProfileName(currentUserName);
+  }, [currentUserName]);
 
   const safeSave = async (input: Parameters<typeof saveSettings>[0]) => {
     if (saving) {
@@ -59,6 +66,7 @@ export default function SettingsScreen() {
     try {
       await deleteAllUserData();
       await saveSettings({
+        userName: null,
         theme: 'system',
         language: 'system',
         currency: 'BRL',
@@ -108,6 +116,24 @@ export default function SettingsScreen() {
       ) : null}
 
       {actionError ? <ErrorState title="Configuracoes" description={actionError} /> : null}
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>Perfil</AppCard.Title>
+        <AppCard.Text>Defina como a Home deve chamar voce. Deixe em branco para usar uma saudacao neutra.</AppCard.Text>
+        <AppInput
+          label="Nome exibido na Home"
+          placeholder="Ex.: Joao"
+          value={profileName}
+          editable={!saving}
+          onChangeText={setProfileName}
+          onBlur={() => {
+            const nextName = profileName.trim();
+            if (nextName !== currentUserName) {
+              void safeSave({ userName: nextName || null });
+            }
+          }}
+        />
+      </AppCard>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Aparencia</AppCard.Title>
@@ -178,6 +204,7 @@ export default function SettingsScreen() {
           onPress={() =>
             void safeSave({
               onboardingCompleted: false,
+              userName: null,
               theme: 'system',
               language: 'system',
               currency: 'BRL',

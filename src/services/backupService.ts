@@ -120,7 +120,7 @@ function assertBackupPayload(payload: Partial<BackupPayload>) {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
-  if (payload.schemaVersion !== SCHEMA_VERSION) {
+  if (payload.schemaVersion !== SCHEMA_VERSION && payload.schemaVersion !== 4) {
     throw new Error('INCOMPATIBLE_BACKUP_SCHEMA');
   }
 
@@ -323,6 +323,7 @@ function normalizeRestoredSettings(settings: AppSettingsRecord, fallback: AppSet
     ...fallback,
     ...settings,
     id: 'default',
+    userName: isNonEmptyString(settings.userName) ? settings.userName.trim() : null,
     theme: pickAllowed(settings.theme, themeModes, fallback.theme),
     language: pickAllowed(settings.language, languages, fallback.language),
     currency: pickAllowed(settings.currency, currencies, fallback.currency),
@@ -563,12 +564,13 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
 
     await db.runAsync(
       `INSERT INTO app_settings (
-        id, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
+        id, user_name, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
         hide_financial_values, ads_enabled, personalized_ads_consent,
         expiration_warning_days, low_stock_warning_enabled, expiration_warning_enabled,
         backup_reminder_enabled, last_backup_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       nextSettings.id,
+      nextSettings.userName ?? null,
       nextSettings.theme,
       nextSettings.language,
       nextSettings.currency,

@@ -20,6 +20,17 @@ import { useI18n } from '@/hooks/useI18n';
 import { formatMoney } from '@/utils/format';
 import { formatShortDateTime } from '@/utils/date-format';
 
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'active':
+      return 'Ativo';
+    case 'archived':
+      return 'Arquivado';
+    default:
+      return status;
+  }
+}
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useI18n();
@@ -73,6 +84,7 @@ export default function ProductDetailScreen() {
             <Ionicons name="cube-outline" size={42} color={palette.primary} />
             <Text style={[styles.heroPlaceholderTitle, { color: palette.text }]}>Sem imagem</Text>
             <Text style={[styles.heroPlaceholderText, { color: palette.textMuted }]}>Adicione uma foto para destacar o produto.</Text>
+            <AppButton label="Adicionar imagem" variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
           </View>
         )}
 
@@ -85,7 +97,7 @@ export default function ProductDetailScreen() {
                 {categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
               </Text>
             </View>
-            <StatusBadge tone={stockTone} label={product.status} />
+            <StatusBadge tone={stockTone} label={getStatusLabel(product.status)} />
           </View>
 
           <View style={styles.heroMeta}>
@@ -103,7 +115,7 @@ export default function ProductDetailScreen() {
         </View>
         <View style={styles.metricsRow}>
           <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency)} />
-          <MetricCard compact label={t('productDetail.location')} value={product.location ?? '-'} />
+          <MetricCard compact label={t('productDetail.location')} value={product.location ?? 'Sem local'} />
         </View>
       </View>
 
@@ -116,6 +128,8 @@ export default function ProductDetailScreen() {
         <AppCard.Text>Fornecedor: {supplierNames.get(product.supplierId ?? '') ?? 'Sem fornecedor'}</AppCard.Text>
         <AppCard.Text>SKU: {product.sku ?? 'Sem SKU'}</AppCard.Text>
         <AppCard.Text>Localizacao: {product.location ?? 'Sem localizacao'}</AppCard.Text>
+        <AppCard.Text>Validade: {product.expirationDate ?? 'Sem validade'}</AppCard.Text>
+        <AppCard.Text>Lote: {product.batchCode ?? 'Sem lote'}</AppCard.Text>
       </AppCard>
 
       <View style={styles.actionsGrid}>

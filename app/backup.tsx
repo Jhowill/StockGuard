@@ -34,6 +34,13 @@ export default function BackupScreen() {
   const [actionError, setActionError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const latestBackup = backups[0];
+  const formatBackupLabel = (backup: { encrypted: boolean; format: string }) => {
+    if (backup.encrypted) {
+      return 'Seguro';
+    }
+
+    return backup.format === 'json' ? 'JSON' : backup.format;
+  };
 
   const pickBackupFile = async () => {
     try {
@@ -169,7 +176,7 @@ export default function BackupScreen() {
               icon="archive-outline"
               title={backup.fileName ?? backup.type}
               subtitle={formatShortDateTime(backup.createdAt)}
-              trailing={<StatusBadge tone={backup.status === 'success' ? 'success' : 'danger'} label={backup.encrypted ? 'seguro' : backup.format} />}
+              trailing={<StatusBadge tone={backup.status === 'success' ? 'success' : 'danger'} label={formatBackupLabel(backup)} />}
             />
             <AppButton
               label="Compartilhar"

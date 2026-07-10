@@ -11,6 +11,7 @@ export type UsageType = 'store' | 'workshop' | 'personal' | 'service' | 'other';
 type AppStateValue = {
   hasCompletedOnboarding: boolean;
   isReady: boolean;
+  userName?: string | null;
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
@@ -20,6 +21,7 @@ type AppStateValue = {
   hideFinancialValues: boolean;
   isUnlocked: boolean;
   setOnboardingCompleted: (completed: boolean) => void;
+  setUserName: (name?: string | null) => void;
   completeOnboarding: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => void;
   setLanguage: (language: AppLanguage) => void;
@@ -39,6 +41,7 @@ const AppStateContext = createContext<AppStateValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeMode>('system');
   const [language, setLanguage] = useState<AppLanguage>('system');
   const [currency, setCurrency] = useState<CurrencyCode>('BRL');
@@ -52,6 +55,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const settings = await getSettings();
+        setUserName(settings.userName ?? null);
         setTheme(settings.theme);
         setLanguage(settings.language);
         setCurrency(settings.currency);
@@ -81,6 +85,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       hasCompletedOnboarding,
       isReady,
+      userName,
       theme,
       language,
       currency,
@@ -90,6 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hideFinancialValues,
       isUnlocked,
       setOnboardingCompleted: setHasCompletedOnboarding,
+      setUserName: (name?: string | null) => setUserName(name ?? null),
       completeOnboarding: async () => {
         await updateSettings({ onboardingCompleted: true });
         setHasCompletedOnboarding(true);
@@ -113,6 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetDemo: async () => {
         await updateSettings({
           onboardingCompleted: false,
+          userName: null,
           theme: 'system',
           language: 'system',
           currency: 'BRL',
@@ -122,6 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           hideFinancialValues: false,
         });
         setHasCompletedOnboarding(false);
+        setUserName(null);
         setTheme('system');
         setLanguage('system');
         setCurrency('BRL');
@@ -133,6 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       hydrateFromSettings: async () => {
         const settings = await getSettings();
+        setUserName(settings.userName ?? null);
         setTheme(settings.theme);
         setLanguage(settings.language);
         setCurrency(settings.currency);
@@ -154,6 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hideFinancialValues,
       language,
       theme,
+      userName,
       usageType,
     ],
   );

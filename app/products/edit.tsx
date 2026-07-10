@@ -9,6 +9,7 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { QuickCreateRelation } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -46,6 +47,33 @@ function getCurrencyPrefix(currency: string) {
   return 'R$';
 }
 
+function getProductErrorMessage(error: unknown, fallback: string) {
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  switch (error.message) {
+    case 'PRODUCT_ID_MISSING':
+      return 'Produto nao informado.';
+    case 'PRODUCT_NOT_FOUND':
+      return 'Produto nao encontrado.';
+    case 'PRODUCT_LOAD_FAILED':
+      return 'Nao foi possivel carregar o produto.';
+    case 'PRODUCT_UPDATE_FAILED':
+      return 'Nao foi possivel salvar o produto.';
+    case 'PRODUCT_BARCODE_ALREADY_EXISTS':
+      return 'Ja existe um produto com este codigo de barras.';
+    case 'PRODUCT_SKU_ALREADY_EXISTS':
+      return 'Ja existe um produto com este SKU.';
+    case 'CATEGORY_NOT_FOUND':
+      return 'A categoria selecionada nao esta mais disponivel.';
+    case 'SUPPLIER_NOT_FOUND':
+      return 'O fornecedor selecionado nao esta mais disponivel.';
+    default:
+      return error.message;
+  }
+}
+
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
@@ -77,7 +105,7 @@ export default function ProductEditScreen() {
     void (async () => {
       if (!productId) {
         setLoading(false);
-        setError('PRODUCT_ID_MISSING');
+        setError('Produto nao informado.');
         return;
       }
 
@@ -88,7 +116,7 @@ export default function ProductEditScreen() {
           listSuppliers(),
         ]);
         if (!product) {
-          setError('PRODUCT_NOT_FOUND');
+          setError('Produto nao encontrado.');
           return;
         }
 
@@ -109,7 +137,7 @@ export default function ProductEditScreen() {
         setImageUri(product.imageUri ?? '');
         setNotes(product.notes ?? '');
       } catch {
-        setError('PRODUCT_LOAD_FAILED');
+        setError('Nao foi possivel carregar o produto.');
       } finally {
         setLoading(false);
       }
@@ -170,7 +198,7 @@ export default function ProductEditScreen() {
 
       router.replace(`/products/${productId}`);
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'PRODUCT_UPDATE_FAILED');
+      setActionError(getProductErrorMessage(nextError, 'Nao foi possivel salvar o produto.'));
     } finally {
       setSaving(false);
     }
@@ -259,6 +287,18 @@ export default function ProductEditScreen() {
           value={supplierId}
           options={[{ value: '', label: 'Sem fornecedor' }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
+        />
+        <QuickCreateRelation
+          disabled={saving}
+          onError={setActionError}
+          onCategoryCreated={(category) => {
+            setCategories((current) => [category, ...current]);
+            setCategoryId(category.id);
+          }}
+          onSupplierCreated={(supplier) => {
+            setSuppliers((current) => [supplier, ...current]);
+            setSupplierId(supplier.id);
+          }}
         />
       </AppCard>
 
