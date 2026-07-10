@@ -17,57 +17,57 @@ type Props = {
   onChange: (value: StockMovementType) => void;
 };
 
-const primaryOptions: MovementOption[] = [
+const mainOptions: MovementOption[] = [
   {
     value: 'in',
-    title: 'Entrada',
-    description: 'Aumenta o saldo do estoque.',
-    icon: 'arrow-up-circle-outline',
+    title: 'Entrou estoque',
+    description: 'Compra, reposicao ou saldo recebido.',
+    icon: 'add-circle-outline',
     accent: 'success',
     deltaLabel: '+ saldo',
   },
   {
     value: 'out',
-    title: 'Saída',
-    description: 'Reduz a quantidade disponível.',
-    icon: 'arrow-down-circle-outline',
+    title: 'Saiu estoque',
+    description: 'Venda, uso interno ou retirada.',
+    icon: 'remove-circle-outline',
     accent: 'warning',
     deltaLabel: '- saldo',
   },
 ];
 
-const secondaryOptions: MovementOption[] = [
+const supportOptions: MovementOption[] = [
   {
     value: 'return',
-    title: 'Devolução',
-    description: 'Reverte uma saída anterior.',
+    title: 'Devolucao',
+    description: 'Item voltou para o estoque.',
     icon: 'return-up-back-outline',
     accent: 'info',
-    deltaLabel: 'reentrada',
+    deltaLabel: '+ volta',
   },
   {
     value: 'loss',
-    title: 'Perda',
-    description: 'Baixa por avaria ou extravio.',
+    title: 'Perda ou avaria',
+    description: 'Baixa por dano, vencimento ou extravio.',
     icon: 'warning-outline',
     accent: 'danger',
-    deltaLabel: 'baixa',
+    deltaLabel: '- baixa',
   },
   {
     value: 'adjustment_positive',
-    title: 'Ajuste +',
-    description: 'Corrige o saldo para cima.',
-    icon: 'add-circle-outline',
+    title: 'Corrigir para cima',
+    description: 'Ajuste manual para aumentar saldo.',
+    icon: 'arrow-up-outline',
     accent: 'success',
-    deltaLabel: 'ajuste',
+    deltaLabel: '+ ajuste',
   },
   {
     value: 'adjustment_negative',
-    title: 'Ajuste -',
-    description: 'Corrige o saldo para baixo.',
-    icon: 'remove-circle-outline',
+    title: 'Corrigir para baixo',
+    description: 'Ajuste manual para reduzir saldo.',
+    icon: 'arrow-down-outline',
     accent: 'danger',
-    deltaLabel: 'ajuste',
+    deltaLabel: '- ajuste',
   },
 ];
 
@@ -76,61 +76,64 @@ export function MovementTypePicker({ value, onChange }: Props) {
 
   return (
     <View style={styles.root}>
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: palette.text }]}>Fluxo principal</Text>
-        <View style={styles.primaryGrid}>
-          {primaryOptions.map((option) => (
+      <View style={styles.mainGrid}>
+        {mainOptions.map((option) => {
+          const selected = value === option.value;
+
+          return (
             <Pressable
               key={option.value}
               onPress={() => onChange(option.value)}
               style={({ pressed }) => [
-                styles.optionCard,
+                styles.mainCard,
                 {
-                  backgroundColor: value === option.value ? palette.surfaceMuted : palette.surface,
-                  borderColor: value === option.value ? palette.primary : palette.border,
+                  backgroundColor: selected ? palette.surfaceMuted : palette.surface,
+                  borderColor: selected ? palette.primary : palette.border,
                 },
                 pressed ? styles.pressed : null,
               ]}
             >
-              <View style={[styles.iconShell, { backgroundColor: palette.background }]}>
-                <Ionicons name={option.icon} size={20} color={palette[option.accent]} />
-              </View>
-              <View style={styles.optionBody}>
-                <View style={styles.optionTitleRow}>
-                  <Text style={[styles.optionTitle, { color: palette.text }]}>{option.title}</Text>
-                  <Text style={[styles.deltaPill, { color: palette[option.accent], borderColor: palette[option.accent] }]}>{option.deltaLabel}</Text>
+              <View style={styles.optionHeader}>
+                <View style={[styles.iconShell, { backgroundColor: palette.background }]}>
+                  <Ionicons name={option.icon} size={22} color={palette[option.accent]} />
                 </View>
-                <Text style={[styles.optionDescription, { color: palette.textMuted }]}>{option.description}</Text>
+                <Text style={[styles.deltaPill, { color: palette[option.accent], borderColor: palette[option.accent] }]}>{option.deltaLabel}</Text>
               </View>
+              <Text style={[styles.mainTitle, { color: palette.text }]}>{option.title}</Text>
+              <Text style={[styles.description, { color: palette.textMuted }]}>{option.description}</Text>
             </Pressable>
-          ))}
-        </View>
+          );
+        })}
       </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: palette.text }]}>Ajustes rápidos</Text>
-        <View style={styles.secondaryGrid}>
-          {secondaryOptions.map((option) => (
-            <Pressable
-              key={option.value}
-              onPress={() => onChange(option.value)}
-              style={({ pressed }) => [
-                styles.secondaryCard,
-                {
-                  backgroundColor: value === option.value ? palette.surfaceMuted : palette.surface,
-                  borderColor: value === option.value ? palette.primary : palette.border,
-                },
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <View style={styles.secondaryHeader}>
-                <Ionicons name={option.icon} size={18} color={palette[option.accent]} />
-                <Text style={[styles.secondaryBadge, { color: palette[option.accent] }]}>{option.deltaLabel}</Text>
-              </View>
-              <Text style={[styles.secondaryTitle, { color: palette.text }]}>{option.title}</Text>
-              <Text style={[styles.secondaryDescription, { color: palette.textMuted }]}>{option.description}</Text>
-            </Pressable>
-          ))}
+      <View style={styles.supportBlock}>
+        <Text style={[styles.supportTitle, { color: palette.text }]}>Outras situacoes</Text>
+        <View style={styles.supportGrid}>
+          {supportOptions.map((option) => {
+            const selected = value === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => onChange(option.value)}
+                style={({ pressed }) => [
+                  styles.supportCard,
+                  {
+                    backgroundColor: selected ? palette.surfaceMuted : palette.surface,
+                    borderColor: selected ? palette.primary : palette.border,
+                  },
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <View style={styles.supportHeader}>
+                  <Ionicons name={option.icon} size={18} color={palette[option.accent]} />
+                  <Text style={[styles.supportDelta, { color: palette[option.accent] }]}>{option.deltaLabel}</Text>
+                </View>
+                <Text style={[styles.supportLabel, { color: palette.text }]}>{option.title}</Text>
+                <Text style={[styles.supportDescription, { color: palette.textMuted }]}>{option.description}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -141,41 +144,23 @@ const styles = StyleSheet.create({
   root: {
     gap: 14,
   },
-  section: {
-    gap: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  primaryGrid: {
-    gap: 10,
-  },
-  optionCard: {
+  mainGrid: {
     flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-    borderRadius: 20,
+    gap: 10,
+  },
+  mainCard: {
+    flex: 1,
+    minHeight: 138,
+    borderRadius: 18,
     borderWidth: 1,
     padding: 14,
+    gap: 8,
   },
-  optionBody: {
-    flex: 1,
-    gap: 4,
-  },
-  optionTitleRow: {
+  optionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  optionDescription: {
-    fontSize: 13,
-    lineHeight: 18,
+    gap: 8,
   },
   iconShell: {
     width: 42,
@@ -191,41 +176,49 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     fontSize: 11,
     fontWeight: '800',
-    textTransform: 'uppercase',
     overflow: 'hidden',
   },
-  secondaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  mainTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  description: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  supportBlock: {
     gap: 10,
   },
-  secondaryCard: {
-    width: '48%',
-    minWidth: 150,
-    flexGrow: 1,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-    gap: 8,
+  supportTitle: {
+    fontSize: 14,
+    fontWeight: '800',
   },
-  secondaryHeader: {
+  supportGrid: {
+    gap: 10,
+  },
+  supportCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+  },
+  supportHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
   },
-  secondaryBadge: {
+  supportDelta: {
     fontSize: 11,
     fontWeight: '800',
-    textTransform: 'uppercase',
   },
-  secondaryTitle: {
-    fontSize: 15,
+  supportLabel: {
+    fontSize: 14,
     fontWeight: '800',
   },
-  secondaryDescription: {
+  supportDescription: {
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   pressed: {
     opacity: 0.88,

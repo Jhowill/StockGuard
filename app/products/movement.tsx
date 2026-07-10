@@ -1,7 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
+import { MovementTypePicker } from '@/components/movement/MovementTypePicker';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -10,27 +12,42 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { MovementTypePicker } from '@/components/movement/MovementTypePicker';
-import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
-import { createStockMovement } from '@/services/stockMovementService';
-import { showRequiredStockSaveInterstitial } from '@/services/adsService';
-import { useCategories } from '@/hooks/useCategories';
-import { useProducts } from '@/hooks/useProducts';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
+import { useCategories } from '@/hooks/useCategories';
 import { useI18n } from '@/hooks/useI18n';
-import { parsePositiveNumber } from '@/utils/validators';
+import { useProducts } from '@/hooks/useProducts';
+import { showRequiredStockSaveInterstitial } from '@/services/adsService';
+import { createStockMovement } from '@/services/stockMovementService';
 import type { StockMovementType } from '@/types/stock';
+import { parsePositiveNumber } from '@/utils/validators';
 
 function getMovementDirection(type: StockMovementType) {
   return type === 'in' || type === 'return' || type === 'adjustment_positive' ? 1 : -1;
 }
 
+function getMovementActionText(type: StockMovementType) {
+  switch (type) {
+    case 'in':
+      return 'receber';
+    case 'return':
+      return 'receber de volta';
+    case 'loss':
+      return 'baixar';
+    case 'adjustment_positive':
+      return 'corrigir para cima em';
+    case 'adjustment_negative':
+      return 'corrigir para baixo em';
+    default:
+      return 'perder';
+  }
+}
+
 const movementLabels: Record<StockMovementType, string> = {
   in: 'Entrada',
-  out: 'Saída',
+  out: 'Saida',
   loss: 'Perda',
-  return: 'Devolução',
+  return: 'Devolucao',
   adjustment_positive: 'Ajuste +',
   adjustment_negative: 'Ajuste -',
   initial_balance: 'Saldo inicial',
@@ -63,7 +80,6 @@ export default function MovementScreen() {
   const direction = getMovementDirection(type);
   const movementImpact = direction * quantityToMove;
   const resultingQuantity = selectedProduct ? selectedProduct.quantity + movementImpact : null;
-
   const canSave = Boolean(selectedProduct && quantityToMove > 0 && !saving && (resultingQuantity == null || resultingQuantity >= 0));
 
   const handleSave = async () => {
@@ -72,7 +88,7 @@ export default function MovementScreen() {
     }
 
     if (!selectedProduct || !canSave) {
-      setError(resultingQuantity != null && resultingQuantity < 0 ? 'Saldo insuficiente para essa saída.' : 'Selecione um produto e informe uma quantidade válida.');
+      setError(resultingQuantity != null && resultingQuantity < 0 ? 'Saldo insuficiente para essa saida.' : 'Selecione um produto e informe uma quantidade valida.');
       return;
     }
 
@@ -95,7 +111,7 @@ export default function MovementScreen() {
       });
       router.replace(`/products/${selectedProduct.id}`);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Não foi possível salvar a movimentação.');
+      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a movimentacao.');
     } finally {
       setSaving(false);
     }
@@ -110,7 +126,7 @@ export default function MovementScreen() {
         onBackPress={() => router.back()}
         rightAction={
           <View style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
-            <Ionicons name="search" size={18} color={palette.text} />
+            <Ionicons name="swap-horizontal-outline" size={18} color={palette.text} />
           </View>
         }
       />
@@ -122,47 +138,86 @@ export default function MovementScreen() {
         tone="required"
       />
 
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Produto</AppCard.Title>
-        {loading ? (
-          <EmptyState title="Produtos" description="Carregando..." icon="cube-outline" />
-        ) : products.length === 0 ? (
-          <EmptyState
-            title="Produtos"
-            description="Nenhum produto cadastrado."
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>1. Produto</Text>
+        <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>Confirme qual item sera movimentado.</Text>
+      </View>
+
+      {selectedProduct ? (
+        <AppCard variant="hero" style={styles.selectedProductCard}>
+          <AppCard.Row
             icon="cube-outline"
-            actionLabel="Adicionar produto"
-            onActionPress={() => router.push('/products/new')}
-          />
-        ) : (
-          products.map((product) => (
-            <AppCard
-              key={product.id}
-              onPress={() => setSelectedProductId(product.id)}
-              variant={selectedProductId === product.id ? 'hero' : 'default'}
-            >
-              <AppCard.Row
-                icon="cube-outline"
-                title={product.name}
-                subtitle={categoryNames.get(product.categoryId ?? '') ?? product.unit}
-                trailing={<StatusBadge tone={product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success'} label={String(product.quantity)} />}
+            title={selectedProduct.name}
+            subtitle={categoryNames.get(selectedProduct.categoryId ?? '') ?? selectedProduct.unit}
+            trailing={
+              <StatusBadge
+                tone={selectedProduct.quantity === 0 ? 'danger' : selectedProduct.quantity <= selectedProduct.minQuantity ? 'warning' : 'success'}
+                label={`${selectedProduct.quantity} ${selectedProduct.unit}`}
               />
-            </AppCard>
-          ))
-        )}
-      </AppCard>
+            }
+          />
+        </AppCard>
+      ) : null}
+
+      {loading ? (
+        <EmptyState title="Produtos" description="Carregando..." icon="cube-outline" />
+      ) : products.length === 0 ? (
+        <EmptyState
+          title="Produtos"
+          description="Nenhum produto cadastrado."
+          icon="cube-outline"
+          actionLabel="Adicionar produto"
+          onActionPress={() => router.push('/products/new')}
+        />
+      ) : (
+        <AppCard style={{ gap: 12 }}>
+          <AppCard.Title>{selectedProduct ? 'Trocar produto' : 'Escolher produto'}</AppCard.Title>
+          <View style={styles.productList}>
+            {products.map((product) => {
+              const selected = selectedProductId === product.id;
+
+              return (
+                <Pressable
+                  key={product.id}
+                  onPress={() => setSelectedProductId(product.id)}
+                  style={({ pressed }) => [
+                    styles.productRow,
+                    {
+                      backgroundColor: selected ? palette.surfaceMuted : palette.surface,
+                      borderColor: selected ? palette.primary : palette.border,
+                    },
+                    pressed ? styles.pressed : null,
+                  ]}
+                >
+                  <AppCard.Row
+                    icon={selected ? 'checkmark-circle-outline' : 'cube-outline'}
+                    title={product.name}
+                    subtitle={categoryNames.get(product.categoryId ?? '') ?? product.unit}
+                    trailing={
+                      <StatusBadge
+                        tone={product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success'}
+                        label={String(product.quantity)}
+                      />
+                    }
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        </AppCard>
+      )}
+
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>2. O que aconteceu?</Text>
+        <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>Escolha pelo efeito real no saldo do estoque.</Text>
+      </View>
+
+      <MovementTypePicker value={type} onChange={setType} />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Tipo de movimentação</AppCard.Title>
-        <AppCard.Text>
-          Escolha o tipo pelo efeito no saldo. Os blocos em destaque ajudam a evitar erros de registro.
-        </AppCard.Text>
-        <MovementTypePicker value={type} onChange={setType} />
-      </AppCard>
-
-      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>3. Quantidade e detalhe</AppCard.Title>
         <AppInput
-          helperText="Aceita até 3 casas decimais."
+          helperText="Aceita ate 3 casas decimais."
           label="Quantidade"
           placeholder="0"
           keyboardType="decimal-pad"
@@ -171,20 +226,20 @@ export default function MovementScreen() {
           value={quantity}
           onChangeText={setQuantity}
         />
-        <AppInput label="Motivo" placeholder="Compra, devolução, perda..." value={reason} onChangeText={setReason} />
-        <AppInput label="Observação" placeholder="Digite uma observação" multiline value={notes} onChangeText={setNotes} />
+        <AppInput label="Motivo" placeholder="Compra, venda, perda, ajuste..." value={reason} onChangeText={setReason} />
+        <AppInput label="Observacao" placeholder="Digite uma observacao" multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 
       {selectedProduct ? (
-        <AppCard style={styles.summaryCard}>
-          <AppCard.Title>Resumo antes de salvar</AppCard.Title>
-        <View style={styles.summaryRow}>
+        <AppCard variant="hero" style={styles.summaryCard}>
+          <AppCard.Title>4. Previa do saldo</AppCard.Title>
+          <View style={styles.summaryRow}>
             <View style={styles.summaryBlock}>
               <AppCard.Text>Atual</AppCard.Text>
               <StatusBadge tone="info" label={String(selectedProduct.quantity)} />
             </View>
             <View style={styles.summaryBlock}>
-              <AppCard.Text>Movimento</AppCard.Text>
+              <AppCard.Text>Alteracao</AppCard.Text>
               <StatusBadge tone={movementImpact >= 0 ? 'success' : 'warning'} label={`${movementImpact >= 0 ? '+' : ''}${quantityToMove}`} />
             </View>
             <View style={styles.summaryBlock}>
@@ -197,7 +252,7 @@ export default function MovementScreen() {
           </View>
           <AppCard.Text>Tipo selecionado: {movementLabels[type]}</AppCard.Text>
           <AppCard.Text>
-            {selectedProduct.name} vai {movementImpact >= 0 ? 'receber' : 'perder'} {quantityToMove} {selectedProduct.unit}.
+            {selectedProduct.name} vai {getMovementActionText(type)} {quantityToMove} {selectedProduct.unit}.
           </AppCard.Text>
         </AppCard>
       ) : null}
@@ -208,13 +263,13 @@ export default function MovementScreen() {
         </AppCard>
       ) : null}
 
-      <AppButton label={saving ? '...' : 'Salvar'} disabled={!canSave} onPress={() => setConfirmSave(true)} />
+      <AppButton label={saving ? '...' : 'Salvar movimentacao'} disabled={!canSave} onPress={() => setConfirmSave(true)} />
       <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
 
       <ConfirmDialog
         visible={confirmSave}
-        title="Confirmar movimentação?"
-        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar. O anúncio obrigatório precisa terminar para concluir o salvamento."
+        title="Confirmar movimentacao?"
+        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar. O anuncio obrigatorio precisa terminar para concluir o salvamento."
         confirmLabel="Salvar"
         onCancel={() => setConfirmSave(false)}
         onConfirm={async () => {
@@ -227,6 +282,28 @@ export default function MovementScreen() {
 }
 
 const styles = StyleSheet.create({
+  sectionHeader: {
+    gap: 4,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  selectedProductCard: {
+    gap: 12,
+  },
+  productList: {
+    gap: 10,
+  },
+  productRow: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+  },
   summaryCard: {
     gap: 14,
   },
@@ -247,5 +324,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.88,
   },
 });
