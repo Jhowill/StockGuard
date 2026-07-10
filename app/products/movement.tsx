@@ -13,6 +13,7 @@ import { MovementTypePicker } from '@/components/movement/MovementTypePicker';
 import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { createStockMovement } from '@/services/stockMovementService';
 import { showRequiredStockSaveInterstitial } from '@/services/adsService';
+import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
@@ -39,6 +40,7 @@ export default function MovementScreen() {
   const { t } = useI18n();
   const { currency } = useAppState();
   const { products, loading } = useProducts();
+  const { categories } = useCategories();
   const [selectedProductId, setSelectedProductId] = useState(initialProductId);
   const [type, setType] = useState<StockMovementType>('in');
   const [quantity, setQuantity] = useState('1');
@@ -54,6 +56,7 @@ export default function MovementScreen() {
 
   const quantityToMove = parsePositiveNumber(quantity);
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
+  const categoryNames = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
   const direction = getMovementDirection(type);
   const movementImpact = direction * quantityToMove;
   const resultingQuantity = selectedProduct ? selectedProduct.quantity + movementImpact : null;
@@ -109,9 +112,15 @@ export default function MovementScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Produto</AppCard.Title>
         {loading ? (
-          <EmptyState title="Produtos" description="Carregando..." />
+          <EmptyState title="Produtos" description="Carregando..." icon="cube-outline" />
         ) : products.length === 0 ? (
-          <EmptyState title="Produtos" description="Nenhum produto cadastrado." actionLabel="Adicionar produto" onActionPress={() => router.push('/products/new')} />
+          <EmptyState
+            title="Produtos"
+            description="Nenhum produto cadastrado."
+            icon="cube-outline"
+            actionLabel="Adicionar produto"
+            onActionPress={() => router.push('/products/new')}
+          />
         ) : (
           products.map((product) => (
             <AppCard
@@ -122,7 +131,7 @@ export default function MovementScreen() {
               <AppCard.Row
                 icon="cube-outline"
                 title={product.name}
-                subtitle={product.categoryId ?? product.unit}
+                subtitle={categoryNames.get(product.categoryId ?? '') ?? product.unit}
                 trailing={<StatusBadge tone={product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success'} label={String(product.quantity)} />}
               />
             </AppCard>
@@ -140,6 +149,7 @@ export default function MovementScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppInput
+          helperText="Aceita até 3 casas decimais."
           label="Quantidade"
           placeholder="0"
           keyboardType="decimal-pad"
@@ -148,7 +158,7 @@ export default function MovementScreen() {
           value={quantity}
           onChangeText={setQuantity}
         />
-        <AppInput label="Motivo" placeholder="Selecione um motivo" value={reason} onChangeText={setReason} />
+        <AppInput label="Motivo" placeholder="Compra, devolução, perda..." value={reason} onChangeText={setReason} />
         <AppInput label="Observação" placeholder="Digite uma observação" multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 

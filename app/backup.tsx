@@ -100,7 +100,14 @@ export default function BackupScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('backup.create')}</AppCard.Title>
         <AppCard.Text>{t('backup.createBody')}</AppCard.Text>
-        <AppInput label="Senha opcional" secureTextEntry value={password} onChangeText={setPassword} placeholder="Preencha para criptografar" />
+        <AppInput
+          label="Senha opcional"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Preencha para criptografar"
+          helperText="Somente se quiser proteger o arquivo com senha."
+        />
         <AppButton label={busy ? '...' : 'Gerar backup simples'} disabled={busy} onPress={() => void handleCreate(false)} />
         <AppButton label={busy ? '...' : 'Gerar backup criptografado'} variant="secondary" disabled={busy || password.trim().length < 6} onPress={() => void handleCreate(true)} />
       </AppCard>
@@ -109,8 +116,8 @@ export default function BackupScreen() {
         <AppCard.Title>{t('backup.restore')}</AppCard.Title>
         <AppCard.Text>{t('backup.restoreBody')}</AppCard.Text>
         <AppButton label="Selecionar arquivo" variant="secondary" disabled={busy} onPress={() => void pickBackupFile()} />
-        <AppInput label="Caminho do arquivo" value={fileUri} onChangeText={setFileUri} />
-        <AppInput label="Senha do backup criptografado" secureTextEntry value={password} onChangeText={setPassword} />
+        <AppInput label="Caminho do arquivo" value={fileUri} onChangeText={setFileUri} helperText="Você também pode colar o caminho do arquivo aqui." />
+        <AppInput label="Senha do backup criptografado" secureTextEntry value={password} onChangeText={setPassword} helperText="Só é necessária para backups protegidos." />
         <AppButton
           label="Restaurar"
           variant="secondary"
@@ -119,15 +126,15 @@ export default function BackupScreen() {
         />
       </AppCard>
 
-      {success ? <EmptyState title="Backup" description={success} /> : null}
-      {actionError ? <ErrorState title="Backup" description={actionError} /> : null}
+      {success ? <EmptyState title="Backup" description={success} icon="checkmark-circle-outline" /> : null}
+      {actionError ? <ErrorState title="Backup" description={actionError} icon="archive-outline" /> : null}
 
       {loading ? (
         <LoadingState title="Backup" description="Carregando backups locais." />
       ) : error ? (
-        <ErrorState title="Backup" description={error} />
+        <ErrorState title="Backup" description={error} icon="archive-outline" />
       ) : backups.length === 0 ? (
-        <EmptyState title="Backup" description="Nenhum backup criado ainda." />
+        <EmptyState title="Backup" description="Nenhum backup criado ainda." icon="archive-outline" />
       ) : (
         backups.map((backup) => (
           <AppCard key={backup.id}>

@@ -86,13 +86,14 @@ export default function UnlockScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone="info" label="App bloqueado" />
-        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} />
+        <AppCard.Text>Digite o PIN ou use a biometria, se estiver configurada.</AppCard.Text>
+        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText="Somente números." placeholder="0000" />
         <AppButton label={busy ? '...' : 'Desbloquear com PIN'} disabled={busy} onPress={() => void handleUnlock()} />
         {biometricAvailable ? <AppButton label="Desbloquear com biometria" variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>
 
       {error ? (
-        <EmptyState title="Nao foi possivel desbloquear" description={error} />
+        <EmptyState title="Nao foi possivel desbloquear" description={error} icon="lock-closed-outline" />
       ) : null}
     </ScreenContainer>
   );

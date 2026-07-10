@@ -94,6 +94,7 @@ export default function PremiumScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Desbloquear recurso</AppCard.Title>
         <AppCard.Text>Escolha um recurso avancado para liberar por tempo ou uso limitado.</AppCard.Text>
+        <AppCard.Text>Toque em um item para destacá-lo e depois assista ao anúncio.</AppCard.Text>
         {features.map((feature) => (
           <AppButton
             key={feature.key}

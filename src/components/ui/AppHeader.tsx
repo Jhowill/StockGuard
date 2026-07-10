@@ -23,7 +23,7 @@ export function AppHeader({ title, subtitle, actionLabel, onActionPress, rightAc
       {rightAction ? (
         rightAction
       ) : actionLabel ? (
-        <Pressable onPress={onActionPress} hitSlop={8} style={styles.action}>
+        <Pressable onPress={onActionPress} hitSlop={8} style={[styles.action, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
           <Ionicons name="add" size={22} color={palette.primary} />
           <Text style={[styles.actionText, { color: palette.primary }]}>{actionLabel}</Text>
         </Pressable>
@@ -53,9 +53,14 @@ const styles = StyleSheet.create({
   action: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   actionText: {
     fontWeight: '700',
+    fontSize: 14,
   },
 });

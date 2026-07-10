@@ -102,22 +102,22 @@ export default function CategoriesScreen() {
         <AppCard.Title>{editingId ? 'Editar categoria' : 'Nova categoria'}</AppCard.Title>
         <AppCard.Text>Use este formulário para criar novas categorias ou editar a selecionada na lista abaixo.</AppCard.Text>
         {editingId ? <StatusBadge tone="info" label="Editando" /> : null}
-        <AppInput label="Nome" value={name} onChangeText={setName} />
-        <AppInput label="Cor" value={colorToken} onChangeText={setColorToken} />
-        <AppInput label="Icone" value={iconName} onChangeText={setIconName} />
-        <AppInput label="Ordem" keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
+        <AppInput label="Nome" placeholder="Ex.: Higiene" value={name} onChangeText={setName} />
+        <AppInput label="Cor" placeholder="#B7F34D" helperText="Opcional. Pode usar hex ou nome do token." value={colorToken} onChangeText={setColorToken} />
+        <AppInput label="Icone" placeholder="layers-outline" helperText="Use um nome válido do Ionicons." value={iconName} onChangeText={setIconName} />
+        <AppInput label="Ordem" helperText="Menor número aparece primeiro." keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
         <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label="Cancelar edicao" variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
-      {actionError ? <EmptyState title="Categorias" description={actionError} /> : null}
+      {actionError ? <EmptyState title="Categorias" description={actionError} icon="layers-outline" /> : null}
 
       {loading ? (
-        <EmptyState title="Categorias" description="Carregando..." />
+        <EmptyState title="Categorias" description="Carregando..." icon="layers-outline" />
       ) : error ? (
-        <EmptyState title="Categorias" description={error} />
+        <EmptyState title="Categorias" description={error} icon="layers-outline" />
       ) : categories.length === 0 ? (
-        <EmptyState title="Categorias" description="Nenhuma categoria cadastrada." />
+        <EmptyState title="Categorias" description="Nenhuma categoria cadastrada." icon="layers-outline" />
       ) : (
         categories.map((category) => (
           <AppCard key={category.id}>

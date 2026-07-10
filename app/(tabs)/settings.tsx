@@ -87,6 +87,7 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Aparencia</AppCard.Title>
+        <AppCard.Text>Escolha como o app deve se apresentar na sua rotina.</AppCard.Text>
         <StatusBadge tone="info" label={settings?.theme ?? '...'} />
         <AppButton label="Sistema" disabled={saving} variant={settings?.theme === 'system' ? 'primary' : 'ghost'} onPress={() => void safeSave({ theme: 'system' })} />
         <AppButton label="Claro" disabled={saving} variant={settings?.theme === 'light' ? 'primary' : 'ghost'} onPress={() => void safeSave({ theme: 'light' })} />
@@ -95,6 +96,7 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Idioma</AppCard.Title>
+        <AppCard.Text>Textos, atalhos e mensagens do sistema.</AppCard.Text>
         <StatusBadge tone="info" label={settings?.language ?? '...'} />
         <AppButton label="PT-BR" disabled={saving} variant={settings?.language === 'pt-BR' ? 'primary' : 'ghost'} onPress={() => void safeSave({ language: 'pt-BR' })} />
         <AppButton label="EN" disabled={saving} variant={settings?.language === 'en' ? 'primary' : 'ghost'} onPress={() => void safeSave({ language: 'en' })} />
@@ -103,6 +105,7 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Moeda</AppCard.Title>
+        <AppCard.Text>Usada nos campos de valores e nos relatórios.</AppCard.Text>
         <StatusBadge tone="success" label={settings?.currency ?? 'BRL'} />
         <AppButton label="BRL" disabled={saving} variant={settings?.currency === 'BRL' ? 'primary' : 'ghost'} onPress={() => void safeSave({ currency: 'BRL' })} />
         <AppButton label="USD" disabled={saving} variant={settings?.currency === 'USD' ? 'primary' : 'ghost'} onPress={() => void safeSave({ currency: 'USD' })} />
@@ -111,6 +114,7 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Seguranca</AppCard.Title>
+        <AppCard.Text>Proteja o acesso com PIN ou biometria.</AppCard.Text>
         <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? 'PIN ativo' : 'PIN desativado'} />
         <AppButton label={appLockEnabled ? 'Gerenciar PIN' : 'Ativar PIN'} onPress={() => router.push('/security/pin')} />
         <AppButton label={biometricUnlockEnabled ? 'Gerenciar biometria' : 'Ativar biometria'} variant="secondary" onPress={() => router.push('/security/biometric')} />
@@ -119,6 +123,7 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Dados</AppCard.Title>
+        <AppCard.Text>Backup, exportação e outras saídas de informação.</AppCard.Text>
         <AppButton label="Backup" variant="secondary" onPress={() => router.push('/backup')} />
         <AppButton label="Premium e recompensas" variant="ghost" onPress={() => router.push('/premium')} />
         <AppButton
@@ -156,8 +161,9 @@ export default function SettingsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Zona de perigo</AppCard.Title>
+        <AppCard.Text>Apenas se você quiser recomeçar do zero neste aparelho.</AppCard.Text>
         <AppCard.Text>Apaga produtos, movimentacoes, categorias, fornecedores, backups registrados e recompensas locais.</AppCard.Text>
-        <AppButton label="Apagar todos os dados" variant="secondary" disabled={saving} onPress={() => setDeleteStep(1)} />
+        <AppButton label="Apagar todos os dados" variant="danger" disabled={saving} onPress={() => setDeleteStep(1)} />
       </AppCard>
 
       <ConfirmDialog

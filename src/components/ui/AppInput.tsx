@@ -5,6 +5,8 @@ import { formatDecimalInput, formatIsoDateInput, formatMoneyInput } from '@/util
 
 type Props = TextInputProps & {
   label?: string;
+  helperText?: string;
+  errorText?: string;
   prefix?: string;
   mask?: 'money' | 'decimal' | 'date';
   maskOptions?: {
@@ -12,8 +14,9 @@ type Props = TextInputProps & {
   };
 };
 
-export function AppInput({ label, prefix, mask, maskOptions, onChangeText, style, ...props }: Props) {
+export function AppInput({ label, helperText, errorText, prefix, mask, maskOptions, onChangeText, style, multiline, ...props }: Props) {
   const { palette } = useAppTheme();
+  const hasError = Boolean(errorText);
   const handleChangeText: NonNullable<TextInputProps['onChangeText']> = (text) => {
     if (!onChangeText) {
       return;
@@ -40,30 +43,40 @@ export function AppInput({ label, prefix, mask, maskOptions, onChangeText, style
   return (
     <View style={styles.root}>
       {label ? <Text style={[styles.label, { color: palette.text }]}>{label}</Text> : null}
-      {prefix ? (
-        <View style={[styles.inputShell, { borderColor: palette.border, backgroundColor: palette.surface }]}>
+      <View
+        style={[
+          styles.inputShell,
+          {
+            borderColor: hasError ? palette.danger : palette.border,
+            backgroundColor: palette.surface,
+          },
+          multiline ? styles.inputShellMultiline : null,
+        ]}
+      >
+        {prefix ? (
           <View style={[styles.prefixBadge, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
             <Text style={[styles.prefixText, { color: palette.text }]}>{prefix}</Text>
           </View>
-          <TextInput
-            placeholderTextColor={palette.textMuted}
-            style={[styles.inputWithPrefix, { color: palette.text }, style]}
-            onChangeText={handleChangeText}
-            {...props}
-          />
-        </View>
-      ) : (
+        ) : null}
         <TextInput
           placeholderTextColor={palette.textMuted}
           style={[
             styles.input,
-            { borderColor: palette.border, backgroundColor: palette.surface, color: palette.text },
+            { color: palette.text },
+            prefix ? styles.inputWithPrefix : null,
+            multiline ? styles.multiline : null,
             style,
           ]}
+          multiline={multiline}
           onChangeText={handleChangeText}
           {...props}
         />
-      )}
+      </View>
+      {errorText ? (
+        <Text style={[styles.helper, { color: palette.danger }]}>{errorText}</Text>
+      ) : helperText ? (
+        <Text style={[styles.helper, { color: palette.textMuted }]}>{helperText}</Text>
+      ) : null}
     </View>
   );
 }
@@ -76,13 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  input: {
-    minHeight: 48,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
   inputShell: {
     minHeight: 48,
     borderRadius: 16,
@@ -93,10 +99,21 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     gap: 10,
   },
-  inputWithPrefix: {
+  inputShellMultiline: {
+    alignItems: 'stretch',
+    paddingVertical: 8,
+  },
+  input: {
     flex: 1,
     minHeight: 48,
     paddingVertical: 12,
+  },
+  inputWithPrefix: {},
+  multiline: {
+    minHeight: 96,
+    textAlignVertical: 'top',
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   prefixBadge: {
     minWidth: 52,
@@ -111,5 +128,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.3,
+  },
+  helper: {
+    fontSize: 12,
+    lineHeight: 17,
+    paddingHorizontal: 4,
   },
 });

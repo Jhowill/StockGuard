@@ -223,15 +223,17 @@ export default function ProductEditScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Organizacao</AppCard.Title>
-        <AppSelect label="Unidade" value={unit} options={unitOptions} onChange={setUnit} />
+        <AppSelect label="Unidade" helperText="Escolha como este item será medido no estoque." value={unit} options={unitOptions} onChange={setUnit} />
         <AppSelect
           label="Categoria"
+          helperText="Opcional. Ajuda a separar produtos por grupo."
           value={categoryId}
           options={[{ value: '', label: 'Sem categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setCategoryId}
         />
         <AppSelect
           label="Fornecedor"
+          helperText="Opcional. Você pode vincular depois."
           value={supplierId}
           options={[{ value: '', label: 'Sem fornecedor' }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
@@ -240,11 +242,12 @@ export default function ProductEditScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Estoque, valores e avancados</AppCard.Title>
-        <AppInput label="Estoque minimo" keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
+        <AppInput label="Estoque minimo" helperText="Usado para alertas de reposição." keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
         <AppInput
           label="Custo"
           prefix={getCurrencyPrefix(currency)}
           placeholder="0,00"
+          helperText={`Ex.: ${getCurrencyPrefix(currency)} 12,50`}
           keyboardType="decimal-pad"
           mask="money"
           value={costPrice}
@@ -254,12 +257,13 @@ export default function ProductEditScreen() {
           label="Venda"
           prefix={getCurrencyPrefix(currency)}
           placeholder="0,00"
+          helperText={`Ex.: ${getCurrencyPrefix(currency)} 19,90`}
           keyboardType="decimal-pad"
           mask="money"
           value={salePrice}
           onChangeText={setSalePrice}
         />
-        <AppInput label="Validade" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
+        <AppInput label="Validade" helperText="Digite no formato AAAA-MM-DD." placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
         <AppInput label="Lote" value={batchCode} onChangeText={setBatchCode} />
         <AppInput label="Localizacao" value={location} onChangeText={setLocation} />
         <AppInput label="Observacoes" multiline value={notes} onChangeText={setNotes} />

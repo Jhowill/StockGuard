@@ -9,7 +9,9 @@ import { MetricCard } from '@/components/ui/MetricCard';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { archiveProduct } from '@/database/repositories/productRepository';
+import { useCategories } from '@/hooks/useCategories';
 import { useProductDetail } from '@/hooks/useProductDetail';
+import { useSuppliers } from '@/hooks/useSuppliers';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
 import { formatMoney } from '@/utils/format';
@@ -19,16 +21,20 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useI18n();
   const { currency } = useAppState();
+  const { categories } = useCategories();
+  const { suppliers } = useSuppliers();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
   const { product, movements, loading, error } = useProductDetail(productId);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const categoryNames = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
+  const supplierNames = useMemo(() => new Map(suppliers.map((supplier) => [supplier.id, supplier.name])), [suppliers]);
 
   if (loading) {
     return (
       <ScreenContainer padded>
-        <EmptyState title={t('productDetail.title')} description="..." />
+        <EmptyState title={t('productDetail.title')} description="..." icon="cube-outline" />
       </ScreenContainer>
     );
   }
@@ -40,6 +46,7 @@ export default function ProductDetailScreen() {
         <EmptyState
           title={t('products.emptyTitle')}
           description={error ?? t('products.emptyBody')}
+          icon="cube-outline"
           actionLabel={t('common.back')}
           onActionPress={() => router.back()}
         />
@@ -58,10 +65,16 @@ export default function ProductDetailScreen() {
         <AppCard.Row
           icon="cube-outline"
           title={product.name}
-          subtitle={product.categoryId ?? product.location ?? product.unit}
+          subtitle={categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
           trailing={<StatusBadge tone={stockTone} label={product.status} />}
         />
         <AppCard.Text>{product.notes ?? t('home.noAlertsBody')}</AppCard.Text>
+        <AppCard.Text>
+          Categoria: {categoryNames.get(product.categoryId ?? '') ?? 'Sem categoria'}
+        </AppCard.Text>
+        <AppCard.Text>
+          Fornecedor: {supplierNames.get(product.supplierId ?? '') ?? 'Sem fornecedor'}
+        </AppCard.Text>
       </AppCard>
 
       <AppCard style={{ flexDirection: 'row', gap: 12 }}>
@@ -97,7 +110,7 @@ export default function ProductDetailScreen() {
       <AppButton label={t('productDetail.edit')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
       <AppButton
         label={t('common.archive')}
-        variant="ghost"
+        variant="danger"
         disabled={busy}
         onPress={() => setConfirmArchive(true)}
       />

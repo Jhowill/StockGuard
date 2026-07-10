@@ -9,28 +9,32 @@ export type SelectOption<T extends string> = {
 
 type Props<T extends string> = {
   label: string;
+  helperText?: string;
   value: T;
   options: Array<SelectOption<T>>;
   onChange: (value: T) => void;
 };
 
-export function AppSelect<T extends string>({ label, value, options, onChange }: Props<T>) {
+export function AppSelect<T extends string>({ label, helperText, value, options, onChange }: Props<T>) {
   const { palette } = useAppTheme();
 
   return (
     <View style={styles.root}>
       <Text style={[styles.label, { color: palette.text }]}>{label}</Text>
-      <View style={styles.options}>
-        {options.map((option) => (
-          <AppButton
-            key={option.value}
-            label={option.label}
-            variant={value === option.value ? 'primary' : 'ghost'}
-            style={styles.option}
-            onPress={() => onChange(option.value)}
-          />
-        ))}
+      <View style={[styles.shell, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+        <View style={styles.options}>
+          {options.map((option) => (
+            <AppButton
+              key={option.value}
+              label={option.label}
+              variant={value === option.value ? 'primary' : 'ghost'}
+              style={styles.option}
+              onPress={() => onChange(option.value)}
+            />
+          ))}
+        </View>
       </View>
+      {helperText ? <Text style={[styles.helper, { color: palette.textMuted }]}>{helperText}</Text> : null}
     </View>
   );
 }
@@ -43,6 +47,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  shell: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 6,
+  },
   options: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -51,5 +60,11 @@ const styles = StyleSheet.create({
   option: {
     minHeight: 42,
     flexGrow: 1,
+    flexBasis: 110,
+  },
+  helper: {
+    fontSize: 12,
+    lineHeight: 17,
+    paddingHorizontal: 4,
   },
 });

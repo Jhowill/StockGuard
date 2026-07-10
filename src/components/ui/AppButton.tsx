@@ -23,8 +23,8 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
       ? palette.surfaceMuted
       : isDanger
         ? palette.danger
-      : 'transparent';
-  const textColor = isDanger ? '#FFFFFF' : isPrimary ? palette.primaryText : palette.text;
+      : palette.surface;
+  const textColor = isDanger ? '#FFFFFF' : isPrimary ? palette.primaryText : isSecondary ? palette.text : palette.textMuted;
 
   return (
     <Pressable
@@ -34,8 +34,9 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
         styles.button,
         {
           backgroundColor,
-          borderColor: palette.border,
         },
+        variant === 'primary' && styles.primary,
+        variant === 'secondary' && styles.secondary,
         variant === 'danger' && styles.danger,
         variant === 'ghost' && styles.ghost,
         pressed ? styles.pressed : null,
@@ -57,10 +58,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
   },
-  ghost: {
-    backgroundColor: 'transparent',
+  primary: {
+    borderColor: 'transparent',
+  },
+  secondary: {
+    borderColor: 'transparent',
   },
   danger: {
+    borderColor: 'transparent',
+  },
+  ghost: {
     borderColor: 'transparent',
   },
   pressed: {

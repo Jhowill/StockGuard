@@ -79,11 +79,12 @@ export default function BiometricSecurityScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.biometricUnlockEnabled ? 'success' : 'info'} label={settings?.biometricUnlockEnabled ? 'Ativada' : 'Desativada'} />
         <StatusBadge tone={available ? 'success' : 'warning'} label={available ? 'Disponivel neste aparelho' : 'Nao disponivel'} />
+        <AppCard.Text>Quando ativada, a biometria facilita o desbloqueio sem digitar o PIN.</AppCard.Text>
         <AppButton label={busy ? '...' : 'Ativar biometria'} disabled={busy || !available} onPress={() => void enable()} />
         <AppButton label="Desativar biometria" variant="secondary" disabled={busy} onPress={() => void disable()} />
       </AppCard>
 
-      {error ? <EmptyState title="Seguranca" description={error} /> : null}
+      {error ? <EmptyState title="Seguranca" description={error} icon="finger-print-outline" /> : null}
     </ScreenContainer>
   );
 }

@@ -69,13 +69,14 @@ export default function PinSecurityScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? 'Ativado' : 'Desativado'} />
-        <AppInput label="Novo PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} />
-        <AppInput label="Confirmar PIN" secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} />
+        <AppCard.Text>Use um PIN numérico com pelo menos 4 dígitos.</AppCard.Text>
+        <AppInput label="Novo PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} helperText="Ex.: 1234" />
+        <AppInput label="Confirmar PIN" secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} helperText="Digite o mesmo PIN novamente." />
         <AppButton label={busy ? '...' : 'Salvar PIN'} disabled={busy} onPress={() => void save()} />
         <AppButton label="Remover PIN" variant="secondary" disabled={busy} onPress={() => void remove()} />
       </AppCard>
 
-      {error ? <EmptyState title="Seguranca" description={error} /> : null}
+      {error ? <EmptyState title="Seguranca" description={error} icon="lock-closed-outline" /> : null}
     </ScreenContainer>
   );
 }

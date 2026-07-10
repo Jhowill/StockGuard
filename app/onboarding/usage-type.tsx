@@ -26,6 +26,7 @@ export default function UsageTypeScreen() {
   return (
     <ScreenContainer scroll padded>
       <AppHeader title="Como voce usa o app?" subtitle="Isso ajuda a montar a experiencia inicial." />
+      <AppCard.Text>Escolha a rotina que mais se aproxima do seu uso real.</AppCard.Text>
 
       {options.map((option) => (
         <AppCard

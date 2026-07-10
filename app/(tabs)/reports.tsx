@@ -35,6 +35,7 @@ export default function ReportsScreen() {
   const [lockedFeature, setLockedFeature] = useState<PremiumFeature | undefined>();
   const { summary, loading, error, refresh } = useReports(period);
   const { canUseFeature } = useFeatureGate('csv_export');
+  const currentPeriodLabel = periods.find((item) => item.value === period)?.label ?? period;
 
   const unlockFeature = async (featureKey: PremiumFeature) => {
     setExporting(true);
@@ -95,16 +96,17 @@ export default function ReportsScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Periodo</AppCard.Title>
-        <AppCard.Text>{period}</AppCard.Text>
+        <AppCard.Text>Escolha o intervalo para resumir vendas, entradas e saídas.</AppCard.Text>
+        <StatusBadge tone="info" label={currentPeriodLabel} />
         {periods.map((item) => (
           <AppButton key={item.value} label={item.label} variant={period === item.value ? 'primary' : 'ghost'} onPress={() => setPeriod(item.value)} />
         ))}
       </AppCard>
 
       {loading ? (
-        <EmptyState title="Relatorios" description="Carregando..." />
+        <EmptyState title="Relatorios" description="Carregando..." icon="bar-chart-outline" />
       ) : error ? (
-        <EmptyState title="Relatorios" description={error} actionLabel="Tentar novamente" onActionPress={() => void refresh()} />
+        <EmptyState title="Relatorios" description={error} icon="bar-chart-outline" actionLabel="Tentar novamente" onActionPress={() => void refresh()} />
       ) : summary ? (
         <>
           <AppCard style={{ flexDirection: 'row', gap: 12 }}>
@@ -130,7 +132,7 @@ export default function ReportsScreen() {
                 />
               ))
             ) : (
-              <EmptyState title="Principais produtos" description="Sem dados para este periodo." />
+              <EmptyState title="Principais produtos" description="Sem dados para este periodo." icon="bar-chart-outline" />
             )}
           </AppCard>
 

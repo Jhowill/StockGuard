@@ -89,21 +89,21 @@ export default function SuppliersScreen() {
         <AppCard.Title>{editingId ? 'Editar fornecedor' : 'Novo fornecedor'}</AppCard.Title>
         <AppCard.Text>Toque em Novo para limpar o formulário ou em Editar para carregar os dados do item escolhido.</AppCard.Text>
         {editingId ? <StatusBadge tone="info" label="Editando" /> : null}
-        <AppInput label="Nome" value={name} onChangeText={setName} />
-        <AppInput label="Telefone" value={phone} onChangeText={setPhone} />
-        <AppInput label="E-mail" value={email} onChangeText={setEmail} />
+        <AppInput label="Nome" placeholder="Ex.: Distribuidora Alfa" value={name} onChangeText={setName} />
+        <AppInput label="Telefone" placeholder="(00) 00000-0000" helperText="Opcional. Use o contato principal." value={phone} onChangeText={setPhone} />
+        <AppInput label="E-mail" placeholder="contato@exemplo.com" helperText="Opcional. Ajuda no retorno rápido." value={email} onChangeText={setEmail} />
         <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label="Cancelar edicao" variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
-      {actionError ? <EmptyState title="Fornecedores" description={actionError} /> : null}
+      {actionError ? <EmptyState title="Fornecedores" description={actionError} icon="business-outline" /> : null}
 
       {loading ? (
-        <EmptyState title="Fornecedores" description="Carregando..." />
+        <EmptyState title="Fornecedores" description="Carregando..." icon="business-outline" />
       ) : error ? (
-        <EmptyState title="Fornecedores" description={error} />
+        <EmptyState title="Fornecedores" description={error} icon="business-outline" />
       ) : suppliers.length === 0 ? (
-        <EmptyState title="Fornecedores" description="Nenhum fornecedor cadastrado." />
+        <EmptyState title="Fornecedores" description="Nenhum fornecedor cadastrado." icon="business-outline" />
       ) : (
         suppliers.map((supplier) => (
           <AppCard key={supplier.id}>

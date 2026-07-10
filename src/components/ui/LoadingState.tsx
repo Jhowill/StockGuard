@@ -11,7 +11,9 @@ export function LoadingState({ title = 'Carregando...', description }: Props) {
 
   return (
     <View style={[styles.root, { borderColor: palette.border, backgroundColor: palette.surface }]}>
-      <ActivityIndicator color={palette.primary} />
+      <View style={[styles.spinnerShell, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+        <ActivityIndicator color={palette.primary} />
+      </View>
       <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
       {description ? <Text style={[styles.description, { color: palette.textMuted }]}>{description}</Text> : null}
     </View>
@@ -20,15 +22,24 @@ export function LoadingState({ title = 'Carregando...', description }: Props) {
 
 const styles = StyleSheet.create({
   root: {
-    gap: 10,
+    gap: 12,
     alignItems: 'center',
     borderRadius: 20,
     borderWidth: 1,
     padding: 20,
   },
+  spinnerShell: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 16,
     fontWeight: '800',
+    textAlign: 'center',
   },
   description: {
     textAlign: 'center',

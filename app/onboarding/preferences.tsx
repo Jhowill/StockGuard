@@ -22,6 +22,7 @@ export default function PreferencesScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Tema</AppCard.Title>
+        <AppCard.Text>Escolha o visual que fica mais confortável para trabalhar.</AppCard.Text>
         <StatusBadge tone="info" label={theme} />
         {(['system', 'light', 'dark'] as ThemeMode[]).map((mode) => (
           <AppButton
@@ -35,6 +36,7 @@ export default function PreferencesScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Idioma</AppCard.Title>
+        <AppCard.Text>Use o idioma que deixa os atalhos e mensagens mais claros.</AppCard.Text>
         <StatusBadge tone="info" label={language} />
         {(['system', 'pt-BR', 'en', 'es'] as AppLanguage[]).map((value) => (
           <AppButton
@@ -48,6 +50,7 @@ export default function PreferencesScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>Moeda</AppCard.Title>
+        <AppCard.Text>Ela será usada em produtos, relatórios e backups.</AppCard.Text>
         <StatusBadge tone="info" label={currency} />
         {(['BRL', 'USD', 'EUR'] as CurrencyCode[]).map((value) => (
           <AppButton
