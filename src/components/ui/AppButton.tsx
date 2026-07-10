@@ -24,7 +24,8 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
       : isDanger
         ? palette.danger
       : palette.surface;
-  const textColor = isDanger ? '#FFFFFF' : isPrimary ? palette.primaryText : isSecondary ? palette.text : palette.textMuted;
+  const textColor = isDanger ? '#FFFFFF' : isPrimary ? palette.primaryText : palette.text;
+  const borderColor = isPrimary || isDanger ? 'transparent' : palette.border;
 
   return (
     <Pressable
@@ -34,6 +35,7 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
         styles.button,
         {
           backgroundColor,
+          borderColor,
         },
         variant === 'primary' && styles.primary,
         variant === 'secondary' && styles.secondary,

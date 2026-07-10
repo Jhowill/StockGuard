@@ -24,10 +24,17 @@ import { formatMoney } from '@/utils/format';
 import type { ReportPeriod } from '@/services/reportService';
 import type { PremiumFeature } from '@/types/ads';
 
-const periods: Array<{ value: ReportPeriod; label: string }> = [
-  { value: 'today', label: 'Hoje' },
-  { value: 'week', label: '7 dias' },
-  { value: 'month', label: '30 dias' },
+const periodKeys: Record<ReportPeriod, string> = {
+  today: 'reports.today',
+  week: 'reports.week',
+  month: 'reports.month',
+  custom: 'reports.custom',
+};
+
+const periods: Array<{ value: ReportPeriod; labelKey: string }> = [
+  { value: 'today', labelKey: 'reports.today' },
+  { value: 'week', labelKey: 'reports.week' },
+  { value: 'month', labelKey: 'reports.month' },
 ];
 
 export default function ReportsScreen() {
@@ -40,7 +47,7 @@ export default function ReportsScreen() {
   const [lockedFeature, setLockedFeature] = useState<PremiumFeature | undefined>();
   const { summary, loading, error, refresh } = useReports(period);
   const { canUseFeature } = useFeatureGate('csv_export');
-  const currentPeriodLabel = periods.find((item) => item.value === period)?.label ?? period;
+  const currentPeriodLabel = t(periodKeys[period]);
 
   const unlockFeature = async (featureKey: PremiumFeature) => {
     setExporting(true);
@@ -53,7 +60,7 @@ export default function ReportsScreen() {
       await grantFeatureUnlock(featureKey);
       setLockedFeature(undefined);
     } catch (nextError) {
-      setExportError(nextError instanceof Error ? nextError.message : 'Nao foi possivel liberar o recurso.');
+      setExportError(nextError instanceof Error ? nextError.message : t('premium.featureFailed'));
     } finally {
       setExporting(false);
     }
@@ -82,7 +89,7 @@ export default function ReportsScreen() {
 
       await consumeFeatureUse(featureKey);
     } catch (nextError) {
-      setExportError(nextError instanceof Error ? nextError.message : 'Nao foi possivel exportar o relatorio.');
+      setExportError(nextError instanceof Error ? nextError.message : t('reports.exportError'));
     } finally {
       setExporting(false);
     }
@@ -97,12 +104,12 @@ export default function ReportsScreen() {
           <Ionicons name="bar-chart-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Resumo rapido do periodo</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Visualize entradas, saidas, lucro estimado e movimentos sem sair do app.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('reports.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('reports.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
           <StatusBadge tone="info" label={currentPeriodLabel} />
-          <StatusBadge tone="success" label={summary ? `${summary.movedProductsCount} itens` : '...'} />
+          <StatusBadge tone="success" label={summary ? t('products.items', { count: summary.movedProductsCount }) : '...'} />
         </View>
       </AppCard>
 
@@ -114,68 +121,68 @@ export default function ReportsScreen() {
       />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Periodo</AppCard.Title>
-        <AppCard.Text>Escolha o intervalo para resumir vendas, entradas e saidas.</AppCard.Text>
+        <AppCard.Title>{t('reports.period')}</AppCard.Title>
+        <AppCard.Text>{t('reports.periodBody')}</AppCard.Text>
         <AppSelect
-          label="Intervalo"
+          label={t('reports.interval')}
           value={period}
-          options={periods}
+          options={periods.map((item) => ({ value: item.value, label: t(item.labelKey) }))}
           disabled={exporting}
           onChange={setPeriod}
         />
       </AppCard>
 
       {loading ? (
-        <EmptyState title="Relatorios" description="Carregando..." icon="bar-chart-outline" />
+        <EmptyState title={t('reports.title')} description={t('common.loading')} icon="bar-chart-outline" />
       ) : error ? (
-        <EmptyState title="Relatorios" description={error} icon="bar-chart-outline" actionLabel="Tentar novamente" onActionPress={() => void refresh()} />
+        <EmptyState title={t('reports.title')} description={error} icon="bar-chart-outline" actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
       ) : summary ? (
         <>
           <View style={styles.metricRows}>
             <View style={styles.metricRow}>
-              <MetricCard compact label="Entradas" value={formatMoney(summary.entriesValueCents, currency)} />
-              <MetricCard compact label="Saidas" value={formatMoney(summary.exitsValueCents, currency)} />
+              <MetricCard compact label={t('reports.entries')} value={formatMoney(summary.entriesValueCents, currency)} />
+              <MetricCard compact label={t('reports.exits')} value={formatMoney(summary.exitsValueCents, currency)} />
             </View>
             <View style={styles.metricRow}>
-              <MetricCard compact label="Lucro estimado" value={formatMoney(summary.estimatedProfitCents ?? 0, currency)} />
-              <MetricCard compact label="Produtos" value={String(summary.movedProductsCount)} />
+              <MetricCard compact label={t('reports.profit')} value={formatMoney(summary.estimatedProfitCents ?? 0, currency)} />
+              <MetricCard compact label={t('reports.products')} value={String(summary.movedProductsCount)} />
             </View>
           </View>
 
           <AppCard style={{ gap: 12 }}>
-            <AppCard.Title>Principais produtos</AppCard.Title>
+            <AppCard.Title>{t('reports.topProducts')}</AppCard.Title>
             {summary.topProductsByQuantity.length > 0 ? (
               summary.topProductsByQuantity.map((product) => (
                 <AppCard.Row
                   key={product.productId}
                   icon="bar-chart-outline"
                   title={product.productName}
-                  subtitle={`${product.quantity} movimentacoes`}
+                  subtitle={t('reports.movementsCount', { count: product.quantity })}
                   trailing={<StatusBadge tone="info" label={String(product.quantity)} />}
                 />
               ))
             ) : (
-              <EmptyState title="Principais produtos" description="Sem dados para este periodo." icon="bar-chart-outline" />
+              <EmptyState title={t('reports.topProducts')} description={t('reports.topProductsEmpty')} icon="bar-chart-outline" />
             )}
           </AppCard>
 
           <AppCard style={{ gap: 12 }}>
             <AppCard.Title>{t('reports.overview')}</AppCard.Title>
             <AppCard.Text>{t('reports.overviewBody')}</AppCard.Text>
-            <AppButton label={exporting ? '...' : 'Exportar CSV'} variant="secondary" disabled={exporting} onPress={() => void exportReport('csv')} />
-            <AppButton label={exporting ? '...' : 'Gerar PDF'} disabled={exporting} onPress={() => void exportReport('pdf')} />
+            <AppButton label={exporting ? '...' : t('reports.exportCsv')} variant="secondary" disabled={exporting} onPress={() => void exportReport('csv')} />
+            <AppButton label={exporting ? '...' : t('reports.generatePdf')} disabled={exporting} onPress={() => void exportReport('pdf')} />
           </AppCard>
 
           {lockedFeature ? (
             <PremiumLock
-              title={lockedFeature === 'csv_export' ? 'CSV avancado bloqueado' : 'PDF avancado bloqueado'}
+              title={lockedFeature === 'csv_export' ? t('reports.csvLocked') : t('reports.pdfLocked')}
               description={lockedFeature === 'csv_export' ? t('ads.rewardBody') : t('ads.reportBody')}
               busy={exporting}
               onUnlock={() => void unlockFeature(lockedFeature)}
             />
           ) : null}
 
-          {exportError ? <ErrorState title="Exportacao" description={exportError} /> : null}
+          {exportError ? <ErrorState title={t('common.export')} description={exportError} /> : null}
         </>
       ) : null}
     </ScreenContainer>

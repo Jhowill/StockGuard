@@ -8,19 +8,21 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 import type { UsageType } from '@/types/settings';
 
-const options: Array<{ value: UsageType; label: string; description: string }> = [
-  { value: 'store', label: 'Loja', description: 'Vendas e reposicao de produtos.' },
-  { value: 'workshop', label: 'Oficina', description: 'Pecas, ferramentas e consumo.' },
-  { value: 'personal', label: 'Pessoal', description: 'Itens e organizacao domestica.' },
-  { value: 'service', label: 'Servico', description: 'Materiais usados em atendimento.' },
-  { value: 'other', label: 'Outro', description: 'Uso geral e personalizado.' },
+const options: Array<{ value: UsageType; labelKey: string; descriptionKey: string }> = [
+  { value: 'store', labelKey: 'onboarding.store', descriptionKey: 'onboarding.storeBody' },
+  { value: 'workshop', labelKey: 'onboarding.workshop', descriptionKey: 'onboarding.workshopBody' },
+  { value: 'personal', labelKey: 'onboarding.personal', descriptionKey: 'onboarding.personalBody' },
+  { value: 'service', labelKey: 'onboarding.service', descriptionKey: 'onboarding.serviceBody' },
+  { value: 'other', labelKey: 'onboarding.other', descriptionKey: 'onboarding.otherBody' },
 ];
 
 export default function UsageTypeScreen() {
   const { settings, saveSettings } = useSettings();
+  const { t } = useI18n();
   const { palette } = useAppTheme();
   const [selected, setSelected] = useState<UsageType>(settings?.usageType ?? 'other');
   const [saving, setSaving] = useState(false);
@@ -30,22 +32,22 @@ export default function UsageTypeScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Como voce usa o app?" subtitle="Isso ajuda a montar a experiencia inicial." variant="page" onBackPress={() => router.back()} />
+      <AppHeader title={t('onboarding.usageTitle')} subtitle={t('onboarding.usageSubtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="layers-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Escolha a rotina que mais combina com voce</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Essa escolha ajuda a montar o fluxo inicial do app sem alterar nenhuma função.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('onboarding.usageHeroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('onboarding.usageHeroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="info" label="Etapa 1 de 4" />
+          <StatusBadge tone="info" label={t('onboarding.step1')} />
         </View>
       </AppCard>
 
-      <AppCard.Text>Escolha a rotina que mais se aproxima do seu uso real.</AppCard.Text>
+      <AppCard.Text>{t('onboarding.usageBody')}</AppCard.Text>
 
       {options.map((option) => (
         <AppCard
@@ -53,12 +55,17 @@ export default function UsageTypeScreen() {
           onPress={() => setSelected(option.value)}
           variant={selected === option.value ? 'hero' : 'default'}
         >
-          <AppCard.Row icon="ellipse-outline" title={option.label} subtitle={option.description} trailing={<StatusBadge tone={selected === option.value ? 'success' : 'info'} label={selected === option.value ? 'Selecionado' : 'Escolher'} />} />
+          <AppCard.Row
+            icon="ellipse-outline"
+            title={t(option.labelKey)}
+            subtitle={t(option.descriptionKey)}
+            trailing={<StatusBadge tone={selected === option.value ? 'success' : 'info'} label={selected === option.value ? t('onboarding.selected') : t('onboarding.choose')} />}
+          />
         </AppCard>
       ))}
 
       <AppButton
-        label={saving ? '...' : 'Proximo'}
+        label={saving ? '...' : t('onboardingPrefs.next')}
         disabled={saving}
         onPress={async () => {
           if (!canContinue || saving) return;
@@ -69,14 +76,14 @@ export default function UsageTypeScreen() {
             await saveSettings({ usageType: selected });
             router.push('/onboarding/preferences');
           } catch {
-            setError('Nao foi possivel salvar esta etapa.');
+            setError(t('onboarding.usageSaveFailed'));
           } finally {
             setSaving(false);
           }
         }}
       />
       {error ? <AppCard><AppCard.Text>{error}</AppCard.Text></AppCard> : null}
-      <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
+      <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );
 }

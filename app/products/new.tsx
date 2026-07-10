@@ -26,16 +26,18 @@ import type { Category } from '@/types/category';
 import type { Supplier } from '@/types/supplier';
 import { parseMoneyToCents, parseNonNegativeNumber } from '@/utils/validators';
 
-const unitOptions: Array<{ value: ProductUnit; label: string }> = [
-  { value: 'unit', label: 'Unidade' },
-  { value: 'kg', label: 'Kg' },
-  { value: 'g', label: 'g' },
-  { value: 'l', label: 'L' },
-  { value: 'ml', label: 'ml' },
-  { value: 'box', label: 'Caixa' },
-  { value: 'pack', label: 'Pacote' },
-  { value: 'pair', label: 'Par' },
-];
+function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit; label: string }> {
+  return [
+    { value: 'unit', label: t('productNew.unitEach') },
+    { value: 'kg', label: 'Kg' },
+    { value: 'g', label: 'g' },
+    { value: 'l', label: 'L' },
+    { value: 'ml', label: 'ml' },
+    { value: 'box', label: t('productNew.unitBox') },
+    { value: 'pack', label: t('productNew.unitPack') },
+    { value: 'pair', label: t('productNew.unitPair') },
+  ];
+}
 
 function getCurrencyPrefix(currency: string) {
   if (currency === 'USD') {
@@ -49,20 +51,20 @@ function getCurrencyPrefix(currency: string) {
   return 'R$';
 }
 
-function getProductCreateErrorMessage(error: unknown) {
+function getProductCreateErrorMessage(error: unknown, t: (key: string) => string) {
   if (!(error instanceof Error)) {
-    return 'Nao foi possivel criar o produto.';
+    return t('productNew.createFailed');
   }
 
   switch (error.message) {
     case 'PRODUCT_BARCODE_ALREADY_EXISTS':
-      return 'Ja existe um produto com este codigo de barras.';
+      return t('productNew.barcodeExists');
     case 'PRODUCT_SKU_ALREADY_EXISTS':
-      return 'Ja existe um produto com este SKU.';
+      return t('productNew.skuExists');
     case 'CATEGORY_NOT_FOUND':
-      return 'A categoria selecionada nao esta mais disponivel.';
+      return t('productNew.categoryMissing');
     case 'SUPPLIER_NOT_FOUND':
-      return 'O fornecedor selecionado nao esta mais disponivel.';
+      return t('productNew.supplierMissing');
     default:
       return error.message;
   }
@@ -70,6 +72,7 @@ function getProductCreateErrorMessage(error: unknown) {
 
 export default function NewProductScreen() {
   const { t } = useI18n();
+  const unitOptions = useMemo(() => getUnitOptions(t), [t]);
   const { currency } = useAppState();
   const { palette } = useAppTheme();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -100,8 +103,8 @@ export default function NewProductScreen() {
         setCategories(nextCategories);
         setSuppliers(nextSuppliers);
       })
-      .catch(() => setError('Nao foi possivel carregar categorias e fornecedores.'));
-  }, []);
+      .catch(() => setError(t('productNew.loadRelationsFailed')));
+  }, [t]);
 
   const dirty = Boolean(name || sku || barcode || categoryId || supplierId || quantity !== '0' || minQuantity !== '0' || costPrice || salePrice || expirationDate || batchCode || location || imageUri || notes);
   const parsedQuantity = parseNonNegativeNumber(quantity);
@@ -112,7 +115,7 @@ export default function NewProductScreen() {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        setError('Permissao de imagens negada.');
+        setError(t('productNew.imageDenied'));
         return;
       }
 
@@ -124,7 +127,7 @@ export default function NewProductScreen() {
         setImageUri(result.assets[0]?.uri ?? '');
       }
     } catch {
-      setError('Nao foi possivel selecionar a imagem.');
+      setError(t('productNew.imageFailed'));
     }
   };
 
@@ -181,7 +184,7 @@ export default function NewProductScreen() {
 
       router.replace(`/products/${product.id}`);
     } catch (err) {
-      setError(getProductCreateErrorMessage(err));
+      setError(getProductCreateErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
@@ -198,9 +201,9 @@ export default function NewProductScreen() {
           <Pressable
             onPress={() => void handleSave()}
             hitSlop={10}
-            style={[styles.headerAction, { backgroundColor: '#B7F34D' }]}
+            style={[styles.headerAction, { backgroundColor: palette.primary }]}
           >
-            <Ionicons name="checkmark" size={20} color="#0B0F14" />
+            <Ionicons name="checkmark" size={20} color={palette.primaryText} />
           </Pressable>
         }
       />
@@ -213,15 +216,15 @@ export default function NewProductScreen() {
       />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Identificacao</AppCard.Title>
+        <AppCard.Title>{t('productNew.identification')}</AppCard.Title>
         <AppCard variant="hero" onPress={() => void pickImage()} style={styles.photoCard}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.photoImage} />
           ) : (
             <View style={[styles.photoPlaceholder, { backgroundColor: palette.background }]}>
               <Ionicons name="camera-outline" size={34} color={palette.primary} />
-              <Text style={[styles.photoTitle, { color: palette.text }]}>Adicionar foto</Text>
-              <Text style={[styles.photoSubtitle, { color: palette.textMuted }]}>Toque para escolher uma imagem da galeria.</Text>
+              <Text style={[styles.photoTitle, { color: palette.text }]}>{t('productNew.addPhoto')}</Text>
+              <Text style={[styles.photoSubtitle, { color: palette.textMuted }]}>{t('productNew.addPhotoBody')}</Text>
             </View>
           )}
         </AppCard>
@@ -231,20 +234,20 @@ export default function NewProductScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Organizacao</AppCard.Title>
-        <AppSelect label="Unidade" helperText="Escolha como este item será medido no estoque." value={unit} options={unitOptions} onChange={setUnit} />
+        <AppCard.Title>{t('productNew.organization')}</AppCard.Title>
+        <AppSelect label={t('productNew.unit')} helperText={t('productNew.unitHelper')} value={unit} options={unitOptions} onChange={setUnit} />
         <AppSelect
-          label="Categoria"
-          helperText="Opcional. Ajuda a separar produtos por grupo."
+          label={t('productNew.category')}
+          helperText={t('productNew.categoryHelper')}
           value={categoryId}
-          options={[{ value: '', label: 'Sem categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
+          options={[{ value: '', label: t('common.noCategory') }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setCategoryId}
         />
         <AppSelect
-          label="Fornecedor"
-          helperText="Opcional. Você pode vincular depois."
+          label={t('productNew.supplier')}
+          helperText={t('productNew.supplierHelper')}
           value={supplierId}
-          options={[{ value: '', label: 'Sem fornecedor' }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
+          options={[{ value: '', label: t('common.noSupplier') }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
         />
         <QuickCreateRelation
@@ -262,11 +265,11 @@ export default function NewProductScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Estoque e valores</AppCard.Title>
+        <AppCard.Title>{t('productNew.stockValues')}</AppCard.Title>
         <View style={styles.row}>
           <AppInput
             label={t('productNew.quantity')}
-            helperText="Aceita até 3 casas decimais."
+            helperText={t('productNew.decimalHelper')}
             keyboardType="decimal-pad"
             mask="decimal"
             maskOptions={{ maxFractionDigits: 3 }}
@@ -287,7 +290,7 @@ export default function NewProductScreen() {
         </View>
         <View style={styles.row}>
           <AppInput
-            label="Custo"
+            label={t('productNew.cost')}
             prefix={getCurrencyPrefix(currency)}
             placeholder="0,00"
             helperText={`Ex.: ${getCurrencyPrefix(currency)} 12,50`}
@@ -298,7 +301,7 @@ export default function NewProductScreen() {
             style={styles.flex}
           />
           <AppInput
-            label="Venda"
+            label={t('productNew.sale')}
             prefix={getCurrencyPrefix(currency)}
             placeholder="0,00"
             helperText={`Ex.: ${getCurrencyPrefix(currency)} 19,90`}
@@ -312,12 +315,12 @@ export default function NewProductScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Row icon="options-outline" title="Campos avancados" subtitle="Validade, lote, localizacao e observacoes." />
-        <AppButton label={advancedOpen ? 'Ocultar avancados' : 'Mostrar avancados'} variant="ghost" onPress={() => setAdvancedOpen((current) => !current)} />
+        <AppCard.Row icon="options-outline" title={t('productNew.advanced')} subtitle={t('productNew.advancedBody')} />
+        <AppButton label={advancedOpen ? t('productNew.hideAdvanced') : t('productNew.showAdvanced')} variant="ghost" onPress={() => setAdvancedOpen((current) => !current)} />
         {advancedOpen ? (
           <>
-            <AppInput label="Validade" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
-            <AppInput label="Lote" value={batchCode} onChangeText={setBatchCode} />
+            <AppInput label={t('productNew.expiration')} placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
+            <AppInput label={t('productNew.batch')} value={batchCode} onChangeText={setBatchCode} />
             <AppInput label={t('productNew.location')} placeholder="Gaveta A1" value={location} onChangeText={setLocation} />
             <AppInput label={t('productNew.notes')} placeholder={t('productNew.notesPlaceholder')} multiline value={notes} onChangeText={setNotes} />
           </>
@@ -331,9 +334,9 @@ export default function NewProductScreen() {
 
       <ConfirmDialog
         visible={confirmExit}
-        title="Descartar alteracoes?"
+        title={t('productNew.discardTitle')}
         message="Existem dados preenchidos neste produto. Se voltar agora, eles serao perdidos. Caso haja saldo inicial, o anuncio obrigatorio tambem precisara ser concluido para registrar o estoque."
-        confirmLabel="Descartar"
+        confirmLabel={t('productNew.discard')}
         danger
         onCancel={() => setConfirmExit(false)}
         onConfirm={() => router.back()}

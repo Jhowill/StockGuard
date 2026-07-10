@@ -34,9 +34,10 @@ export default function BackupScreen() {
   const [actionError, setActionError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const latestBackup = backups[0];
+
   const formatBackupLabel = (backup: { encrypted: boolean; format: string }) => {
     if (backup.encrypted) {
-      return 'Seguro';
+      return t('backup.secure');
     }
 
     return backup.format === 'json' ? 'JSON' : backup.format;
@@ -52,7 +53,7 @@ export default function BackupScreen() {
         setFileUri(result.assets[0]?.uri ?? '');
       }
     } catch {
-      setActionError('Nao foi possivel selecionar o arquivo.');
+      setActionError(t('backup.selectFailed'));
     }
   };
 
@@ -78,9 +79,9 @@ export default function BackupScreen() {
         await consumeFeatureUse('encrypted_backup');
       }
       setFileUri(result.fileUri);
-      setSuccess(encrypted ? 'Backup criptografado criado.' : 'Backup criado.');
+      setSuccess(encrypted ? t('backup.encryptedCreated') : t('backup.created'));
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel gerar o backup.');
+      setActionError(nextError instanceof Error ? nextError.message : t('backup.createFailed'));
     } finally {
       setBusy(false);
     }
@@ -96,10 +97,10 @@ export default function BackupScreen() {
     setSuccess(undefined);
     try {
       await restoreBackup(fileUri.trim(), password || undefined);
-      setSuccess('Backup restaurado com sucesso.');
+      setSuccess(t('backup.restored'));
       setRestoreStep(0);
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel restaurar o backup.');
+      setActionError(nextError instanceof Error ? nextError.message : t('backup.restoreFailed'));
     } finally {
       setBusy(false);
     }
@@ -110,65 +111,54 @@ export default function BackupScreen() {
       <AppHeader title={t('backup.title')} subtitle={t('backup.subtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
-        <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}
-        >
+        <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="archive-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Backup e restauracao em um bloco unico</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Mantenha arquivos locais organizados e prontos para recuperar se precisar.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('backup.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('backup.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone={latestBackup ? 'success' : 'info'} label={latestBackup ? 'Backup recente' : 'Sem backup ainda'} />
-          <StatusBadge tone="info" label={backups.length > 0 ? `${backups.length} arquivos` : '0 arquivos'} />
+          <StatusBadge tone={latestBackup ? 'success' : 'info'} label={latestBackup ? t('backup.recent') : t('backup.none')} />
+          <StatusBadge tone="info" label={t('backup.files', { count: backups.length })} />
         </View>
       </AppCard>
 
-      <AdPolicyNotice
-        title={t('ads.backupTitle')}
-        body={t('ads.backupBody')}
-        icon="lock-closed-outline"
-        tone="reward"
-      />
+      <AdPolicyNotice title={t('ads.backupTitle')} body={t('ads.backupBody')} icon="lock-closed-outline" tone="reward" />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('backup.create')}</AppCard.Title>
         <AppCard.Text>{t('backup.createBody')}</AppCard.Text>
         <AppInput
-          label="Senha opcional"
+          label={t('backup.optionalPassword')}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          placeholder="Preencha para criptografar"
-          helperText="Somente se quiser proteger o arquivo com senha."
+          placeholder={t('backup.passwordPlaceholder')}
+          helperText={t('backup.passwordHelper')}
         />
-        <AppButton label={busy ? '...' : 'Gerar backup simples'} disabled={busy} onPress={() => void handleCreate(false)} />
-        <AppButton label={busy ? '...' : 'Gerar backup criptografado'} variant="secondary" disabled={busy || password.trim().length < 6} onPress={() => void handleCreate(true)} />
+        <AppButton label={busy ? '...' : t('backup.simple')} disabled={busy} onPress={() => void handleCreate(false)} />
+        <AppButton label={busy ? '...' : t('backup.encrypted')} variant="secondary" disabled={busy || password.trim().length < 6} onPress={() => void handleCreate(true)} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('backup.restore')}</AppCard.Title>
         <AppCard.Text>{t('backup.restoreBody')}</AppCard.Text>
-        <AppButton label="Selecionar arquivo" variant="secondary" disabled={busy} onPress={() => void pickBackupFile()} />
-        <AppInput label="Caminho do arquivo" value={fileUri} onChangeText={setFileUri} helperText="Você também pode colar o caminho do arquivo aqui." />
-        <AppInput label="Senha do backup criptografado" secureTextEntry value={password} onChangeText={setPassword} helperText="Só é necessária para backups protegidos." />
-        <AppButton
-          label="Restaurar"
-          variant="secondary"
-          disabled={busy || !fileUri.trim()}
-          onPress={() => setRestoreStep(1)}
-        />
+        <AppButton label={t('backup.selectFile')} variant="secondary" disabled={busy} onPress={() => void pickBackupFile()} />
+        <AppInput label={t('backup.filePath')} value={fileUri} onChangeText={setFileUri} helperText={t('backup.filePathHelper')} />
+        <AppInput label={t('backup.encryptedPassword')} secureTextEntry value={password} onChangeText={setPassword} helperText={t('backup.encryptedPasswordHelper')} />
+        <AppButton label={t('backup.restore')} variant="secondary" disabled={busy || !fileUri.trim()} onPress={() => setRestoreStep(1)} />
       </AppCard>
 
-      {success ? <EmptyState title="Backup" description={success} icon="checkmark-circle-outline" /> : null}
-      {actionError ? <ErrorState title="Backup" description={actionError} icon="archive-outline" /> : null}
+      {success ? <EmptyState title={t('backup.title')} description={success} icon="checkmark-circle-outline" /> : null}
+      {actionError ? <ErrorState title={t('backup.title')} description={actionError} icon="archive-outline" /> : null}
 
       {loading ? (
-        <LoadingState title="Backup" description="Carregando backups locais." />
+        <LoadingState title={t('backup.title')} description={t('common.loading')} />
       ) : error ? (
-        <ErrorState title="Backup" description={error} icon="archive-outline" />
+        <ErrorState title={t('backup.title')} description={error} icon="archive-outline" />
       ) : backups.length === 0 ? (
-        <EmptyState title="Backup" description="Nenhum backup criado ainda." icon="archive-outline" />
+        <EmptyState title={t('backup.title')} description={t('backup.noBackups')} icon="archive-outline" />
       ) : (
         backups.map((backup) => (
           <AppCard key={backup.id}>
@@ -179,7 +169,7 @@ export default function BackupScreen() {
               trailing={<StatusBadge tone={backup.status === 'success' ? 'success' : 'danger'} label={formatBackupLabel(backup)} />}
             />
             <AppButton
-              label="Compartilhar"
+              label={t('common.share')}
               disabled={busy || !backup.fileUri}
               onPress={async () => {
                 if (!backup.fileUri) {
@@ -190,7 +180,7 @@ export default function BackupScreen() {
                 try {
                   await shareBackup(backup.fileUri);
                 } catch (nextError) {
-                  setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel compartilhar o backup.');
+                  setActionError(nextError instanceof Error ? nextError.message : t('backup.shareFailed'));
                 } finally {
                   setBusy(false);
                 }
@@ -202,18 +192,18 @@ export default function BackupScreen() {
 
       <ConfirmDialog
         visible={restoreStep === 1}
-        title="Restaurar backup?"
-        message="Esta acao pode substituir produtos, movimentacoes, categorias e configuracoes atuais. Um backup automatico sera criado antes."
-        confirmLabel="Continuar"
+        title={t('backup.restoreTitle')}
+        message={t('backup.restoreConfirm')}
+        confirmLabel={t('common.continue')}
         danger
         onCancel={() => setRestoreStep(0)}
         onConfirm={() => setRestoreStep(2)}
       />
       <ConfirmDialog
         visible={restoreStep === 2}
-        title="Confirmacao final"
-        message="Confirme novamente para restaurar. Arquivos invalidos serao recusados antes de alterar o banco."
-        confirmLabel="Restaurar agora"
+        title={t('backup.finalTitle')}
+        message={t('backup.finalBody')}
+        confirmLabel={t('backup.restoreNow')}
         danger
         onCancel={() => setRestoreStep(0)}
         onConfirm={() => void handleRestore()}

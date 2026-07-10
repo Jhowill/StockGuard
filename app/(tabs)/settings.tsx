@@ -16,11 +16,13 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 import { useAppState, type AppLanguage, type CurrencyCode, type ThemeMode } from '@/state/app-state';
 import { deleteAllUserData } from '@/services/dataService';
 
 export default function SettingsScreen() {
+  const { t } = useI18n();
   const { settings, loading, error, saveSettings } = useSettings();
   const { appLockEnabled, biometricUnlockEnabled, hideFinancialValues } = useAppState();
   const { palette } = useAppTheme();
@@ -49,7 +51,7 @@ export default function SettingsScreen() {
     try {
       await saveSettings(input);
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a configuracao.');
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -84,7 +86,7 @@ export default function SettingsScreen() {
         lastBackupAt: null,
       });
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel apagar os dados.');
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.deleteFailed'));
     } finally {
       setSaving(false);
     }
@@ -92,15 +94,15 @@ export default function SettingsScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Configuracoes" subtitle="Tema, idioma, seguranca, backup e dados." />
+      <AppHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="settings-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Tudo centralizado para personalizar o app</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Ajuste aparencia, idioma, moeda, seguranca e backups em um so lugar.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('settings.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('settings.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
           <StatusBadge tone="info" label={currentTheme} />
@@ -110,19 +112,19 @@ export default function SettingsScreen() {
       </AppCard>
 
       {loading ? (
-        <LoadingState title="Configuracoes" description="Carregando preferencias." />
+        <LoadingState title={t('settings.title')} description={t('common.loading')} />
       ) : error ? (
-        <ErrorState title="Configuracoes" description={error} />
+        <ErrorState title={t('settings.title')} description={error} />
       ) : null}
 
-      {actionError ? <ErrorState title="Configuracoes" description={actionError} /> : null}
+      {actionError ? <ErrorState title={t('settings.title')} description={actionError} /> : null}
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Perfil</AppCard.Title>
-        <AppCard.Text>Defina como a Home deve chamar voce. Deixe em branco para usar uma saudacao neutra.</AppCard.Text>
+        <AppCard.Title>{t('settings.profile')}</AppCard.Title>
+        <AppCard.Text>{t('settings.profileBody')}</AppCard.Text>
         <AppInput
-          label="Nome exibido na Home"
-          placeholder="Ex.: Joao"
+          label={t('settings.homeName')}
+          placeholder={t('settings.homeNamePlaceholder')}
           value={profileName}
           editable={!saving}
           onChangeText={setProfileName}
@@ -136,15 +138,15 @@ export default function SettingsScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Aparencia</AppCard.Title>
-        <AppCard.Text>Escolha como o app deve se apresentar na sua rotina.</AppCard.Text>
+        <AppCard.Title>{t('settings.appearance')}</AppCard.Title>
+        <AppCard.Text>{t('settings.appearanceBody')}</AppCard.Text>
         <AppSelect
-          label="Tema"
+          label={t('settings.theme')}
           value={currentTheme}
           options={[
-            { value: 'system', label: 'Sistema' },
-            { value: 'light', label: 'Claro' },
-            { value: 'dark', label: 'Escuro' },
+            { value: 'system', label: t('settings.themeSystem') },
+            { value: 'light', label: t('settings.themeLight') },
+            { value: 'dark', label: t('settings.themeDark') },
           ]}
           disabled={saving}
           onChange={(value) => void safeSave({ theme: value })}
@@ -152,10 +154,10 @@ export default function SettingsScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Idioma</AppCard.Title>
-        <AppCard.Text>Textos, atalhos e mensagens do sistema.</AppCard.Text>
+        <AppCard.Title>{t('settings.language')}</AppCard.Title>
+        <AppCard.Text>{t('settings.languageBody')}</AppCard.Text>
         <AppSelect
-          label="Idioma"
+          label={t('settings.language')}
           value={currentLanguage}
           options={[
             { value: 'system', label: 'Sistema' },
@@ -169,10 +171,10 @@ export default function SettingsScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Moeda</AppCard.Title>
-        <AppCard.Text>Usada nos campos de valores e nos relatorios.</AppCard.Text>
+        <AppCard.Title>{t('settings.currency')}</AppCard.Title>
+        <AppCard.Text>{t('settings.currencyBody')}</AppCard.Text>
         <AppSelect
-          label="Moeda"
+          label={t('settings.currency')}
           value={currentCurrency}
           options={[
             { value: 'BRL', label: 'BRL' },
@@ -185,21 +187,21 @@ export default function SettingsScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Seguranca</AppCard.Title>
-        <AppCard.Text>Proteja o acesso com PIN ou biometria.</AppCard.Text>
-        <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? 'PIN ativo' : 'PIN desativado'} />
-        <AppButton label={appLockEnabled ? 'Gerenciar PIN' : 'Ativar PIN'} onPress={() => router.push('/security/pin')} />
-        <AppButton label={biometricUnlockEnabled ? 'Gerenciar biometria' : 'Ativar biometria'} variant="secondary" onPress={() => router.push('/security/biometric')} />
-        <AppButton label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'} disabled={saving} variant="ghost" onPress={() => void safeSave({ hideFinancialValues: !hideFinancialValues })} />
+        <AppCard.Title>{t('settings.security')}</AppCard.Title>
+        <AppCard.Text>{t('settings.securityBody')}</AppCard.Text>
+        <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? t('settings.pinActive') : t('settings.pinInactive')} />
+        <AppButton label={appLockEnabled ? t('settings.managePin') : t('settings.enablePin')} onPress={() => router.push('/security/pin')} />
+        <AppButton label={biometricUnlockEnabled ? t('settings.manageBiometric') : t('settings.enableBiometric')} variant="secondary" onPress={() => router.push('/security/biometric')} />
+        <AppButton label={hideFinancialValues ? t('settings.showValues') : t('settings.hideValues')} disabled={saving} variant="ghost" onPress={() => void safeSave({ hideFinancialValues: !hideFinancialValues })} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Dados</AppCard.Title>
-        <AppCard.Text>Backup, exportacao e outras saidas de informacao.</AppCard.Text>
-        <AppButton label="Backup" variant="secondary" onPress={() => router.push('/backup')} />
-        <AppButton label="Premium e recompensas" variant="ghost" onPress={() => router.push('/premium')} />
+        <AppCard.Title>{t('settings.data')}</AppCard.Title>
+        <AppCard.Text>{t('settings.dataBody')}</AppCard.Text>
+        <AppButton label={t('settings.backup')} variant="secondary" onPress={() => router.push('/backup')} />
+        <AppButton label={t('settings.premium')} variant="ghost" onPress={() => router.push('/premium')} />
         <AppButton
-          label="Redefinir preferencias"
+          label={t('settings.resetPreferences')}
           variant="ghost"
           onPress={() =>
             void safeSave({
@@ -218,41 +220,38 @@ export default function SettingsScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Ads</AppCard.Title>
-        <AppCard.Text>
-          Pronto para receber IDs via app.config/app.json extra: EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
-          EXPO_PUBLIC_ADMOB_IOS_APP_ID e unidades rewarded.
-        </AppCard.Text>
-        <StatusBadge tone={adsConfig.enabled ? 'success' : 'info'} label={adsConfig.enabled ? 'Ads configurado' : 'Ads aguardando IDs'} />
+        <AppCard.Title>{t('settings.ads')}</AppCard.Title>
+        <AppCard.Text>{t('settings.adsBody')}</AppCard.Text>
+        <StatusBadge tone={adsConfig.enabled ? 'success' : 'info'} label={adsConfig.enabled ? t('settings.adsConfigured') : t('settings.adsWaiting')} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Sobre</AppCard.Title>
-        <AppCard.Text>Versao {Application.nativeApplicationVersion ?? '0.1.0'} ({Application.nativeBuildVersion ?? 'dev'})</AppCard.Text>
-        <AppCard.Text>Politica de privacidade e termos de uso devem ser publicados antes da loja. Nenhum dado e enviado para servidor nesta V1 offline.</AppCard.Text>
+        <AppCard.Title>{t('settings.about')}</AppCard.Title>
+        <AppCard.Text>{t('settings.version', { version: Application.nativeApplicationVersion ?? '0.1.0', build: Application.nativeBuildVersion ?? 'dev' })}</AppCard.Text>
+        <AppCard.Text>{t('settings.privacyNote')}</AppCard.Text>
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Zona de perigo</AppCard.Title>
-        <AppCard.Text>Apenas se voce quiser recomeçar do zero neste aparelho.</AppCard.Text>
-        <AppCard.Text>Apaga produtos, movimentacoes, categorias, fornecedores, backups registrados e recompensas locais.</AppCard.Text>
-        <AppButton label="Apagar todos os dados" variant="danger" disabled={saving} onPress={() => setDeleteStep(1)} />
+        <AppCard.Title>{t('settings.dangerZone')}</AppCard.Title>
+        <AppCard.Text>{t('settings.dangerBody')}</AppCard.Text>
+        <AppCard.Text>{t('settings.dangerDetails')}</AppCard.Text>
+        <AppButton label={t('settings.deleteAll')} variant="danger" disabled={saving} onPress={() => setDeleteStep(1)} />
       </AppCard>
 
       <ConfirmDialog
         visible={deleteStep === 1}
-        title="Apagar todos os dados?"
-        message="Esta acao remove dados operacionais deste aparelho. Faca um backup antes se quiser preservar o estoque."
-        confirmLabel="Continuar"
+        title={t('settings.deleteTitle')}
+        message={t('settings.deleteBody')}
+        confirmLabel={t('common.continue')}
         danger
         onCancel={() => setDeleteStep(0)}
         onConfirm={() => setDeleteStep(2)}
       />
       <ConfirmDialog
         visible={deleteStep === 2}
-        title="Confirmacao final"
-        message="Confirme novamente. Depois de apagar, a recuperacao so sera possivel com um backup valido."
-        confirmLabel="Apagar agora"
+        title={t('settings.finalConfirm')}
+        message={t('settings.finalDeleteBody')}
+        confirmLabel={t('settings.deleteNow')}
         danger
         onCancel={() => setDeleteStep(0)}
         onConfirm={() => void handleDeleteAll()}

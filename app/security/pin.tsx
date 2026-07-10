@@ -10,11 +10,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 import { clearPin, setPin } from '@/services/securityService';
 
 export default function PinSecurityScreen() {
   const { settings, saveSettings } = useSettings();
+  const { t } = useI18n();
   const { palette } = useAppTheme();
   const [pin, setPinValue] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -27,12 +29,12 @@ export default function PinSecurityScreen() {
     }
 
     if (pin.trim().length < 4) {
-      setError('O PIN precisa ter pelo menos 4 digitos.');
+      setError(t('securityFlow.pinShort'));
       return;
     }
 
     if (pin.trim() !== confirmPin.trim()) {
-      setError('Os PINs nao conferem.');
+      setError(t('securityFlow.pinMismatch'));
       return;
     }
 
@@ -43,7 +45,7 @@ export default function PinSecurityScreen() {
       await saveSettings({ appLockEnabled: true });
       router.back();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar o PIN.');
+      setError(nextError instanceof Error ? nextError.message : t('securityFlow.pinSaveFailed'));
     } finally {
       setBusy(false);
     }
@@ -61,7 +63,7 @@ export default function PinSecurityScreen() {
       await saveSettings({ appLockEnabled: false, biometricUnlockEnabled: false });
       router.back();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel remover o PIN.');
+      setError(nextError instanceof Error ? nextError.message : t('securityFlow.pinRemoveFailed'));
     } finally {
       setBusy(false);
     }
@@ -69,28 +71,28 @@ export default function PinSecurityScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="PIN" subtitle="Configure a trava principal do app." variant="page" onBackPress={() => router.back()} />
+      <AppHeader title="PIN" subtitle={t('securityFlow.pinSubtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="lock-closed-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Crie uma senha rapida e direta para o acesso</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>O PIN protege o app com uma camada simples e facil de lembrar.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('securityFlow.pinHeroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('securityFlow.pinHeroBody')}</Text>
         </View>
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? 'Ativado' : 'Desativado'} />
-        <AppCard.Text>Use um PIN numérico com pelo menos 4 dígitos.</AppCard.Text>
-        <AppInput label="Novo PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} helperText="Ex.: 1234" />
-        <AppInput label="Confirmar PIN" secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} helperText="Digite o mesmo PIN novamente." />
-        <AppButton label={busy ? '...' : 'Salvar PIN'} disabled={busy} onPress={() => void save()} />
-        <AppButton label="Remover PIN" variant="secondary" disabled={busy} onPress={() => void remove()} />
+        <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? t('securityFlow.enabled') : t('securityFlow.disabled')} />
+        <AppCard.Text>{t('securityFlow.pinBody')}</AppCard.Text>
+        <AppInput label={t('securityFlow.newPin')} secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} helperText="Ex.: 1234" />
+        <AppInput label={t('securityFlow.confirmPin')} secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} helperText={t('securityFlow.confirmPinHelper')} />
+        <AppButton label={busy ? '...' : t('securityFlow.savePin')} disabled={busy} onPress={() => void save()} />
+        <AppButton label={t('securityFlow.removePin')} variant="secondary" disabled={busy} onPress={() => void remove()} />
       </AppCard>
 
-      {error ? <EmptyState title="Seguranca" description={error} icon="lock-closed-outline" /> : null}
+      {error ? <EmptyState title={t('settings.security')} description={error} icon="lock-closed-outline" /> : null}
     </ScreenContainer>
   );
 }

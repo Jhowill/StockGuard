@@ -10,10 +10,12 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/state/app-state';
 import { authenticateWithBiometric, canUseBiometricUnlock, isBiometricEnabled, verifyPin } from '@/services/securityService';
 
 export default function UnlockScreen() {
+  const { t } = useI18n();
   const { unlockApp, biometricUnlockEnabled } = useAppState();
   const { palette } = useAppTheme();
   const [pin, setPin] = useState('');
@@ -39,7 +41,7 @@ export default function UnlockScreen() {
     }
 
     if (!pin.trim()) {
-      setError('Digite o PIN para continuar.');
+      setError(t('securityFlow.pinRequired'));
       return;
     }
 
@@ -48,14 +50,14 @@ export default function UnlockScreen() {
     try {
       const ok = await verifyPin(pin.trim());
       if (!ok) {
-        setError('PIN incorreto.');
+        setError(t('securityFlow.pinWrong'));
         return;
       }
 
       unlockApp();
       router.replace('/(tabs)');
     } catch {
-      setError('Nao foi possivel validar o PIN agora.');
+      setError(t('securityFlow.pinValidateFailed'));
     } finally {
       setBusy(false);
     }
@@ -71,14 +73,14 @@ export default function UnlockScreen() {
     try {
       const result = await authenticateWithBiometric();
       if (!result.success) {
-        setError('Nao foi possivel autenticar com biometria.');
+        setError(t('securityFlow.biometricAuthFailed'));
         return;
       }
 
       unlockApp();
       router.replace('/(tabs)');
     } catch {
-      setError('Nao foi possivel autenticar com biometria.');
+      setError(t('securityFlow.biometricAuthFailed'));
     } finally {
       setBusy(false);
     }
@@ -86,33 +88,31 @@ export default function UnlockScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Desbloquear" subtitle="Proteja seu estoque com PIN ou biometria." />
+      <AppHeader title={t('securityFlow.unlockTitle')} subtitle={t('securityFlow.unlockSubtitle')} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="lock-closed-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Acesso protegido ao seu estoque</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Use PIN ou biometria para liberar o app com rapidez e segurança.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('securityFlow.unlockHeroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('securityFlow.unlockHeroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="info" label="App bloqueado" />
-          <StatusBadge tone={biometricAvailable ? 'success' : 'warning'} label={biometricAvailable ? 'Biometria pronta' : 'Biometria indisponivel'} />
+          <StatusBadge tone="info" label={t('securityFlow.appLocked')} />
+          <StatusBadge tone={biometricAvailable ? 'success' : 'warning'} label={biometricAvailable ? t('securityFlow.biometricReady') : t('securityFlow.biometricUnavailable')} />
         </View>
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <StatusBadge tone="info" label="App bloqueado" />
-        <AppCard.Text>Digite o PIN ou use a biometria, se estiver configurada.</AppCard.Text>
-        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText="Somente numeros." placeholder="0000" />
-        <AppButton label={busy ? '...' : 'Desbloquear com PIN'} disabled={busy} onPress={() => void handleUnlock()} />
-        {biometricAvailable ? <AppButton label="Desbloquear com biometria" variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
+        <StatusBadge tone="info" label={t('securityFlow.appLocked')} />
+        <AppCard.Text>{t('securityFlow.unlockBody')}</AppCard.Text>
+        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText={t('securityFlow.pinHelper')} placeholder="0000" />
+        <AppButton label={busy ? '...' : t('securityFlow.unlockPin')} disabled={busy} onPress={() => void handleUnlock()} />
+        {biometricAvailable ? <AppButton label={t('securityFlow.unlockBiometric')} variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>
 
-      {error ? (
-        <EmptyState title="Nao foi possivel desbloquear" description={error} icon="lock-closed-outline" />
-      ) : null}
+      {error ? <EmptyState title={t('securityFlow.unlockFailed')} description={error} icon="lock-closed-outline" /> : null}
     </ScreenContainer>
   );
 }

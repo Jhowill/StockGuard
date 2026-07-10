@@ -8,56 +8,58 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAlerts } from '@/hooks/useAlerts';
+import { useI18n } from '@/hooks/useI18n';
 
-function getAlertLabel(kind: string) {
+function getAlertLabel(kind: string, t: (key: string) => string) {
   switch (kind) {
     case 'zero':
-      return 'Sem estoque';
+      return t('alerts.zero');
     case 'low':
-      return 'Baixo estoque';
+      return t('alerts.low');
     case 'expiring':
-      return 'Vencimento';
+      return t('alerts.expiring');
     default:
       return kind;
   }
 }
 
 export default function AlertsScreen() {
+  const { t } = useI18n();
   const { alerts, loading, error } = useAlerts();
   const { palette } = useAppTheme();
   const totalAlerts = alerts.reduce((sum, alert) => sum + alert.count, 0);
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Alertas" subtitle="Itens que precisam de atencao." rightAction={<Ionicons name="alert-circle-outline" size={22} color={palette.primary} />} />
+      <AppHeader title={t('alerts.title')} subtitle={t('alerts.subtitle')} rightAction={<Ionicons name="alert-circle-outline" size={22} color={palette.primary} />} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="warning-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Resumo das pendencias</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Veja rapidamente onde ha risco de ruptura, validade ou baixa reposicao.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('alerts.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('alerts.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="warning" label={`${totalAlerts} pendencias`} />
-          <StatusBadge tone="info" label={`${alerts.length} grupos`} />
+          <StatusBadge tone="warning" label={t('alerts.pending', { count: totalAlerts })} />
+          <StatusBadge tone="info" label={t('alerts.groups', { count: alerts.length })} />
         </View>
       </AppCard>
 
       {loading ? (
-        <EmptyState title="Alertas" description="Carregando..." />
+        <EmptyState title={t('alerts.title')} description={t('common.loading')} />
       ) : error ? (
-        <EmptyState title="Alertas" description={error} />
+        <EmptyState title={t('alerts.title')} description={error} />
       ) : alerts.length === 0 ? (
-        <EmptyState title="Tudo em ordem" description="Nenhum alerta no momento." />
+        <EmptyState title={t('alerts.emptyTitle')} description={t('alerts.emptyBody')} />
       ) : (
         alerts.map((alert) => (
           <AppCard key={alert.id} onPress={() => router.push({ pathname: '/(tabs)/products', params: { filter: alert.kind } })}>
             <AppCard.Row
               icon={alert.kind === 'zero' ? 'alert-circle-outline' : alert.kind === 'low' ? 'warning-outline' : 'calendar-outline'}
-              title={getAlertLabel(alert.kind)}
-              subtitle={`${alert.count} produtos`}
+              title={getAlertLabel(alert.kind, t)}
+              subtitle={t('alerts.products', { count: alert.count })}
               trailing={<StatusBadge tone={alert.tone} label={String(alert.count)} />}
             />
           </AppCard>

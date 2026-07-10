@@ -9,11 +9,13 @@ import { AppSelect } from '@/components/ui/AppSelect';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 import type { AppLanguage, CurrencyCode, ThemeMode } from '@/state/app-state';
 
 export default function PreferencesScreen() {
   const { settings, saveSettings } = useSettings();
+  const { t } = useI18n();
   const { palette } = useAppTheme();
   const [theme, setTheme] = useState<ThemeMode>(settings?.theme ?? 'system');
   const [language, setLanguage] = useState<AppLanguage>(settings?.language ?? 'system');
@@ -23,31 +25,31 @@ export default function PreferencesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Preferencias iniciais" subtitle="Ajuste idioma, tema e moeda." variant="page" onBackPress={() => router.back()} />
+      <AppHeader title={t('onboardingPrefs.title')} subtitle={t('onboardingPrefs.subtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="color-palette-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Deixe o app com o seu jeito desde o inicio</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Essas escolhas afinam a interface e os valores exibidos nas proximas telas.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('onboardingPrefs.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('onboardingPrefs.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="info" label="Etapa 2 de 4" />
+          <StatusBadge tone="info" label={t('onboardingPrefs.step')} />
         </View>
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Tema</AppCard.Title>
-        <AppCard.Text>Escolha o visual que fica mais confortavel para trabalhar.</AppCard.Text>
+        <AppCard.Title>{t('settings.theme')}</AppCard.Title>
+        <AppCard.Text>{t('onboardingPrefs.themeBody')}</AppCard.Text>
         <AppSelect
-          label="Tema"
+          label={t('settings.theme')}
           value={theme}
           options={[
-            { value: 'system', label: 'Sistema' },
-            { value: 'light', label: 'Claro' },
-            { value: 'dark', label: 'Escuro' },
+            { value: 'system', label: t('settings.themeSystem') },
+            { value: 'light', label: t('settings.themeLight') },
+            { value: 'dark', label: t('settings.themeDark') },
           ]}
           disabled={saving}
           onChange={setTheme}
@@ -55,13 +57,13 @@ export default function PreferencesScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Idioma</AppCard.Title>
-        <AppCard.Text>Use o idioma que deixa os atalhos e mensagens mais claros.</AppCard.Text>
+        <AppCard.Title>{t('settings.language')}</AppCard.Title>
+        <AppCard.Text>{t('onboardingPrefs.languageBody')}</AppCard.Text>
         <AppSelect
-          label="Idioma"
+          label={t('settings.language')}
           value={language}
           options={[
-            { value: 'system', label: 'Sistema' },
+            { value: 'system', label: t('settings.themeSystem') },
             { value: 'pt-BR', label: 'PT-BR' },
             { value: 'en', label: 'EN' },
             { value: 'es', label: 'ES' },
@@ -72,10 +74,10 @@ export default function PreferencesScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Moeda</AppCard.Title>
-        <AppCard.Text>Ela sera usada em produtos, relatorios e backups.</AppCard.Text>
+        <AppCard.Title>{t('settings.currency')}</AppCard.Title>
+        <AppCard.Text>{t('onboardingPrefs.currencyBody')}</AppCard.Text>
         <AppSelect
-          label="Moeda"
+          label={t('settings.currency')}
           value={currency}
           options={[
             { value: 'BRL', label: 'BRL' },
@@ -88,7 +90,7 @@ export default function PreferencesScreen() {
       </AppCard>
 
       <AppButton
-        label={saving ? '...' : 'Proximo'}
+        label={saving ? '...' : t('onboardingPrefs.next')}
         disabled={saving}
         onPress={async () => {
           if (saving) return;
@@ -99,14 +101,14 @@ export default function PreferencesScreen() {
             await saveSettings({ theme, language, currency });
             router.push('/onboarding/security');
           } catch {
-            setError('Nao foi possivel salvar as preferencias.');
+            setError(t('onboardingPrefs.saveFailed'));
           } finally {
             setSaving(false);
           }
         }}
       />
       {error ? <AppCard><AppCard.Text>{error}</AppCard.Text></AppCard> : null}
-      <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
+      <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );
 }

@@ -8,9 +8,11 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 
 export default function OnboardingDoneScreen() {
+  const { t } = useI18n();
   const { palette } = useAppTheme();
   const { saveSettings } = useSettings();
   const [busy, setBusy] = useState(false);
@@ -18,21 +20,19 @@ export default function OnboardingDoneScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Pronto!" subtitle="Seu ambiente inicial esta configurado." variant="page" onBackPress={() => router.back()} />
+      <AppHeader title={t('onboarding.doneTitle')} subtitle={t('onboarding.doneSubtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="checkmark-circle-outline" size={34} color={palette.success} />
         </View>
-        <Text style={[styles.heroTitle, { color: palette.text }]}>Seu ambiente inicial esta pronto.</Text>
-        <Text style={[styles.heroBody, { color: palette.textMuted }]}>
-          Voce ja pode cadastrar produtos, movimentar o estoque e consultar alertas offline.
-        </Text>
-        <StatusBadge tone="success" label="Etapa 4 de 4" />
+        <Text style={[styles.heroTitle, { color: palette.text }]}>{t('onboarding.doneHeroTitle')}</Text>
+        <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('onboarding.doneHeroBody')}</Text>
+        <StatusBadge tone="success" label={t('onboarding.step4')} />
       </AppCard>
 
       <AppButton
-        label={busy ? '...' : 'Entrar no app'}
+        label={busy ? '...' : t('onboarding.enterApp')}
         disabled={busy}
         onPress={async () => {
           if (busy) {
@@ -45,7 +45,7 @@ export default function OnboardingDoneScreen() {
             await saveSettings({ onboardingCompleted: true });
             router.replace('/(tabs)');
           } catch {
-            setError('Nao foi possivel concluir a configuracao inicial.');
+            setError(t('onboarding.doneFailed'));
           } finally {
             setBusy(false);
           }

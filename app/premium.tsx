@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -9,22 +10,21 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PremiumLock } from '@/components/ui/PremiumLock';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useI18n } from '@/hooks/useI18n';
 import type { PremiumFeature } from '@/types/ads';
 
-const features: Array<{ key: PremiumFeature; label: string; description: string }> = [
-  { key: 'advanced_pdf_reports', label: 'PDF avancado', description: 'Gere relatórios mais completos.' },
-  { key: 'csv_export', label: 'Exportacao CSV', description: 'Leve dados para planilhas rapidamente.' },
-  { key: 'barcode_scanner', label: 'Leitor de codigo', description: 'Facilita a leitura em campo.' },
-  { key: 'encrypted_backup', label: 'Backup criptografado', description: 'Proteja seus arquivos locais.' },
-  { key: 'profit_analysis', label: 'Analise de lucro', description: 'Veja margens com mais clareza.' },
-  { key: 'advanced_history', label: 'Historico avancado', description: 'Acesse uma trilha mais detalhada.' },
-  { key: 'unlimited_categories', label: 'Categorias ilimitadas', description: 'Organize sem limites extras.' },
-  { key: 'batch_expiration_control', label: 'Lote e validade', description: 'Controle itens com mais rigor.' },
+const features: Array<{ key: PremiumFeature; labelKey: string; descriptionKey: string }> = [
+  { key: 'advanced_pdf_reports', labelKey: 'premium.advancedPdf', descriptionKey: 'premium.advancedPdfBody' },
+  { key: 'csv_export', labelKey: 'premium.csvExport', descriptionKey: 'premium.csvExportBody' },
+  { key: 'barcode_scanner', labelKey: 'premium.barcodeScanner', descriptionKey: 'premium.barcodeScannerBody' },
+  { key: 'encrypted_backup', labelKey: 'premium.encryptedBackup', descriptionKey: 'premium.encryptedBackupBody' },
+  { key: 'profit_analysis', labelKey: 'premium.profitAnalysis', descriptionKey: 'premium.profitAnalysisBody' },
+  { key: 'advanced_history', labelKey: 'premium.advancedHistory', descriptionKey: 'premium.advancedHistoryBody' },
+  { key: 'unlimited_categories', labelKey: 'premium.unlimitedCategories', descriptionKey: 'premium.unlimitedCategoriesBody' },
+  { key: 'batch_expiration_control', labelKey: 'premium.batchExpiration', descriptionKey: 'premium.batchExpirationBody' },
 ];
 
 export default function PremiumScreen() {
@@ -49,7 +49,7 @@ export default function PremiumScreen() {
         setActionError(result.reason);
       }
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel liberar a recompensa.');
+      setActionError(nextError instanceof Error ? nextError.message : t('premium.rewardFailed'));
     } finally {
       setBusy(false);
     }
@@ -69,7 +69,7 @@ export default function PremiumScreen() {
       }
       await refreshAccess(selectedFeature);
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel liberar o recurso.');
+      setActionError(nextError instanceof Error ? nextError.message : t('premium.featureFailed'));
     } finally {
       setBusy(false);
     }
@@ -90,36 +90,37 @@ export default function PremiumScreen() {
           <Ionicons name="sparkles-outline" size={24} color={palette.premium} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Ganhe recompensas com fluxo visual simples</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>A pagina destaca os recursos liberados por anuncio e mantém tudo fácil de entender.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('premium.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('premium.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone={isTemporaryAdFree ? 'success' : 'info'} label={isTemporaryAdFree ? `ate ${adFreeExpiresAt ?? 'agora'}` : 'anuncios ativos'} />
-          <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? 'Liberado' : 'Bloqueado'} />
+          <StatusBadge
+            tone={isTemporaryAdFree ? 'success' : 'info'}
+            label={isTemporaryAdFree ? t('premium.until', { date: adFreeExpiresAt ?? t('premium.now') }) : t('premium.adsActive')}
+          />
+          <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? t('premium.unlocked') : t('premium.blocked')} />
         </View>
       </AppCard>
 
-      <AdPolicyNotice
-        title={t('ads.premiumTitle')}
-        body={t('ads.premiumBody')}
-        icon="ribbon-outline"
-        tone="reward"
-      />
+      <AdPolicyNotice title={t('ads.premiumTitle')} body={t('ads.premiumBody')} icon="ribbon-outline" tone="reward" />
 
       {actionError || adsError || featureError ? (
-        <EmptyState title="Recompensas" description={actionError ?? adsError ?? featureError ?? 'Nao foi possivel carregar recompensas.'} />
+        <EmptyState title={t('premium.rewards')} description={actionError ?? adsError ?? featureError ?? t('premium.loadFailed')} />
       ) : null}
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Remover anuncios temporariamente</AppCard.Title>
-        <AppCard.Text>Assista a um anuncio e fique sem banners por um periodo curto.</AppCard.Text>
-        <StatusBadge tone={isTemporaryAdFree ? 'success' : 'info'} label={isTemporaryAdFree ? `ate ${adFreeExpiresAt ?? 'agora'}` : 'ativo'} />
-        <AppButton label={busy ? '...' : 'Assistir anuncio'} disabled={busy} onPress={() => void handleAdFree()} />
+        <AppCard.Title>{t('premium.temporaryAdFree')}</AppCard.Title>
+        <AppCard.Text>{t('premium.temporaryAdFreeBody')}</AppCard.Text>
+        <StatusBadge
+          tone={isTemporaryAdFree ? 'success' : 'info'}
+          label={isTemporaryAdFree ? t('premium.until', { date: adFreeExpiresAt ?? t('premium.now') }) : t('premium.active')}
+        />
+        <AppButton label={busy ? '...' : t('premium.watchAd')} disabled={busy} onPress={() => void handleAdFree()} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Desbloquear recurso</AppCard.Title>
-        <AppCard.Text>Escolha um recurso avancado para liberar por tempo ou uso limitado.</AppCard.Text>
+        <AppCard.Title>{t('premium.unlockFeature')}</AppCard.Title>
+        <AppCard.Text>{t('premium.unlockFeatureBody')}</AppCard.Text>
         <View style={styles.featureGrid}>
           {features.map((feature) => (
             <AppCard
@@ -130,15 +131,15 @@ export default function PremiumScreen() {
             >
               <AppCard.Row
                 icon="sparkles-outline"
-                title={feature.label}
-                subtitle={feature.description}
-                trailing={<StatusBadge tone={selectedFeature === feature.key ? 'success' : 'info'} label={selectedFeature === feature.key ? 'Selecionado' : 'Escolher'} />}
+                title={t(feature.labelKey)}
+                subtitle={t(feature.descriptionKey)}
+                trailing={<StatusBadge tone={selectedFeature === feature.key ? 'success' : 'info'} label={selectedFeature === feature.key ? t('premium.selected') : t('premium.choose')} />}
               />
             </AppCard>
           ))}
         </View>
-        <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? 'Liberado' : 'Bloqueado'} />
-        <AppButton label={busy ? '...' : 'Assistir e liberar'} variant="secondary" disabled={busy} onPress={() => void handleFeatureUnlock()} />
+        <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? t('premium.unlocked') : t('premium.blocked')} />
+        <AppButton label={busy ? '...' : t('premium.watchUnlock')} variant="secondary" disabled={busy} onPress={() => void handleFeatureUnlock()} />
       </AppCard>
     </ScreenContainer>
   );

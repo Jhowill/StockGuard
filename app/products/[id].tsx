@@ -20,12 +20,12 @@ import { useI18n } from '@/hooks/useI18n';
 import { formatMoney } from '@/utils/format';
 import { formatShortDateTime } from '@/utils/date-format';
 
-function getStatusLabel(status: string) {
+function getStatusLabel(status: string, t: (key: string) => string) {
   switch (status) {
     case 'active':
-      return 'Ativo';
+      return t('common.active');
     case 'archived':
-      return 'Arquivado';
+      return t('common.archived');
     default:
       return status;
   }
@@ -82,29 +82,29 @@ export default function ProductDetailScreen() {
         ) : (
           <View style={[styles.heroImage, styles.heroPlaceholder, { backgroundColor: palette.background }]}>
             <Ionicons name="cube-outline" size={42} color={palette.primary} />
-            <Text style={[styles.heroPlaceholderTitle, { color: palette.text }]}>Sem imagem</Text>
-            <Text style={[styles.heroPlaceholderText, { color: palette.textMuted }]}>Adicione uma foto para destacar o produto.</Text>
-            <AppButton label="Adicionar imagem" variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
+            <Text style={[styles.heroPlaceholderTitle, { color: palette.text }]}>{t('productDetail.noImage')}</Text>
+            <Text style={[styles.heroPlaceholderText, { color: palette.textMuted }]}>{t('productDetail.noImageBody')}</Text>
+            <AppButton label={t('productDetail.addImage')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
           </View>
         )}
 
         <View style={styles.heroBody}>
           <View style={styles.heroTop}>
             <View style={styles.heroCopy}>
-              <Text style={[styles.heroLabel, { color: palette.textMuted }]}>Produto</Text>
+              <Text style={[styles.heroLabel, { color: palette.textMuted }]}>{t('productDetail.product')}</Text>
               <Text style={[styles.heroTitle, { color: palette.text }]}>{product.name}</Text>
               <Text style={[styles.heroSubtitle, { color: palette.textMuted }]}>
                 {categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
               </Text>
             </View>
-            <StatusBadge tone={stockTone} label={getStatusLabel(product.status)} />
+            <StatusBadge tone={stockTone} label={getStatusLabel(product.status, t)} />
           </View>
 
           <View style={styles.heroMeta}>
             <StatusBadge tone="info" label={product.unit} />
-            <StatusBadge tone="success" label={product.sku ?? 'Sem SKU'} />
+            <StatusBadge tone="success" label={product.sku ?? t('common.noSku')} />
           </View>
-          <AppCard.Text>{product.notes ?? t('home.noAlertsBody')}</AppCard.Text>
+          <AppCard.Text>{product.notes ?? t('productDetail.noNotes')}</AppCard.Text>
         </View>
       </AppCard>
 
@@ -115,21 +115,21 @@ export default function ProductDetailScreen() {
         </View>
         <View style={styles.metricsRow}>
           <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency)} />
-          <MetricCard compact label={t('productDetail.location')} value={product.location ?? 'Sem local'} />
+          <MetricCard compact label={t('productDetail.location')} value={product.location ?? t('common.noLocation')} />
         </View>
       </View>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Row
           icon="information-circle-outline"
-          title="Detalhes"
-          subtitle={`Categoria: ${categoryNames.get(product.categoryId ?? '') ?? 'Sem categoria'}`}
+          title={t('productDetail.details')}
+          subtitle={t('productDetail.categoryLine', { value: categoryNames.get(product.categoryId ?? '') ?? t('common.noCategory') })}
         />
-        <AppCard.Text>Fornecedor: {supplierNames.get(product.supplierId ?? '') ?? 'Sem fornecedor'}</AppCard.Text>
-        <AppCard.Text>SKU: {product.sku ?? 'Sem SKU'}</AppCard.Text>
-        <AppCard.Text>Localizacao: {product.location ?? 'Sem localizacao'}</AppCard.Text>
-        <AppCard.Text>Validade: {product.expirationDate ?? 'Sem validade'}</AppCard.Text>
-        <AppCard.Text>Lote: {product.batchCode ?? 'Sem lote'}</AppCard.Text>
+        <AppCard.Text>{t('productDetail.supplierLine', { value: supplierNames.get(product.supplierId ?? '') ?? t('common.noSupplier') })}</AppCard.Text>
+        <AppCard.Text>{t('productDetail.skuLine', { value: product.sku ?? t('common.noSku') })}</AppCard.Text>
+        <AppCard.Text>{t('productDetail.locationLine', { value: product.location ?? t('common.noLocation') })}</AppCard.Text>
+        <AppCard.Text>{t('productDetail.expirationLine', { value: product.expirationDate ?? t('productDetail.noExpiration') })}</AppCard.Text>
+        <AppCard.Text>{t('productDetail.batchLine', { value: product.batchCode ?? t('productDetail.noBatch') })}</AppCard.Text>
       </AppCard>
 
       <View style={styles.actionsGrid}>
@@ -166,9 +166,9 @@ export default function ProductDetailScreen() {
 
       <ConfirmDialog
         visible={confirmArchive}
-        title="Arquivar produto?"
-        message="O produto vai sair das listas principais, mas o historico e a auditoria continuam disponiveis."
-        confirmLabel="Arquivar"
+        title={t('productDetail.archiveTitle')}
+        message={t('productDetail.archiveBody')}
+        confirmLabel={t('common.archive')}
         danger
         onCancel={() => setConfirmArchive(false)}
         onConfirm={async () => {
@@ -179,7 +179,7 @@ export default function ProductDetailScreen() {
             await archiveProduct(product.id);
             router.replace('/(tabs)/products');
           } catch (nextError) {
-            setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o produto.');
+            setActionError(nextError instanceof Error ? nextError.message : t('productDetail.archiveFailed'));
           } finally {
             setBusy(false);
           }

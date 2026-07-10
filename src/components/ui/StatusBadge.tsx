@@ -22,13 +22,13 @@ export function StatusBadge({ label, tone = 'info' }: Props) {
       style={[
         styles.root,
         {
-          backgroundColor: palette.surfaceMuted,
-          borderColor: palette.border,
+          backgroundColor: palette.surface,
+          borderColor: color,
         },
       ]}
       >
       <View style={[styles.dot, { backgroundColor: color }]} />
-      <Text style={[styles.label, { color }]}>{label}</Text>
+      <Text style={[styles.label, { color: palette.text }]}>{label}</Text>
     </View>
   );
 }

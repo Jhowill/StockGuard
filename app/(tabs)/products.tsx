@@ -16,11 +16,11 @@ import { useI18n } from '@/hooks/useI18n';
 
 type ProductFilter = 'all' | 'low' | 'zero' | 'expiring';
 
-const filterOptions: Array<{ value: ProductFilter; label: string }> = [
-  { value: 'all', label: 'Todos' },
-  { value: 'low', label: 'Baixo estoque' },
-  { value: 'zero', label: 'Zerados' },
-  { value: 'expiring', label: 'Vencendo' },
+const filterOptions: Array<{ value: ProductFilter; labelKey: string }> = [
+  { value: 'all', labelKey: 'products.all' },
+  { value: 'low', labelKey: 'products.low' },
+  { value: 'zero', labelKey: 'products.zero' },
+  { value: 'expiring', labelKey: 'products.expiring' },
 ];
 
 function isProductExpiring(expirationDate?: string | null) {
@@ -67,7 +67,7 @@ export default function ProductsScreen() {
         return products;
     }
   }, [activeFilter, products]);
-  const selectedFilterLabel = filterOptions.find((item) => item.value === activeFilter)?.label ?? 'Todos';
+  const selectedFilterLabel = t(filterOptions.find((item) => item.value === activeFilter)?.labelKey ?? 'products.all');
 
   useEffect(() => {
     setActiveFilter(normalizeFilter(filter));
@@ -77,7 +77,7 @@ export default function ProductsScreen() {
     <ScreenContainer scroll padded>
       <AppHeader
         title={t('products.title')}
-        subtitle={activeFilter === 'all' ? t('products.subtitle') : `Filtro ativo: ${selectedFilterLabel}`}
+        subtitle={activeFilter === 'all' ? t('products.subtitle') : t('products.filteredSubtitle', { filter: selectedFilterLabel })}
         actionLabel="+"
         onActionPress={() => router.push('/products/new')}
       />
@@ -87,29 +87,29 @@ export default function ProductsScreen() {
           <Ionicons name="cube-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Lista compacta para navegar rapido</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Busque, filtre e abra o detalhe do produto em poucos toques.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('products.listTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('products.listBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="info" label={`${products.length} itens`} />
-          <StatusBadge tone={lowStockCount > 0 ? 'warning' : 'success'} label={`${lowStockCount} baixo estoque`} />
+          <StatusBadge tone="info" label={t('products.items', { count: products.length })} />
+          <StatusBadge tone={lowStockCount > 0 ? 'warning' : 'success'} label={t('products.lowItems', { count: lowStockCount })} />
         </View>
       </AppCard>
 
       <AppInput
         placeholder={t('products.searchPlaceholder')}
-        helperText="Busque por nome, SKU, codigo de barras ou localizacao."
+        helperText={t('products.searchHelper')}
         value={query}
         onChangeText={setQuery}
       />
 
       <AppCard style={styles.filterCard}>
-        <AppCard.Title>Filtros rapidos</AppCard.Title>
+        <AppCard.Title>{t('products.filters')}</AppCard.Title>
         <View style={styles.filterRow}>
           {filterOptions.map((item) => (
             <AppButton
               key={item.value}
-              label={item.label}
+              label={t(item.labelKey)}
               variant={activeFilter === item.value ? 'primary' : 'secondary'}
               style={styles.filterButton}
               onPress={() => setActiveFilter(item.value)}
@@ -117,9 +117,9 @@ export default function ProductsScreen() {
           ))}
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="danger" label={`${zeroStockCount} zerados`} />
-          <StatusBadge tone="warning" label={`${lowStockCount} baixos`} />
-          <StatusBadge tone="info" label={`${expiringCount} vencendo`} />
+          <StatusBadge tone="danger" label={t('products.zeroBadge', { count: zeroStockCount })} />
+          <StatusBadge tone="warning" label={t('products.lowBadge', { count: lowStockCount })} />
+          <StatusBadge tone="info" label={t('products.expiringBadge', { count: expiringCount })} />
         </View>
       </AppCard>
 
@@ -136,7 +136,7 @@ export default function ProductsScreen() {
           onActionPress={() => router.push('/products/new')}
         />
       ) : filteredProducts.length === 0 ? (
-        <EmptyState title="Nenhum item neste filtro" description="Troque o filtro ou ajuste a busca para ver outros produtos." icon="filter-outline" />
+        <EmptyState title={t('products.noFilterTitle')} description={t('products.noFilterBody')} icon="filter-outline" />
       ) : (
         filteredProducts.map((product) => (
           <AppCard key={product.id} onPress={() => router.push(`/products/${product.id}`)}>

@@ -8,9 +8,11 @@ import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useI18n } from '@/hooks/useI18n';
 import { useSuppliers } from '@/hooks/useSuppliers';
 
 export default function SuppliersScreen() {
+  const { t } = useI18n();
   const { suppliers, loading, error, create, edit, archive } = useSuppliers();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -40,7 +42,7 @@ export default function SuppliersScreen() {
     };
 
     if (!input.name) {
-      setActionError('Informe o nome do fornecedor.');
+      setActionError(t('suppliers.nameRequired'));
       return;
     }
 
@@ -55,7 +57,7 @@ export default function SuppliersScreen() {
 
       resetForm();
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar o fornecedor.');
+      setActionError(nextError instanceof Error ? nextError.message : t('suppliers.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -73,8 +75,8 @@ export default function SuppliersScreen() {
       setArchiveId(null);
     } catch (nextError) {
       const message = nextError instanceof Error && nextError.message === 'SUPPLIER_HAS_PRODUCTS'
-        ? 'Este fornecedor possui produtos vinculados. Remova o vinculo antes de arquivar.'
-        : nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o fornecedor.';
+        ? t('suppliers.linkedError')
+        : nextError instanceof Error ? nextError.message : t('suppliers.archiveFailed');
       setActionError(message);
     } finally {
       setBusy(false);
@@ -83,39 +85,39 @@ export default function SuppliersScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." actionLabel="Novo" onActionPress={resetForm} />
+      <AppHeader title={t('suppliers.title')} subtitle={t('suppliers.subtitle')} actionLabel={t('suppliers.newAction')} onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>{editingId ? 'Editar fornecedor' : 'Novo fornecedor'}</AppCard.Title>
-        <AppCard.Text>Toque em Novo para limpar o formulário ou em Editar para carregar os dados do item escolhido.</AppCard.Text>
-        {editingId ? <StatusBadge tone="info" label="Editando" /> : null}
-        <AppInput label="Nome" placeholder="Ex.: Distribuidora Alfa" value={name} onChangeText={setName} />
-        <AppInput label="Telefone" placeholder="(00) 00000-0000" helperText="Opcional. Use o contato principal." value={phone} onChangeText={setPhone} />
-        <AppInput label="E-mail" placeholder="contato@exemplo.com" helperText="Opcional. Ajuda no retorno rápido." value={email} onChangeText={setEmail} />
-        <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
-        {editingId ? <AppButton label="Cancelar edicao" variant="ghost" onPress={resetForm} /> : null}
+        <AppCard.Title>{editingId ? t('suppliers.edit') : t('suppliers.new')}</AppCard.Title>
+        <AppCard.Text>{t('suppliers.formBody')}</AppCard.Text>
+        {editingId ? <StatusBadge tone="info" label={t('suppliers.editBadge')} /> : null}
+        <AppInput label={t('suppliers.name')} placeholder="Ex.: Distribuidora Alfa" value={name} onChangeText={setName} />
+        <AppInput label={t('suppliers.phone')} placeholder="(00) 00000-0000" helperText={t('suppliers.phoneHelper')} value={phone} onChangeText={setPhone} />
+        <AppInput label={t('suppliers.email')} placeholder="contato@exemplo.com" helperText={t('suppliers.emailHelper')} value={email} onChangeText={setEmail} />
+        <AppButton label={busy ? '...' : editingId ? t('common.save') : t('common.create')} disabled={busy} onPress={() => void handleSave()} />
+        {editingId ? <AppButton label={t('common.cancel')} variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
-      {actionError ? <EmptyState title="Fornecedores" description={actionError} icon="business-outline" /> : null}
+      {actionError ? <EmptyState title={t('suppliers.title')} description={actionError} icon="business-outline" /> : null}
 
       {loading ? (
-        <EmptyState title="Fornecedores" description="Carregando..." icon="business-outline" />
+        <EmptyState title={t('suppliers.title')} description={t('common.loading')} icon="business-outline" />
       ) : error ? (
-        <EmptyState title="Fornecedores" description={error} icon="business-outline" />
+        <EmptyState title={t('suppliers.title')} description={error} icon="business-outline" />
       ) : suppliers.length === 0 ? (
-        <EmptyState title="Fornecedores" description="Nenhum fornecedor cadastrado." icon="business-outline" />
+        <EmptyState title={t('suppliers.title')} description={t('suppliers.empty')} icon="business-outline" />
       ) : (
         suppliers.map((supplier) => (
           <AppCard key={supplier.id}>
             <AppCard.Row
               icon="business-outline"
               title={supplier.name}
-              subtitle={supplier.phone ?? supplier.email ?? 'Sem contato'}
-              trailing={<StatusBadge tone={supplier.status === 'active' ? 'success' : 'info'} label={supplier.status === 'active' ? 'Ativo' : 'Arquivado'} />}
+              subtitle={supplier.phone ?? supplier.email ?? t('suppliers.noContact')}
+              trailing={<StatusBadge tone={supplier.status === 'active' ? 'success' : 'info'} label={supplier.status === 'active' ? t('common.active') : t('common.archived')} />}
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <AppButton
-                label="Editar"
+                label={t('common.edit')}
                 variant="secondary"
                 style={{ flex: 1 }}
                 onPress={() => {
@@ -126,7 +128,7 @@ export default function SuppliersScreen() {
                 }}
               />
               <AppButton
-                label="Arquivar"
+                label={t('common.archive')}
                 variant="danger"
                 style={{ flex: 1 }}
                 disabled={busy}
@@ -138,9 +140,9 @@ export default function SuppliersScreen() {
       )}
       <ConfirmDialog
         visible={Boolean(archiveId)}
-        title="Arquivar fornecedor?"
-        message="A exclusao arquiva o fornecedor sem apagar o historico. Fornecedores com produtos vinculados precisam ser liberados antes."
-        confirmLabel="Arquivar"
+        title={t('suppliers.archiveTitle')}
+        message={t('suppliers.archiveBody')}
+        confirmLabel={t('common.archive')}
         danger
         onCancel={() => setArchiveId(null)}
         onConfirm={() => void handleArchive()}

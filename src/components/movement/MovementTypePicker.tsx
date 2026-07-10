@@ -2,11 +2,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { StockMovementType } from '@/types/stock';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 
 type MovementOption = {
   value: StockMovementType;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   icon: keyof typeof Ionicons.glyphMap;
   accent: 'success' | 'warning' | 'info' | 'danger';
   deltaLabel: string;
@@ -20,16 +21,16 @@ type Props = {
 const mainOptions: MovementOption[] = [
   {
     value: 'in',
-    title: 'Entrou estoque',
-    description: 'Compra, reposicao ou saldo recebido.',
+    titleKey: 'movement.mainInTitle',
+    descriptionKey: 'movement.mainInBody',
     icon: 'add-circle-outline',
     accent: 'success',
     deltaLabel: '+ saldo',
   },
   {
     value: 'out',
-    title: 'Saiu estoque',
-    description: 'Venda, uso interno ou retirada.',
+    titleKey: 'movement.mainOutTitle',
+    descriptionKey: 'movement.mainOutBody',
     icon: 'remove-circle-outline',
     accent: 'warning',
     deltaLabel: '- saldo',
@@ -39,32 +40,32 @@ const mainOptions: MovementOption[] = [
 const supportOptions: MovementOption[] = [
   {
     value: 'return',
-    title: 'Devolucao',
-    description: 'Item voltou para o estoque.',
+    titleKey: 'movement.returnTitle',
+    descriptionKey: 'movement.returnBody',
     icon: 'return-up-back-outline',
     accent: 'info',
     deltaLabel: '+ volta',
   },
   {
     value: 'loss',
-    title: 'Perda ou avaria',
-    description: 'Baixa por dano, vencimento ou extravio.',
+    titleKey: 'movement.lossTitle',
+    descriptionKey: 'movement.lossBody',
     icon: 'warning-outline',
     accent: 'danger',
     deltaLabel: '- baixa',
   },
   {
     value: 'adjustment_positive',
-    title: 'Corrigir para cima',
-    description: 'Ajuste manual para aumentar saldo.',
+    titleKey: 'movement.adjustUpTitle',
+    descriptionKey: 'movement.adjustUpBody',
     icon: 'arrow-up-outline',
     accent: 'success',
     deltaLabel: '+ ajuste',
   },
   {
     value: 'adjustment_negative',
-    title: 'Corrigir para baixo',
-    description: 'Ajuste manual para reduzir saldo.',
+    titleKey: 'movement.adjustDownTitle',
+    descriptionKey: 'movement.adjustDownBody',
     icon: 'arrow-down-outline',
     accent: 'danger',
     deltaLabel: '- ajuste',
@@ -72,6 +73,7 @@ const supportOptions: MovementOption[] = [
 ];
 
 export function MovementTypePicker({ value, onChange }: Props) {
+  const { t } = useI18n();
   const { palette } = useAppTheme();
 
   return (
@@ -99,15 +101,15 @@ export function MovementTypePicker({ value, onChange }: Props) {
                 </View>
                 <Text style={[styles.deltaPill, { color: palette[option.accent], borderColor: palette[option.accent] }]}>{option.deltaLabel}</Text>
               </View>
-              <Text style={[styles.mainTitle, { color: palette.text }]}>{option.title}</Text>
-              <Text style={[styles.description, { color: palette.textMuted }]}>{option.description}</Text>
+              <Text style={[styles.mainTitle, { color: palette.text }]}>{t(option.titleKey)}</Text>
+              <Text style={[styles.description, { color: palette.textMuted }]}>{t(option.descriptionKey)}</Text>
             </Pressable>
           );
         })}
       </View>
 
       <View style={styles.supportBlock}>
-        <Text style={[styles.supportTitle, { color: palette.text }]}>Outras situacoes</Text>
+        <Text style={[styles.supportTitle, { color: palette.text }]}>{t('movement.supportTitle')}</Text>
         <View style={styles.supportGrid}>
           {supportOptions.map((option) => {
             const selected = value === option.value;
@@ -129,8 +131,8 @@ export function MovementTypePicker({ value, onChange }: Props) {
                   <Ionicons name={option.icon} size={18} color={palette[option.accent]} />
                   <Text style={[styles.supportDelta, { color: palette[option.accent] }]}>{option.deltaLabel}</Text>
                 </View>
-                <Text style={[styles.supportLabel, { color: palette.text }]}>{option.title}</Text>
-                <Text style={[styles.supportDescription, { color: palette.textMuted }]}>{option.description}</Text>
+                <Text style={[styles.supportLabel, { color: palette.text }]}>{t(option.titleKey)}</Text>
+                <Text style={[styles.supportDescription, { color: palette.textMuted }]}>{t(option.descriptionKey)}</Text>
               </Pressable>
             );
           })}

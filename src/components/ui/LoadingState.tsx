@@ -1,12 +1,14 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 
 type Props = {
   title?: string;
   description?: string;
 };
 
-export function LoadingState({ title = 'Carregando...', description }: Props) {
+export function LoadingState({ title, description }: Props) {
+  const { t } = useI18n();
   const { palette } = useAppTheme();
 
   return (
@@ -14,7 +16,7 @@ export function LoadingState({ title = 'Carregando...', description }: Props) {
       <View style={[styles.spinnerShell, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
         <ActivityIndicator color={palette.primary} />
       </View>
-      <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+      <Text style={[styles.title, { color: palette.text }]}>{title ?? t('common.loading')}</Text>
       {description ? <Text style={[styles.description, { color: palette.textMuted }]}>{description}</Text> : null}
     </View>
   );

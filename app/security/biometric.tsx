@@ -9,11 +9,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 import { authenticateWithBiometric, canUseBiometricUnlock, disableBiometricLock, enableBiometricLock } from '@/services/securityService';
 
 export default function BiometricSecurityScreen() {
   const { settings, saveSettings } = useSettings();
+  const { t } = useI18n();
   const { palette } = useAppTheme();
   const [available, setAvailable] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -35,7 +37,7 @@ export default function BiometricSecurityScreen() {
     }
 
     if (!available) {
-      setError('Biometria nao disponivel neste aparelho.');
+      setError(t('securityFlow.biometricNotAvailable'));
       return;
     }
 
@@ -44,7 +46,7 @@ export default function BiometricSecurityScreen() {
     try {
       const result = await authenticateWithBiometric();
       if (!result.success) {
-        setError('Nao foi possivel validar a biometria.');
+        setError(t('securityFlow.biometricValidateFailed'));
         return;
       }
 
@@ -52,7 +54,7 @@ export default function BiometricSecurityScreen() {
       await saveSettings({ biometricUnlockEnabled: true });
       router.back();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel ativar a biometria.');
+      setError(nextError instanceof Error ? nextError.message : t('securityFlow.biometricEnableFailed'));
     } finally {
       setBusy(false);
     }
@@ -70,7 +72,7 @@ export default function BiometricSecurityScreen() {
       await saveSettings({ biometricUnlockEnabled: false });
       router.back();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel desativar a biometria.');
+      setError(nextError instanceof Error ? nextError.message : t('securityFlow.biometricDisableFailed'));
     } finally {
       setBusy(false);
     }
@@ -78,27 +80,27 @@ export default function BiometricSecurityScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Biometria" subtitle="Use a biometria do aparelho para desbloquear." variant="page" onBackPress={() => router.back()} />
+      <AppHeader title={t('securityFlow.biometricTitle')} subtitle={t('securityFlow.biometricSubtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="finger-print-outline" size={24} color={palette.primary} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>Desbloqueio mais rapido no dia a dia</Text>
-          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Ative a biometria para abrir o app sem digitar o PIN sempre.</Text>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('securityFlow.biometricHeroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('securityFlow.biometricHeroBody')}</Text>
         </View>
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <StatusBadge tone={settings?.biometricUnlockEnabled ? 'success' : 'info'} label={settings?.biometricUnlockEnabled ? 'Ativada' : 'Desativada'} />
-        <StatusBadge tone={available ? 'success' : 'warning'} label={available ? 'Disponivel neste aparelho' : 'Nao disponivel'} />
-        <AppCard.Text>Quando ativada, a biometria facilita o desbloqueio sem digitar o PIN.</AppCard.Text>
-        <AppButton label={busy ? '...' : 'Ativar biometria'} disabled={busy || !available} onPress={() => void enable()} />
-        <AppButton label="Desativar biometria" variant="secondary" disabled={busy} onPress={() => void disable()} />
+        <StatusBadge tone={settings?.biometricUnlockEnabled ? 'success' : 'info'} label={settings?.biometricUnlockEnabled ? t('securityFlow.biometricEnabled') : t('securityFlow.biometricDisabled')} />
+        <StatusBadge tone={available ? 'success' : 'warning'} label={available ? t('securityFlow.available') : t('securityFlow.unavailable')} />
+        <AppCard.Text>{t('securityFlow.biometricBody')}</AppCard.Text>
+        <AppButton label={busy ? '...' : t('securityFlow.enableBiometric')} disabled={busy || !available} onPress={() => void enable()} />
+        <AppButton label={t('securityFlow.disableBiometric')} variant="secondary" disabled={busy} onPress={() => void disable()} />
       </AppCard>
 
-      {error ? <EmptyState title="Seguranca" description={error} icon="finger-print-outline" /> : null}
+      {error ? <EmptyState title={t('settings.security')} description={error} icon="finger-print-outline" /> : null}
     </ScreenContainer>
   );
 }

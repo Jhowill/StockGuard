@@ -143,14 +143,14 @@ export async function exportReportPdf(summary: ReportSummary) {
           * { box-sizing: border-box; }
           body {
             margin: 0;
-            color: #17202A;
+            color: #101418;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            background: #F5F7F2;
+            background: #F7F8FA;
           }
           .page {
             padding: 28px;
             background: #FFFFFF;
-            border: 1px solid #DDE6D2;
+            border: 1px solid #C8D0DC;
             border-radius: 18px;
           }
           .header {
@@ -159,14 +159,14 @@ export async function exportReportPdf(summary: ReportSummary) {
             justify-content: space-between;
             gap: 20px;
             padding-bottom: 18px;
-            border-bottom: 2px solid #B7F34D;
+            border-bottom: 2px solid #005FCC;
           }
           .brand {
             font-size: 13px;
             font-weight: 800;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: #4F6B22;
+            color: #005FCC;
           }
           h1 {
             margin: 8px 0 4px;
@@ -174,17 +174,17 @@ export async function exportReportPdf(summary: ReportSummary) {
             line-height: 1.15;
           }
           .muted {
-            color: #65715E;
+            color: #48515C;
             font-size: 13px;
             line-height: 1.5;
           }
           .pill {
             display: inline-block;
-            border: 1px solid #B7F34D;
+            border: 1px solid #005FCC;
             border-radius: 999px;
             padding: 8px 12px;
-            color: #25320F;
-            background: #F1FFD7;
+            color: #101418;
+            background: #E9EDF3;
             font-size: 12px;
             font-weight: 800;
             white-space: nowrap;
@@ -196,14 +196,14 @@ export async function exportReportPdf(summary: ReportSummary) {
             margin: 22px 0;
           }
           .metric {
-            border: 1px solid #DDE6D2;
+            border: 1px solid #C8D0DC;
             border-radius: 14px;
             padding: 14px;
-            background: #FBFCF8;
+            background: #FFFFFF;
           }
           .metric-label {
             margin-bottom: 6px;
-            color: #65715E;
+            color: #48515C;
             font-size: 12px;
             font-weight: 700;
           }
@@ -229,8 +229,8 @@ export async function exportReportPdf(summary: ReportSummary) {
             font-size: 13px;
           }
           th {
-            color: #425236;
-            background: #F1FFD7;
+            color: #101418;
+            background: #E9EDF3;
             font-size: 12px;
             text-transform: uppercase;
           }
@@ -238,15 +238,15 @@ export async function exportReportPdf(summary: ReportSummary) {
           .number { text-align: right; font-weight: 800; }
           .empty {
             padding: 18px;
-            color: #65715E;
-            border: 1px dashed #C8D8B8;
+            color: #48515C;
+            border: 1px dashed #C8D0DC;
             border-radius: 12px;
-            background: #FBFCF8;
+            background: #FFFFFF;
           }
           .footer {
             margin-top: 24px;
             padding-top: 14px;
-            border-top: 1px solid #DDE6D2;
+            border-top: 1px solid #C8D0DC;
           }
         </style>
       </head>

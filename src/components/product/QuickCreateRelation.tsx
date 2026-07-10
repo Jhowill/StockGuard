@@ -5,6 +5,7 @@ import { AppCard } from '@/components/ui/AppCard';
 import { AppInput } from '@/components/ui/AppInput';
 import { createCategory } from '@/database/repositories/categoryRepository';
 import { createSupplier } from '@/database/repositories/supplierRepository';
+import { useI18n } from '@/hooks/useI18n';
 import type { Category } from '@/types/category';
 import type { Supplier } from '@/types/supplier';
 
@@ -37,6 +38,7 @@ function friendlyRelationError(error: unknown, fallback: string) {
 }
 
 export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCreated, onError }: Props) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<QuickMode>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -80,7 +82,7 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
       }
       reset();
     } catch (error) {
-      onError(friendlyRelationError(error, mode === 'category' ? 'Nao foi possivel criar a categoria.' : 'Nao foi possivel criar o fornecedor.'));
+      onError(friendlyRelationError(error, mode === 'category' ? t('categories.saveFailed') : t('suppliers.saveFailed')));
       setBusy(false);
     }
   };
@@ -88,20 +90,20 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
   return (
     <View style={styles.root}>
       <View style={styles.actionsRow}>
-        <AppButton label="+ Categoria" variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('category')} />
-        <AppButton label="+ Fornecedor" variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('supplier')} />
+        <AppButton label={t('quickCreate.category')} variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('category')} />
+        <AppButton label={t('quickCreate.supplier')} variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('supplier')} />
       </View>
 
       {mode ? (
         <AppCard variant="hero" style={styles.quickCard}>
-          <AppCard.Title>{mode === 'category' ? 'Nova categoria rapida' : 'Novo fornecedor rapido'}</AppCard.Title>
+          <AppCard.Title>{mode === 'category' ? t('quickCreate.categoryTitle') : t('quickCreate.supplierTitle')}</AppCard.Title>
           <AppCard.Text>
             {mode === 'category'
-              ? 'Crie e selecione uma categoria sem sair deste produto.'
-              : 'Crie e selecione um fornecedor sem perder os dados do produto.'}
+              ? t('quickCreate.categoryBody')
+              : t('quickCreate.supplierBody')}
           </AppCard.Text>
           <AppInput
-            label={mode === 'category' ? 'Nome da categoria' : 'Nome do fornecedor'}
+            label={mode === 'category' ? t('quickCreate.categoryName') : t('quickCreate.supplierName')}
             placeholder={mode === 'category' ? 'Ex.: Bebidas' : 'Ex.: Distribuidora Alfa'}
             value={name}
             editable={!busy}
@@ -109,13 +111,13 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
           />
           {mode === 'supplier' ? (
             <>
-              <AppInput label="Telefone" placeholder="(00) 00000-0000" value={phone} editable={!busy} onChangeText={setPhone} />
-              <AppInput label="E-mail" placeholder="contato@exemplo.com" value={email} editable={!busy} keyboardType="email-address" autoCapitalize="none" onChangeText={setEmail} />
+              <AppInput label={t('suppliers.phone')} placeholder="(00) 00000-0000" value={phone} editable={!busy} onChangeText={setPhone} />
+              <AppInput label={t('suppliers.email')} placeholder="contato@exemplo.com" value={email} editable={!busy} keyboardType="email-address" autoCapitalize="none" onChangeText={setEmail} />
             </>
           ) : null}
           <View style={styles.actionsRow}>
-            <AppButton label={busy ? '...' : 'Criar e selecionar'} disabled={busy} style={styles.action} onPress={() => void save()} />
-            <AppButton label="Cancelar" variant="ghost" disabled={busy} style={styles.action} onPress={reset} />
+            <AppButton label={busy ? '...' : t('quickCreate.createSelect')} disabled={busy} style={styles.action} onPress={() => void save()} />
+            <AppButton label={t('common.cancel')} variant="ghost" disabled={busy} style={styles.action} onPress={reset} />
           </View>
         </AppCard>
       ) : null}

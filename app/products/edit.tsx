@@ -17,6 +17,7 @@ import { listCategories } from '@/database/repositories/categoryRepository';
 import { archiveProduct, findProductById, updateProduct } from '@/database/repositories/productRepository';
 import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/state/app-state';
 import type { Category } from '@/types/category';
 import type { ProductUnit } from '@/types/product';
@@ -24,16 +25,18 @@ import type { Supplier } from '@/types/supplier';
 import { formatDecimalInput, formatMoneyInputFromCents } from '@/utils/input-format';
 import { parseMoneyToCents, parseNonNegativeNumber } from '@/utils/validators';
 
-const unitOptions: Array<{ value: ProductUnit; label: string }> = [
-  { value: 'unit', label: 'Unidade' },
-  { value: 'kg', label: 'Kg' },
-  { value: 'g', label: 'g' },
-  { value: 'l', label: 'L' },
-  { value: 'ml', label: 'ml' },
-  { value: 'box', label: 'Caixa' },
-  { value: 'pack', label: 'Pacote' },
-  { value: 'pair', label: 'Par' },
-];
+function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit; label: string }> {
+  return [
+    { value: 'unit', label: t('productNew.unitEach') },
+    { value: 'kg', label: 'Kg' },
+    { value: 'g', label: 'g' },
+    { value: 'l', label: 'L' },
+    { value: 'ml', label: 'ml' },
+    { value: 'box', label: t('productNew.unitBox') },
+    { value: 'pack', label: t('productNew.unitPack') },
+    { value: 'pair', label: t('productNew.unitPair') },
+  ];
+}
 
 function getCurrencyPrefix(currency: string) {
   if (currency === 'USD') {
@@ -47,28 +50,28 @@ function getCurrencyPrefix(currency: string) {
   return 'R$';
 }
 
-function getProductErrorMessage(error: unknown, fallback: string) {
+function getProductErrorMessage(error: unknown, fallback: string, t: (key: string) => string) {
   if (!(error instanceof Error)) {
     return fallback;
   }
 
   switch (error.message) {
     case 'PRODUCT_ID_MISSING':
-      return 'Produto nao informado.';
+      return t('productDetail.missing');
     case 'PRODUCT_NOT_FOUND':
-      return 'Produto nao encontrado.';
+      return t('productDetail.notFound');
     case 'PRODUCT_LOAD_FAILED':
-      return 'Nao foi possivel carregar o produto.';
+      return t('productDetail.loadFailed');
     case 'PRODUCT_UPDATE_FAILED':
-      return 'Nao foi possivel salvar o produto.';
+      return t('productDetail.saveFailed');
     case 'PRODUCT_BARCODE_ALREADY_EXISTS':
-      return 'Ja existe um produto com este codigo de barras.';
+      return t('productNew.barcodeExists');
     case 'PRODUCT_SKU_ALREADY_EXISTS':
-      return 'Ja existe um produto com este SKU.';
+      return t('productNew.skuExists');
     case 'CATEGORY_NOT_FOUND':
-      return 'A categoria selecionada nao esta mais disponivel.';
+      return t('productNew.categoryMissing');
     case 'SUPPLIER_NOT_FOUND':
-      return 'O fornecedor selecionado nao esta mais disponivel.';
+      return t('productNew.supplierMissing');
     default:
       return error.message;
   }
@@ -77,6 +80,8 @@ function getProductErrorMessage(error: unknown, fallback: string) {
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
+  const { t } = useI18n();
+  const unitOptions = useMemo(() => getUnitOptions(t), [t]);
   const { currency } = useAppState();
   const { palette } = useAppTheme();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -105,7 +110,7 @@ export default function ProductEditScreen() {
     void (async () => {
       if (!productId) {
         setLoading(false);
-        setError('Produto nao informado.');
+        setError(t('productNew.nameRequired'));
         return;
       }
 
@@ -116,7 +121,7 @@ export default function ProductEditScreen() {
           listSuppliers(),
         ]);
         if (!product) {
-          setError('Produto nao encontrado.');
+          setError(t('products.emptyTitle'));
           return;
         }
 
@@ -137,12 +142,12 @@ export default function ProductEditScreen() {
         setImageUri(product.imageUri ?? '');
         setNotes(product.notes ?? '');
       } catch {
-        setError('Nao foi possivel carregar o produto.');
+        setError(t('productDetail.title'));
       } finally {
         setLoading(false);
       }
     })();
-  }, [productId]);
+  }, [productId, t]);
 
   const canSave = useMemo(() => name.trim().length > 0 && !saving, [name, saving]);
 
@@ -150,7 +155,7 @@ export default function ProductEditScreen() {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        setActionError('Permissao de imagens negada.');
+        setActionError(t('productNew.imageDenied'));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -161,7 +166,7 @@ export default function ProductEditScreen() {
         setImageUri(result.assets[0]?.uri ?? '');
       }
     } catch {
-      setActionError('Nao foi possivel selecionar a imagem.');
+      setActionError(t('productNew.imageFailed'));
     }
   };
 
@@ -198,7 +203,7 @@ export default function ProductEditScreen() {
 
       router.replace(`/products/${productId}`);
     } catch (nextError) {
-      setActionError(getProductErrorMessage(nextError, 'Nao foi possivel salvar o produto.'));
+      setActionError(getProductErrorMessage(nextError, t('productDetail.saveFailed'), t));
     } finally {
       setSaving(false);
     }
@@ -216,7 +221,7 @@ export default function ProductEditScreen() {
       await archiveProduct(productId);
       router.replace('/(tabs)/products');
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar o produto.');
+      setActionError(nextError instanceof Error ? nextError.message : t('productDetail.archiveFailed'));
     } finally {
       setSaving(false);
     }
@@ -225,7 +230,7 @@ export default function ProductEditScreen() {
   if (loading) {
     return (
       <ScreenContainer padded>
-        <LoadingState title="Editar produto" description="Carregando dados do produto." />
+        <LoadingState title={t('productDetail.edit')} description={t('common.loading')} />
       </ScreenContainer>
     );
   }
@@ -233,8 +238,8 @@ export default function ProductEditScreen() {
   if (error) {
     return (
       <ScreenContainer padded>
-        <AppHeader title="Editar produto" subtitle="Atualize os dados do item." variant="page" onBackPress={() => router.back()} />
-        <ErrorState description={error} actionLabel="Voltar" onActionPress={() => router.back()} />
+        <AppHeader title={t('productDetail.edit')} subtitle={t('productDetail.title')} variant="page" onBackPress={() => router.back()} />
+        <ErrorState description={error} actionLabel={t('common.back')} onActionPress={() => router.back()} />
       </ScreenContainer>
     );
   }
@@ -242,50 +247,50 @@ export default function ProductEditScreen() {
   return (
     <ScreenContainer scroll padded>
       <AppHeader
-        title="Editar produto"
-        subtitle="Atualize os dados do item."
+        title={t('productDetail.edit')}
+        subtitle={t('productDetail.title')}
         variant="page"
         onBackPress={() => router.back()}
         rightAction={
-          <Pressable onPress={() => void handleSave()} hitSlop={10} style={[styles.headerAction, { backgroundColor: '#B7F34D' }]}>
-            <Ionicons name="checkmark" size={20} color="#0B0F14" />
+          <Pressable onPress={() => void handleSave()} hitSlop={10} style={[styles.headerAction, { backgroundColor: palette.primary }]}>
+            <Ionicons name="checkmark" size={20} color={palette.primaryText} />
           </Pressable>
         }
       />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Identificacao</AppCard.Title>
+        <AppCard.Title>{t('productNew.identification')}</AppCard.Title>
         <AppCard variant="hero" onPress={() => void pickImage()} style={styles.photoCard}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.photoImage} />
           ) : (
             <View style={[styles.photoPlaceholder, { backgroundColor: palette.background }]}>
               <Ionicons name="camera-outline" size={34} color={palette.primary} />
-              <Text style={[styles.photoTitle, { color: palette.text }]}>Adicionar foto</Text>
-              <Text style={[styles.photoSubtitle, { color: palette.textMuted }]}>Toque para escolher uma imagem da galeria.</Text>
+              <Text style={[styles.photoTitle, { color: palette.text }]}>{t('productNew.addPhoto')}</Text>
+              <Text style={[styles.photoSubtitle, { color: palette.textMuted }]}>{t('productNew.addPhotoBody')}</Text>
             </View>
           )}
         </AppCard>
-        <AppInput label="Nome" value={name} onChangeText={setName} />
+        <AppInput label={t('productNew.name')} value={name} onChangeText={setName} />
         <AppInput label="SKU" value={sku} onChangeText={setSku} />
-        <AppInput label="Codigo de barras" value={barcode} onChangeText={setBarcode} />
+        <AppInput label={t('productNew.barcode')} value={barcode} onChangeText={setBarcode} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Organizacao</AppCard.Title>
-        <AppSelect label="Unidade" helperText="Escolha como este item será medido no estoque." value={unit} options={unitOptions} onChange={setUnit} />
+        <AppCard.Title>{t('productNew.organization')}</AppCard.Title>
+        <AppSelect label={t('productNew.unit')} helperText={t('productNew.unitHelper')} value={unit} options={unitOptions} onChange={setUnit} />
         <AppSelect
-          label="Categoria"
-          helperText="Opcional. Ajuda a separar produtos por grupo."
+          label={t('productNew.category')}
+          helperText={t('productNew.categoryHelper')}
           value={categoryId}
-          options={[{ value: '', label: 'Sem categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
+          options={[{ value: '', label: t('common.noCategory') }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setCategoryId}
         />
         <AppSelect
-          label="Fornecedor"
-          helperText="Opcional. Você pode vincular depois."
+          label={t('productNew.supplier')}
+          helperText={t('productNew.supplierHelper')}
           value={supplierId}
-          options={[{ value: '', label: 'Sem fornecedor' }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
+          options={[{ value: '', label: t('common.noSupplier') }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
         />
         <QuickCreateRelation
@@ -303,10 +308,10 @@ export default function ProductEditScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Estoque, valores e avancados</AppCard.Title>
-        <AppInput label="Estoque minimo" helperText="Usado para alertas de reposição." keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
+        <AppCard.Title>{t('productNew.stockValues')}</AppCard.Title>
+        <AppInput label={t('productNew.minQuantity')} helperText={t('productNew.minHelper')} keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
         <AppInput
-          label="Custo"
+          label={t('productNew.cost')}
           prefix={getCurrencyPrefix(currency)}
           placeholder="0,00"
           helperText={`Ex.: ${getCurrencyPrefix(currency)} 12,50`}
@@ -316,7 +321,7 @@ export default function ProductEditScreen() {
           onChangeText={setCostPrice}
         />
         <AppInput
-          label="Venda"
+          label={t('productNew.sale')}
           prefix={getCurrencyPrefix(currency)}
           placeholder="0,00"
           helperText={`Ex.: ${getCurrencyPrefix(currency)} 19,90`}
@@ -325,23 +330,23 @@ export default function ProductEditScreen() {
           value={salePrice}
           onChangeText={setSalePrice}
         />
-        <AppInput label="Validade" helperText="Digite no formato AAAA-MM-DD." placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
-        <AppInput label="Lote" value={batchCode} onChangeText={setBatchCode} />
-        <AppInput label="Localizacao" value={location} onChangeText={setLocation} />
-        <AppInput label="Observacoes" multiline value={notes} onChangeText={setNotes} />
+        <AppInput label={t('productNew.expiration')} helperText="AAAA-MM-DD" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
+        <AppInput label={t('productNew.batch')} value={batchCode} onChangeText={setBatchCode} />
+        <AppInput label={t('productNew.location')} value={location} onChangeText={setLocation} />
+        <AppInput label={t('productNew.notes')} multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 
       {actionError ? <ErrorState description={actionError} /> : null}
 
-      <AppButton label={saving ? '...' : 'Salvar'} disabled={!canSave} onPress={() => void handleSave()} />
-      <AppButton label="Arquivar" variant="secondary" disabled={saving} onPress={() => setConfirmArchive(true)} />
-      <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
+      <AppButton label={saving ? '...' : t('common.save')} disabled={!canSave} onPress={() => void handleSave()} />
+      <AppButton label={t('common.archive')} variant="secondary" disabled={saving} onPress={() => setConfirmArchive(true)} />
+      <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
 
       <ConfirmDialog
         visible={confirmArchive}
-        title="Arquivar produto?"
-        message="O produto sairá das listas principais, mas o historico permanece salvo."
-        confirmLabel="Arquivar"
+        title={t('productDetail.archiveTitle')}
+        message={t('productDetail.archiveBody')}
+        confirmLabel={t('common.archive')}
         danger
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => void handleArchive()}
