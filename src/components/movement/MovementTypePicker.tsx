@@ -10,7 +10,7 @@ type MovementOption = {
   descriptionKey: string;
   icon: keyof typeof Ionicons.glyphMap;
   accent: 'success' | 'warning' | 'info' | 'danger';
-  deltaLabel: string;
+  deltaLabelKey: string;
 };
 
 type Props = {
@@ -25,7 +25,7 @@ const mainOptions: MovementOption[] = [
     descriptionKey: 'movement.mainInBody',
     icon: 'add-circle-outline',
     accent: 'success',
-    deltaLabel: '+ saldo',
+    deltaLabelKey: 'movement.deltaEntry',
   },
   {
     value: 'out',
@@ -33,7 +33,7 @@ const mainOptions: MovementOption[] = [
     descriptionKey: 'movement.mainOutBody',
     icon: 'remove-circle-outline',
     accent: 'warning',
-    deltaLabel: '- saldo',
+    deltaLabelKey: 'movement.deltaExit',
   },
 ];
 
@@ -44,7 +44,7 @@ const supportOptions: MovementOption[] = [
     descriptionKey: 'movement.returnBody',
     icon: 'return-up-back-outline',
     accent: 'info',
-    deltaLabel: '+ volta',
+    deltaLabelKey: 'movement.deltaReturn',
   },
   {
     value: 'loss',
@@ -52,7 +52,7 @@ const supportOptions: MovementOption[] = [
     descriptionKey: 'movement.lossBody',
     icon: 'warning-outline',
     accent: 'danger',
-    deltaLabel: '- baixa',
+    deltaLabelKey: 'movement.deltaLoss',
   },
   {
     value: 'adjustment_positive',
@@ -60,7 +60,7 @@ const supportOptions: MovementOption[] = [
     descriptionKey: 'movement.adjustUpBody',
     icon: 'arrow-up-outline',
     accent: 'success',
-    deltaLabel: '+ ajuste',
+    deltaLabelKey: 'movement.deltaAdjustUp',
   },
   {
     value: 'adjustment_negative',
@@ -68,7 +68,7 @@ const supportOptions: MovementOption[] = [
     descriptionKey: 'movement.adjustDownBody',
     icon: 'arrow-down-outline',
     accent: 'danger',
-    deltaLabel: '- ajuste',
+    deltaLabelKey: 'movement.deltaAdjustDown',
   },
 ];
 
@@ -99,7 +99,7 @@ export function MovementTypePicker({ value, onChange }: Props) {
                 <View style={[styles.iconShell, { backgroundColor: palette.background }]}>
                   <Ionicons name={option.icon} size={22} color={palette[option.accent]} />
                 </View>
-                <Text style={[styles.deltaPill, { color: palette[option.accent], borderColor: palette[option.accent] }]}>{option.deltaLabel}</Text>
+                <Text style={[styles.deltaPill, { color: palette[option.accent], borderColor: palette[option.accent] }]}>{t(option.deltaLabelKey)}</Text>
               </View>
               <Text style={[styles.mainTitle, { color: palette.text }]}>{t(option.titleKey)}</Text>
               <Text style={[styles.description, { color: palette.textMuted }]}>{t(option.descriptionKey)}</Text>
@@ -129,7 +129,7 @@ export function MovementTypePicker({ value, onChange }: Props) {
               >
                 <View style={styles.supportHeader}>
                   <Ionicons name={option.icon} size={18} color={palette[option.accent]} />
-                  <Text style={[styles.supportDelta, { color: palette[option.accent] }]}>{option.deltaLabel}</Text>
+                  <Text style={[styles.supportDelta, { color: palette[option.accent] }]}>{t(option.deltaLabelKey)}</Text>
                 </View>
                 <Text style={[styles.supportLabel, { color: palette.text }]}>{t(option.titleKey)}</Text>
                 <Text style={[styles.supportDescription, { color: palette.textMuted }]}>{t(option.descriptionKey)}</Text>

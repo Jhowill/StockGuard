@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from './AppButton';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 
 type Props = {
   title?: string;
@@ -11,7 +12,8 @@ type Props = {
   icon?: keyof typeof Ionicons.glyphMap;
 };
 
-export function ErrorState({ title = 'Algo saiu do esperado', description, actionLabel, onActionPress, icon = 'alert-circle-outline' }: Props) {
+export function ErrorState({ title, description, actionLabel, onActionPress, icon = 'alert-circle-outline' }: Props) {
+  const { t } = useI18n();
   const { palette } = useAppTheme();
 
   return (
@@ -19,7 +21,7 @@ export function ErrorState({ title = 'Algo saiu do esperado', description, actio
       <View style={[styles.iconShell, { backgroundColor: palette.surfaceMuted, borderColor: palette.danger }]}>
         <Ionicons name={icon} size={22} color={palette.danger} />
       </View>
-      <Text style={[styles.title, { color: palette.danger }]}>{title}</Text>
+      <Text style={[styles.title, { color: palette.danger }]}>{title ?? t('errors.genericTitle')}</Text>
       <Text style={[styles.description, { color: palette.textMuted }]}>{description}</Text>
       {actionLabel && onActionPress ? <AppButton label={actionLabel} variant="secondary" style={styles.action} onPress={onActionPress} /> : null}
     </View>

@@ -16,6 +16,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useReports } from '@/hooks/useReports';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useAppState } from '@/state/app-state';
 import { exportReportCsv, exportReportPdf } from '@/services/exportService';
 import { showRewardedInterstitial } from '@/services/adsService';
@@ -38,7 +39,7 @@ const periods: Array<{ value: ReportPeriod; labelKey: string }> = [
 ];
 
 export default function ReportsScreen() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { currency } = useAppState();
   const { palette } = useAppTheme();
   const [period, setPeriod] = useState<ReportPeriod>('month');
@@ -48,6 +49,23 @@ export default function ReportsScreen() {
   const { summary, loading, error, refresh } = useReports(period);
   const { canUseFeature } = useFeatureGate('csv_export');
   const currentPeriodLabel = t(periodKeys[period]);
+  const exportCopy = {
+    brand: t('reports.exportBrand'),
+    title: t('reports.exportTitle'),
+    generatedAtLabel: t('reports.exportGeneratedAt'),
+    periodHeading: t('reports.exportPeriod'),
+    periodValue: currentPeriodLabel,
+    currencyLabel: t('reports.exportCurrency'),
+    entriesLabel: t('reports.exportEntries'),
+    exitsLabel: t('reports.exportExits'),
+    profitLabel: t('reports.exportProfit'),
+    productsMovedLabel: t('reports.exportProductsMoved'),
+    topProductsTitle: t('reports.exportTopProducts'),
+    tableProductLabel: t('reports.exportTableProduct'),
+    tableQuantityLabel: t('reports.exportTableQuantity'),
+    emptyPeriodLabel: t('reports.exportEmpty'),
+    footer: t('reports.exportFooter'),
+  };
 
   const unlockFeature = async (featureKey: PremiumFeature) => {
     setExporting(true);
@@ -55,7 +73,7 @@ export default function ReportsScreen() {
     try {
       const result = await showRewardedInterstitial(featureKey);
       if (result.status !== 'success') {
-        throw new Error(result.status === 'cancelled' ? 'Anuncio cancelado.' : result.reason);
+        throw new Error(result.status === 'cancelled' ? t('ads.cancelled') : result.reason);
       }
       await grantFeatureUnlock(featureKey);
       setLockedFeature(undefined);
@@ -82,9 +100,9 @@ export default function ReportsScreen() {
       }
 
       if (format === 'csv') {
-        await exportReportCsv(summary);
+        await exportReportCsv(summary, exportCopy, language);
       } else {
-        await exportReportPdf(summary);
+        await exportReportPdf(summary, exportCopy, language);
       }
 
       await consumeFeatureUse(featureKey);
@@ -135,16 +153,16 @@ export default function ReportsScreen() {
       {loading ? (
         <EmptyState title={t('reports.title')} description={t('common.loading')} icon="bar-chart-outline" />
       ) : error ? (
-        <EmptyState title={t('reports.title')} description={error} icon="bar-chart-outline" actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
+        <EmptyState title={t('reports.title')} description={translateAppError(error, t)} icon="bar-chart-outline" actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
       ) : summary ? (
         <>
           <View style={styles.metricRows}>
             <View style={styles.metricRow}>
-              <MetricCard compact label={t('reports.entries')} value={formatMoney(summary.entriesValueCents, currency)} />
-              <MetricCard compact label={t('reports.exits')} value={formatMoney(summary.exitsValueCents, currency)} />
+              <MetricCard compact label={t('reports.entries')} value={formatMoney(summary.entriesValueCents, currency, language)} />
+              <MetricCard compact label={t('reports.exits')} value={formatMoney(summary.exitsValueCents, currency, language)} />
             </View>
             <View style={styles.metricRow}>
-              <MetricCard compact label={t('reports.profit')} value={formatMoney(summary.estimatedProfitCents ?? 0, currency)} />
+              <MetricCard compact label={t('reports.profit')} value={formatMoney(summary.estimatedProfitCents ?? 0, currency, language)} />
               <MetricCard compact label={t('reports.products')} value={String(summary.movedProductsCount)} />
             </View>
           </View>
@@ -182,7 +200,7 @@ export default function ReportsScreen() {
             />
           ) : null}
 
-          {exportError ? <ErrorState title={t('common.export')} description={exportError} /> : null}
+          {exportError ? <ErrorState title={t('common.export')} description={translateAppError(exportError, t)} /> : null}
         </>
       ) : null}
     </ScreenContainer>

@@ -18,11 +18,13 @@ import { archiveProduct, findProductById, updateProduct } from '@/database/repos
 import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useAppState } from '@/state/app-state';
 import type { Category } from '@/types/category';
 import type { ProductUnit } from '@/types/product';
 import type { Supplier } from '@/types/supplier';
 import { formatDecimalInput, formatMoneyInputFromCents } from '@/utils/input-format';
+import { formatMoney } from '@/utils/format';
 import { parseMoneyToCents, parseNonNegativeNumber } from '@/utils/validators';
 
 function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit; label: string }> {
@@ -38,7 +40,7 @@ function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit;
   ];
 }
 
-function getCurrencyPrefix(currency: string) {
+function getCurrencyPrefixDisplay(currency: string) {
   if (currency === 'USD') {
     return 'US$';
   }
@@ -80,7 +82,7 @@ function getProductErrorMessage(error: unknown, fallback: string, t: (key: strin
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const unitOptions = useMemo(() => getUnitOptions(t), [t]);
   const { currency } = useAppState();
   const { palette } = useAppTheme();
@@ -110,7 +112,7 @@ export default function ProductEditScreen() {
     void (async () => {
       if (!productId) {
         setLoading(false);
-        setError(t('productNew.nameRequired'));
+        setError(t('productDetail.missing'));
         return;
       }
 
@@ -121,7 +123,7 @@ export default function ProductEditScreen() {
           listSuppliers(),
         ]);
         if (!product) {
-          setError(t('products.emptyTitle'));
+          setError(t('productDetail.notFound'));
           return;
         }
 
@@ -142,7 +144,7 @@ export default function ProductEditScreen() {
         setImageUri(product.imageUri ?? '');
         setNotes(product.notes ?? '');
       } catch {
-        setError(t('productDetail.title'));
+        setError(t('productDetail.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -239,7 +241,7 @@ export default function ProductEditScreen() {
     return (
       <ScreenContainer padded>
         <AppHeader title={t('productDetail.edit')} subtitle={t('productDetail.title')} variant="page" onBackPress={() => router.back()} />
-        <ErrorState description={error} actionLabel={t('common.back')} onActionPress={() => router.back()} />
+        <ErrorState description={translateAppError(error, t)} actionLabel={t('common.back')} onActionPress={() => router.back()} />
       </ScreenContainer>
     );
   }
@@ -271,9 +273,9 @@ export default function ProductEditScreen() {
             </View>
           )}
         </AppCard>
-        <AppInput label={t('productNew.name')} value={name} onChangeText={setName} />
-        <AppInput label="SKU" value={sku} onChangeText={setSku} />
-        <AppInput label={t('productNew.barcode')} value={barcode} onChangeText={setBarcode} />
+        <AppInput label={t('productNew.name')} placeholder={t('productNew.namePlaceholder')} value={name} onChangeText={setName} />
+        <AppInput label={t('productNew.sku')} placeholder={t('productNew.skuPlaceholder')} value={sku} onChangeText={setSku} />
+        <AppInput label={t('productNew.barcode')} placeholder={t('productNew.barcodePlaceholder')} value={barcode} onChangeText={setBarcode} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
@@ -312,9 +314,9 @@ export default function ProductEditScreen() {
         <AppInput label={t('productNew.minQuantity')} helperText={t('productNew.minHelper')} keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
         <AppInput
           label={t('productNew.cost')}
-          prefix={getCurrencyPrefix(currency)}
-          placeholder="0,00"
-          helperText={`Ex.: ${getCurrencyPrefix(currency)} 12,50`}
+          prefix={getCurrencyPrefixDisplay(currency)}
+          placeholder={t('productNew.moneyPlaceholder')}
+          helperText={t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}
           keyboardType="decimal-pad"
           mask="money"
           value={costPrice}
@@ -322,21 +324,21 @@ export default function ProductEditScreen() {
         />
         <AppInput
           label={t('productNew.sale')}
-          prefix={getCurrencyPrefix(currency)}
-          placeholder="0,00"
-          helperText={`Ex.: ${getCurrencyPrefix(currency)} 19,90`}
+          prefix={getCurrencyPrefixDisplay(currency)}
+          placeholder={t('productNew.moneyPlaceholder')}
+          helperText={t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}
           keyboardType="decimal-pad"
           mask="money"
           value={salePrice}
           onChangeText={setSalePrice}
         />
-        <AppInput label={t('productNew.expiration')} helperText="AAAA-MM-DD" placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
+        <AppInput label={t('productNew.expiration')} helperText={t('productNew.expirationPlaceholder')} placeholder={t('productNew.expirationPlaceholder')} keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
         <AppInput label={t('productNew.batch')} value={batchCode} onChangeText={setBatchCode} />
-        <AppInput label={t('productNew.location')} value={location} onChangeText={setLocation} />
-        <AppInput label={t('productNew.notes')} multiline value={notes} onChangeText={setNotes} />
+        <AppInput label={t('productNew.location')} placeholder={t('productNew.locationPlaceholder')} value={location} onChangeText={setLocation} />
+        <AppInput label={t('productNew.notes')} placeholder={t('productNew.notesPlaceholder')} multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 
-      {actionError ? <ErrorState description={actionError} /> : null}
+      {actionError ? <ErrorState description={translateAppError(actionError, t)} /> : null}
 
       <AppButton label={saving ? '...' : t('common.save')} disabled={!canSave} onPress={() => void handleSave()} />
       <AppButton label={t('common.archive')} variant="secondary" disabled={saving} onPress={() => setConfirmArchive(true)} />

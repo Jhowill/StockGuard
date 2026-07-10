@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useSuppliers } from '@/hooks/useSuppliers';
 
 export default function SuppliersScreen() {
@@ -91,19 +92,19 @@ export default function SuppliersScreen() {
         <AppCard.Title>{editingId ? t('suppliers.edit') : t('suppliers.new')}</AppCard.Title>
         <AppCard.Text>{t('suppliers.formBody')}</AppCard.Text>
         {editingId ? <StatusBadge tone="info" label={t('suppliers.editBadge')} /> : null}
-        <AppInput label={t('suppliers.name')} placeholder="Ex.: Distribuidora Alfa" value={name} onChangeText={setName} />
-        <AppInput label={t('suppliers.phone')} placeholder="(00) 00000-0000" helperText={t('suppliers.phoneHelper')} value={phone} onChangeText={setPhone} />
-        <AppInput label={t('suppliers.email')} placeholder="contato@exemplo.com" helperText={t('suppliers.emailHelper')} value={email} onChangeText={setEmail} />
+        <AppInput label={t('suppliers.name')} placeholder={t('suppliers.namePlaceholder')} value={name} onChangeText={setName} />
+        <AppInput label={t('suppliers.phone')} placeholder={t('suppliers.phonePlaceholder')} helperText={t('suppliers.phoneHelper')} value={phone} onChangeText={setPhone} />
+        <AppInput label={t('suppliers.email')} placeholder={t('suppliers.emailPlaceholder')} helperText={t('suppliers.emailHelper')} value={email} onChangeText={setEmail} />
         <AppButton label={busy ? '...' : editingId ? t('common.save') : t('common.create')} disabled={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label={t('common.cancel')} variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
-      {actionError ? <EmptyState title={t('suppliers.title')} description={actionError} icon="business-outline" /> : null}
+      {actionError ? <EmptyState title={t('suppliers.title')} description={translateAppError(actionError, t)} icon="business-outline" /> : null}
 
       {loading ? (
         <EmptyState title={t('suppliers.title')} description={t('common.loading')} icon="business-outline" />
       ) : error ? (
-        <EmptyState title={t('suppliers.title')} description={error} icon="business-outline" />
+        <EmptyState title={t('suppliers.title')} description={translateAppError(error, t)} icon="business-outline" />
       ) : suppliers.length === 0 ? (
         <EmptyState title={t('suppliers.title')} description={t('suppliers.empty')} icon="business-outline" />
       ) : (

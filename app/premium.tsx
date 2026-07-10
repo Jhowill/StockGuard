@@ -14,6 +14,7 @@ import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import type { PremiumFeature } from '@/types/ads';
 
 const features: Array<{ key: PremiumFeature; labelKey: string; descriptionKey: string }> = [
@@ -105,7 +106,7 @@ export default function PremiumScreen() {
       <AdPolicyNotice title={t('ads.premiumTitle')} body={t('ads.premiumBody')} icon="ribbon-outline" tone="reward" />
 
       {actionError || adsError || featureError ? (
-        <EmptyState title={t('premium.rewards')} description={actionError ?? adsError ?? featureError ?? t('premium.loadFailed')} />
+        <EmptyState title={t('premium.rewards')} description={translateAppError(actionError ?? adsError ?? featureError ?? t('premium.loadFailed'), t)} />
       ) : null}
 
       <AppCard style={{ gap: 12 }}>

@@ -10,6 +10,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
 import { authenticateWithBiometric, canUseBiometricUnlock, disableBiometricLock, enableBiometricLock } from '@/services/securityService';
 
@@ -44,7 +45,10 @@ export default function BiometricSecurityScreen() {
     setBusy(true);
     setError(undefined);
     try {
-      const result = await authenticateWithBiometric();
+      const result = await authenticateWithBiometric({
+        promptMessage: t('securityFlow.biometricPrompt'),
+        fallbackLabel: t('securityFlow.usePin'),
+      });
       if (!result.success) {
         setError(t('securityFlow.biometricValidateFailed'));
         return;
@@ -100,7 +104,7 @@ export default function BiometricSecurityScreen() {
         <AppButton label={t('securityFlow.disableBiometric')} variant="secondary" disabled={busy} onPress={() => void disable()} />
       </AppCard>
 
-      {error ? <EmptyState title={t('settings.security')} description={error} icon="finger-print-outline" /> : null}
+      {error ? <EmptyState title={t('settings.security')} description={translateAppError(error, t)} icon="finger-print-outline" /> : null}
     </ScreenContainer>
   );
 }

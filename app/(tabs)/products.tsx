@@ -13,6 +13,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 
 type ProductFilter = 'all' | 'low' | 'zero' | 'expiring';
 
@@ -126,7 +127,7 @@ export default function ProductsScreen() {
       {loading ? (
         <EmptyState title={t('products.emptyTitle')} description={t('products.emptyBody')} icon="cube-outline" />
       ) : error ? (
-        <EmptyState title={t('products.emptyTitle')} description={error} icon="cube-outline" />
+        <EmptyState title={t('products.emptyTitle')} description={translateAppError(error, t)} icon="cube-outline" />
       ) : products.length === 0 ? (
         <EmptyState
           title={t('products.emptyTitle')}

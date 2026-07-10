@@ -11,6 +11,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useCategories } from '@/hooks/useCategories';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { parseNonNegativeInteger } from '@/utils/validators';
 
 export default function CategoriesScreen() {
@@ -104,20 +105,20 @@ export default function CategoriesScreen() {
         <AppCard.Title>{editingId ? t('categories.edit') : t('categories.new')}</AppCard.Title>
         <AppCard.Text>{t('categories.formBody')}</AppCard.Text>
         {editingId ? <StatusBadge tone="info" label={t('categories.editBadge')} /> : null}
-        <AppInput label={t('categories.name')} placeholder="Ex.: Higiene" value={name} onChangeText={setName} />
-        <AppInput label={t('categories.color')} placeholder="#005FCC" helperText={t('categories.colorHelper')} value={colorToken} onChangeText={setColorToken} />
-        <AppInput label={t('categories.icon')} placeholder="layers-outline" helperText={t('categories.iconHelper')} value={iconName} onChangeText={setIconName} />
-        <AppInput label={t('categories.order')} helperText={t('categories.orderHelper')} keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
+        <AppInput label={t('categories.name')} placeholder={t('categories.namePlaceholder')} value={name} onChangeText={setName} />
+        <AppInput label={t('categories.color')} placeholder={t('categories.colorPlaceholder')} helperText={t('categories.colorHelper')} value={colorToken} onChangeText={setColorToken} />
+        <AppInput label={t('categories.icon')} placeholder={t('categories.iconPlaceholder')} helperText={t('categories.iconHelper')} value={iconName} onChangeText={setIconName} />
+        <AppInput label={t('categories.order')} placeholder={t('categories.orderPlaceholder')} helperText={t('categories.orderHelper')} keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
         <AppButton label={busy ? '...' : editingId ? t('common.save') : t('common.create')} disabled={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label={t('common.cancel')} variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
-      {actionError ? <EmptyState title={t('categories.title')} description={actionError} icon="layers-outline" /> : null}
+      {actionError ? <EmptyState title={t('categories.title')} description={translateAppError(actionError, t)} icon="layers-outline" /> : null}
 
       {loading ? (
         <EmptyState title={t('categories.title')} description={t('common.loading')} icon="layers-outline" />
       ) : error ? (
-        <EmptyState title={t('categories.title')} description={error} icon="layers-outline" />
+        <EmptyState title={t('categories.title')} description={translateAppError(error, t)} icon="layers-outline" />
       ) : categories.length === 0 ? (
         <EmptyState title={t('categories.title')} description={t('categories.empty')} icon="layers-outline" />
       ) : (

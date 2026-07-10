@@ -10,6 +10,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useAppState } from '@/state/app-state';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -57,7 +58,7 @@ export default function SecurityScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>PIN</AppCard.Title>
+        <AppCard.Title>{t('securityFlow.pinTitle')}</AppCard.Title>
         <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? t('securityFlow.enabled') : t('onboarding.optional')} />
         <AppButton label={appLockEnabled ? t('settings.managePin') : t('settings.enablePin')} variant={appLockEnabled ? 'secondary' : 'primary'} onPress={() => router.push('/security/pin')} />
       </AppCard>
@@ -74,7 +75,7 @@ export default function SecurityScreen() {
         <AppButton label={hideFinancialValues ? t('settings.showValues') : t('settings.hideValues')} disabled={saving} variant={hideFinancialValues ? 'secondary' : 'primary'} onPress={() => void safeSave({ hideFinancialValues: !hideFinancialValues })} />
       </AppCard>
 
-      {error ? <EmptyState title={t('settings.security')} description={error} /> : null}
+      {error ? <EmptyState title={t('settings.security')} description={translateAppError(error, t)} /> : null}
 
       <AppButton
         label={saving ? '...' : t('onboarding.finish')}

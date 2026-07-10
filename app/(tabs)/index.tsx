@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useAppState } from '@/state/app-state';
 import { updateSettings } from '@/database/repositories/settingsRepository';
 import { formatMoney } from '@/utils/format';
@@ -51,7 +52,7 @@ function getMovementTone(type: string) {
 }
 
 export default function HomeScreen() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { currency, theme, userName, setThemeMode } = useAppState();
   const { palette, mode } = useAppTheme();
   const { summary, loading, error, refresh } = useDashboard();
@@ -72,7 +73,7 @@ export default function HomeScreen() {
   const heroHint = loading
     ? t('home.updatedToday')
     : lastActivity
-      ? t('home.lastUpdated', { date: formatShortDateTime(lastActivity) })
+      ? t('home.lastUpdated', { date: formatShortDateTime(lastActivity, language) })
       : t('home.noRecentActivity');
 
   return (
@@ -101,7 +102,7 @@ export default function HomeScreen() {
           <View style={styles.heroCopy}>
             <Text style={[styles.heroLabel, { color: palette.textMuted }]}>{t('home.stockValue')}</Text>
             <Text style={[styles.heroValue, { color: palette.text }]}>
-              {loading ? '...' : formatMoney(summary.totalStockValueCents, currency)}
+              {loading ? '...' : formatMoney(summary.totalStockValueCents, currency, language)}
             </Text>
             <Text style={[styles.heroHint, { color: palette.textMuted }]}>{heroHint}</Text>
           </View>
@@ -132,7 +133,7 @@ export default function HomeScreen() {
         </View>
 
         {error ? (
-          <EmptyState title={t('home.noRecentMovements')} description={error} actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
+          <EmptyState title={t('home.noRecentMovements')} description={translateAppError(error, t)} actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
         ) : summary.lastMovements.length > 0 ? (
           <View style={styles.listGap}>
             {summary.lastMovements.map((movement) => (
@@ -140,7 +141,7 @@ export default function HomeScreen() {
                 key={movement.id}
                 icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : movement.type === 'loss' ? 'warning-outline' : 'swap-horizontal-outline'}
                 title={movement.productName}
-                subtitle={`${getMovementLabel(movement.type, t)} - ${formatShortDateTime(movement.createdAt)}`}
+                subtitle={`${getMovementLabel(movement.type, t)} - ${formatShortDateTime(movement.createdAt, language)}`}
                 trailing={<StatusBadge tone={getMovementTone(movement.type)} label={`x${movement.quantity}`} />}
               />
             ))}

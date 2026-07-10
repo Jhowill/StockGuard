@@ -21,9 +21,11 @@ import { createStockMovement } from '@/services/stockMovementService';
 import { useAppState } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import type { ProductUnit } from '@/types/product';
 import type { Category } from '@/types/category';
 import type { Supplier } from '@/types/supplier';
+import { formatMoney } from '@/utils/format';
 import { parseMoneyToCents, parseNonNegativeNumber } from '@/utils/validators';
 
 function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit; label: string }> {
@@ -71,7 +73,7 @@ function getProductCreateErrorMessage(error: unknown, t: (key: string) => string
 }
 
 export default function NewProductScreen() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const unitOptions = useMemo(() => getUnitOptions(t), [t]);
   const { currency } = useAppState();
   const { palette } = useAppTheme();
@@ -141,7 +143,7 @@ export default function NewProductScreen() {
 
   const handleSave = async () => {
     if (loading || !name.trim()) {
-      setError('Informe o nome do produto.');
+        setError(t('productNew.nameRequired'));
       return;
     }
 
@@ -170,7 +172,7 @@ export default function NewProductScreen() {
       if (parsedQuantity > 0) {
         const adResult = await showRequiredStockSaveInterstitial();
         if (adResult.status !== 'success') {
-          throw new Error(adResult.status === 'cancelled' ? 'Assista ao anuncio ate o final para registrar o saldo inicial.' : adResult.reason);
+        throw new Error(adResult.status === 'cancelled' ? t('movement.adRequired') : adResult.reason);
         }
 
         await createStockMovement({
@@ -229,8 +231,8 @@ export default function NewProductScreen() {
           )}
         </AppCard>
         <AppInput label={t('productNew.name')} placeholder={t('productNew.namePlaceholder')} value={name} onChangeText={setName} />
-        <AppInput label={t('productNew.sku')} placeholder="Ex: PAR316" value={sku} onChangeText={setSku} />
-        <AppInput label={t('productNew.barcode')} placeholder="Ex: 789..." value={barcode} onChangeText={setBarcode} />
+        <AppInput label={t('productNew.sku')} placeholder={t('productNew.skuPlaceholder')} value={sku} onChangeText={setSku} />
+        <AppInput label={t('productNew.barcode')} placeholder={t('productNew.barcodePlaceholder')} value={barcode} onChangeText={setBarcode} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
@@ -279,7 +281,7 @@ export default function NewProductScreen() {
           />
           <AppInput
             label={t('productNew.minQuantity')}
-            helperText="Usado para alertas de reposição."
+            helperText={t('productNew.minHelper')}
             keyboardType="decimal-pad"
             mask="decimal"
             maskOptions={{ maxFractionDigits: 3 }}
@@ -292,8 +294,8 @@ export default function NewProductScreen() {
           <AppInput
             label={t('productNew.cost')}
             prefix={getCurrencyPrefix(currency)}
-            placeholder="0,00"
-            helperText={`Ex.: ${getCurrencyPrefix(currency)} 12,50`}
+            placeholder={t('productNew.moneyPlaceholder')}
+            helperText={t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}
             keyboardType="decimal-pad"
             mask="money"
             value={costPrice}
@@ -303,8 +305,8 @@ export default function NewProductScreen() {
           <AppInput
             label={t('productNew.sale')}
             prefix={getCurrencyPrefix(currency)}
-            placeholder="0,00"
-            helperText={`Ex.: ${getCurrencyPrefix(currency)} 19,90`}
+            placeholder={t('productNew.moneyPlaceholder')}
+            helperText={t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}
             keyboardType="decimal-pad"
             mask="money"
             value={salePrice}
@@ -319,15 +321,15 @@ export default function NewProductScreen() {
         <AppButton label={advancedOpen ? t('productNew.hideAdvanced') : t('productNew.showAdvanced')} variant="ghost" onPress={() => setAdvancedOpen((current) => !current)} />
         {advancedOpen ? (
           <>
-            <AppInput label={t('productNew.expiration')} placeholder="AAAA-MM-DD" keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
+            <AppInput label={t('productNew.expiration')} placeholder={t('productNew.expirationPlaceholder')} keyboardType="number-pad" mask="date" value={expirationDate} onChangeText={setExpirationDate} />
             <AppInput label={t('productNew.batch')} value={batchCode} onChangeText={setBatchCode} />
-            <AppInput label={t('productNew.location')} placeholder="Gaveta A1" value={location} onChangeText={setLocation} />
+            <AppInput label={t('productNew.location')} placeholder={t('productNew.locationPlaceholder')} value={location} onChangeText={setLocation} />
             <AppInput label={t('productNew.notes')} placeholder={t('productNew.notesPlaceholder')} multiline value={notes} onChangeText={setNotes} />
           </>
         ) : null}
       </AppCard>
 
-      {error ? <ErrorState description={error} /> : null}
+      {error ? <ErrorState description={translateAppError(error, t)} /> : null}
 
       <AppButton label={loading ? '...' : t('common.save')} disabled={!canSave} onPress={() => void handleSave()} />
       <AppButton label={t('common.back')} variant="ghost" onPress={handleBack} />
@@ -335,7 +337,7 @@ export default function NewProductScreen() {
       <ConfirmDialog
         visible={confirmExit}
         title={t('productNew.discardTitle')}
-        message="Existem dados preenchidos neste produto. Se voltar agora, eles serao perdidos. Caso haja saldo inicial, o anuncio obrigatorio tambem precisara ser concluido para registrar o estoque."
+        message={t('productNew.discardBody')}
         confirmLabel={t('productNew.discard')}
         danger
         onCancel={() => setConfirmExit(false)}

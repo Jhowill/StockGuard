@@ -11,6 +11,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
 import { clearPin, setPin } from '@/services/securityService';
 
@@ -71,7 +72,7 @@ export default function PinSecurityScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="PIN" subtitle={t('securityFlow.pinSubtitle')} variant="page" onBackPress={() => router.back()} />
+      <AppHeader title={t('securityFlow.pinTitle')} subtitle={t('securityFlow.pinSubtitle')} variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
@@ -86,13 +87,13 @@ export default function PinSecurityScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? t('securityFlow.enabled') : t('securityFlow.disabled')} />
         <AppCard.Text>{t('securityFlow.pinBody')}</AppCard.Text>
-        <AppInput label={t('securityFlow.newPin')} secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} helperText="Ex.: 1234" />
+        <AppInput label={t('securityFlow.newPin')} secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} helperText={t('securityFlow.pinExample')} />
         <AppInput label={t('securityFlow.confirmPin')} secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} helperText={t('securityFlow.confirmPinHelper')} />
         <AppButton label={busy ? '...' : t('securityFlow.savePin')} disabled={busy} onPress={() => void save()} />
         <AppButton label={t('securityFlow.removePin')} variant="secondary" disabled={busy} onPress={() => void remove()} />
       </AppCard>
 
-      {error ? <EmptyState title={t('settings.security')} description={error} icon="lock-closed-outline" /> : null}
+      {error ? <EmptyState title={t('settings.security')} description={translateAppError(error, t)} icon="lock-closed-outline" /> : null}
     </ScreenContainer>
   );
 }

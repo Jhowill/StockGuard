@@ -23,18 +23,7 @@ function friendlyRelationError(error: unknown, fallback: string) {
     return fallback;
   }
 
-  switch (error.message) {
-    case 'CATEGORY_ALREADY_EXISTS':
-      return 'Ja existe uma categoria com esse nome.';
-    case 'CATEGORY_NAME_REQUIRED':
-      return 'Informe o nome da categoria.';
-    case 'SUPPLIER_NAME_REQUIRED':
-      return 'Informe o nome do fornecedor.';
-    case 'INVALID_SUPPLIER_EMAIL':
-      return 'Informe um e-mail valido para o fornecedor.';
-    default:
-      return error.message;
-  }
+  return error.message;
 }
 
 export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCreated, onError }: Props) {
@@ -60,7 +49,7 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      onError(mode === 'category' ? 'Informe o nome da categoria.' : 'Informe o nome do fornecedor.');
+      onError(mode === 'category' ? 'CATEGORY_NAME_REQUIRED' : 'SUPPLIER_NAME_REQUIRED');
       return;
     }
 
@@ -104,15 +93,15 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
           </AppCard.Text>
           <AppInput
             label={mode === 'category' ? t('quickCreate.categoryName') : t('quickCreate.supplierName')}
-            placeholder={mode === 'category' ? 'Ex.: Bebidas' : 'Ex.: Distribuidora Alfa'}
+            placeholder={mode === 'category' ? t('quickCreate.categoryPlaceholder') : t('quickCreate.supplierPlaceholder')}
             value={name}
             editable={!busy}
             onChangeText={setName}
           />
           {mode === 'supplier' ? (
             <>
-              <AppInput label={t('suppliers.phone')} placeholder="(00) 00000-0000" value={phone} editable={!busy} onChangeText={setPhone} />
-              <AppInput label={t('suppliers.email')} placeholder="contato@exemplo.com" value={email} editable={!busy} keyboardType="email-address" autoCapitalize="none" onChangeText={setEmail} />
+              <AppInput label={t('suppliers.phone')} placeholder={t('quickCreate.phonePlaceholder')} value={phone} editable={!busy} onChangeText={setPhone} />
+              <AppInput label={t('suppliers.email')} placeholder={t('quickCreate.emailPlaceholder')} value={email} editable={!busy} keyboardType="email-address" autoCapitalize="none" onChangeText={setEmail} />
             </>
           ) : null}
           <View style={styles.actionsRow}>

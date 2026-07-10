@@ -18,12 +18,13 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useBackup } from '@/hooks/useBackup';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { showRewardedInterstitial } from '@/services/adsService';
 import { consumeFeatureUse, grantFeatureUnlock } from '@/services/rewardedAccessService';
 import { formatShortDateTime } from '@/utils/date-format';
 
 export default function BackupScreen() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { palette } = useAppTheme();
   const { backups, loading, error, createBackup, restoreBackup, shareBackup } = useBackup();
   const { canUseFeature } = useFeatureGate('encrypted_backup');
@@ -36,11 +37,15 @@ export default function BackupScreen() {
   const latestBackup = backups[0];
 
   const formatBackupLabel = (backup: { encrypted: boolean; format: string }) => {
-    if (backup.encrypted) {
-      return t('backup.secure');
+    if (backup.format === 'encrypted_json' || backup.encrypted) {
+      return t('backup.formatEncryptedJson');
     }
 
-    return backup.format === 'json' ? 'JSON' : backup.format;
+    if (backup.format === 'json') {
+      return t('backup.formatJson');
+    }
+
+    return backup.format;
   };
 
   const pickBackupFile = async () => {
@@ -67,7 +72,7 @@ export default function BackupScreen() {
         if (!allowed) {
           const adResult = await showRewardedInterstitial('encrypted_backup');
           if (adResult.status !== 'success') {
-            const reason = adResult.status === 'failed' ? adResult.reason : 'E necessario assistir o anuncio para liberar o backup criptografado.';
+            const reason = adResult.status === 'failed' ? adResult.reason : t('backup.encryptedAdRequired');
             throw new Error(reason);
           }
           await grantFeatureUnlock('encrypted_backup');
@@ -151,12 +156,12 @@ export default function BackupScreen() {
       </AppCard>
 
       {success ? <EmptyState title={t('backup.title')} description={success} icon="checkmark-circle-outline" /> : null}
-      {actionError ? <ErrorState title={t('backup.title')} description={actionError} icon="archive-outline" /> : null}
+      {actionError ? <ErrorState title={t('backup.title')} description={translateAppError(actionError, t)} icon="archive-outline" /> : null}
 
       {loading ? (
         <LoadingState title={t('backup.title')} description={t('common.loading')} />
       ) : error ? (
-        <ErrorState title={t('backup.title')} description={error} icon="archive-outline" />
+        <ErrorState title={t('backup.title')} description={translateAppError(error, t)} icon="archive-outline" />
       ) : backups.length === 0 ? (
         <EmptyState title={t('backup.title')} description={t('backup.noBackups')} icon="archive-outline" />
       ) : (
@@ -165,7 +170,7 @@ export default function BackupScreen() {
             <AppCard.Row
               icon="archive-outline"
               title={backup.fileName ?? backup.type}
-              subtitle={formatShortDateTime(backup.createdAt)}
+              subtitle={formatShortDateTime(backup.createdAt, language)}
               trailing={<StatusBadge tone={backup.status === 'success' ? 'success' : 'danger'} label={formatBackupLabel(backup)} />}
             />
             <AppButton

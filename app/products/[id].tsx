@@ -17,6 +17,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { formatMoney } from '@/utils/format';
 import { formatShortDateTime } from '@/utils/date-format';
 
@@ -33,7 +34,7 @@ function getStatusLabel(status: string, t: (key: string) => string) {
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { currency } = useAppState();
   const { palette } = useAppTheme();
   const { categories } = useCategories();
@@ -49,7 +50,7 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer padded>
-        <EmptyState title={t('productDetail.title')} description="..." icon="cube-outline" />
+        <EmptyState title={t('productDetail.title')} description={t('common.loading')} icon="cube-outline" />
       </ScreenContainer>
     );
   }
@@ -60,7 +61,7 @@ export default function ProductDetailScreen() {
         <AppHeader title={t('productDetail.title')} subtitle={t('products.emptyTitle')} variant="page" onBackPress={() => router.back()} />
         <EmptyState
           title={t('products.emptyTitle')}
-          description={error ?? t('products.emptyBody')}
+          description={translateAppError(error, t) || t('products.emptyBody')}
           icon="cube-outline"
           actionLabel={t('common.back')}
           onActionPress={() => router.back()}
@@ -114,7 +115,7 @@ export default function ProductDetailScreen() {
           <MetricCard compact label={t('productDetail.minQuantity')} value={String(product.minQuantity)} />
         </View>
         <View style={styles.metricsRow}>
-          <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency)} />
+          <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency, language)} />
           <MetricCard compact label={t('productDetail.location')} value={product.location ?? t('common.noLocation')} />
         </View>
       </View>
@@ -153,7 +154,7 @@ export default function ProductDetailScreen() {
               key={movement.id}
               icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : 'swap-horizontal-outline'}
               title={movement.reason}
-              subtitle={formatShortDateTime(movement.createdAt)}
+              subtitle={formatShortDateTime(movement.createdAt, language)}
               trailing={<StatusBadge tone={movement.type === 'in' ? 'success' : movement.type === 'out' ? 'warning' : 'info'} label={String(movement.quantity)} />}
             />
           ))
@@ -162,7 +163,7 @@ export default function ProductDetailScreen() {
         )}
       </AppCard>
 
-      {actionError ? <EmptyState title={t('productDetail.title')} description={actionError} /> : null}
+      {actionError ? <EmptyState title={t('productDetail.title')} description={translateAppError(actionError, t)} /> : null}
 
       <ConfirmDialog
         visible={confirmArchive}

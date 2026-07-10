@@ -17,9 +17,45 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
 import { useAppState, type AppLanguage, type CurrencyCode, type ThemeMode } from '@/state/app-state';
 import { deleteAllUserData } from '@/services/dataService';
+
+function getThemeLabel(theme: ThemeMode, t: (key: string) => string) {
+  switch (theme) {
+    case 'light':
+      return t('settings.themeLight');
+    case 'dark':
+      return t('settings.themeDark');
+    default:
+      return t('settings.themeSystem');
+  }
+}
+
+function getLanguageLabel(language: AppLanguage, t: (key: string) => string) {
+  switch (language) {
+    case 'pt-BR':
+      return t('settings.languagePortuguese');
+    case 'en':
+      return t('settings.languageEnglish');
+    case 'es':
+      return t('settings.languageSpanish');
+    default:
+      return t('settings.languageSystem');
+  }
+}
+
+function getCurrencyLabel(currency: CurrencyCode, t: (key: string) => string) {
+  switch (currency) {
+    case 'USD':
+      return t('settings.currencyUsd');
+    case 'EUR':
+      return t('settings.currencyEur');
+    default:
+      return t('settings.currencyBrl');
+  }
+}
 
 export default function SettingsScreen() {
   const { t } = useI18n();
@@ -105,19 +141,19 @@ export default function SettingsScreen() {
           <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('settings.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge tone="info" label={currentTheme} />
-          <StatusBadge tone="info" label={currentLanguage} />
-          <StatusBadge tone="success" label={currentCurrency} />
+          <StatusBadge tone="info" label={getThemeLabel(currentTheme, t)} />
+          <StatusBadge tone="info" label={getLanguageLabel(currentLanguage, t)} />
+          <StatusBadge tone="success" label={getCurrencyLabel(currentCurrency, t)} />
         </View>
       </AppCard>
 
       {loading ? (
         <LoadingState title={t('settings.title')} description={t('common.loading')} />
       ) : error ? (
-        <ErrorState title={t('settings.title')} description={error} />
+        <ErrorState title={t('settings.title')} description={translateAppError(error, t)} />
       ) : null}
 
-      {actionError ? <ErrorState title={t('settings.title')} description={actionError} /> : null}
+      {actionError ? <ErrorState title={t('settings.title')} description={translateAppError(actionError, t)} /> : null}
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('settings.profile')}</AppCard.Title>
@@ -160,10 +196,10 @@ export default function SettingsScreen() {
           label={t('settings.language')}
           value={currentLanguage}
           options={[
-            { value: 'system', label: 'Sistema' },
-            { value: 'pt-BR', label: 'PT-BR' },
-            { value: 'en', label: 'EN' },
-            { value: 'es', label: 'ES' },
+            { value: 'system', label: t('settings.languageSystem') },
+            { value: 'pt-BR', label: t('settings.languagePortuguese') },
+            { value: 'en', label: t('settings.languageEnglish') },
+            { value: 'es', label: t('settings.languageSpanish') },
           ]}
           disabled={saving}
           onChange={(value) => void safeSave({ language: value })}
@@ -177,9 +213,9 @@ export default function SettingsScreen() {
           label={t('settings.currency')}
           value={currentCurrency}
           options={[
-            { value: 'BRL', label: 'BRL' },
-            { value: 'USD', label: 'USD' },
-            { value: 'EUR', label: 'EUR' },
+            { value: 'BRL', label: t('settings.currencyBrl') },
+            { value: 'USD', label: t('settings.currencyUsd') },
+            { value: 'EUR', label: t('settings.currencyEur') },
           ]}
           disabled={saving}
           onChange={(value) => void safeSave({ currency: value })}

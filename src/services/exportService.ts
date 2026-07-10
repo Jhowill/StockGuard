@@ -7,6 +7,24 @@ import { formatMoney } from '@/utils/format';
 import { nowIso } from '@/utils/date';
 import { formatShortDateTime } from '@/utils/date-format';
 
+export type ReportExportCopy = {
+  brand: string;
+  title: string;
+  generatedAtLabel: string;
+  periodHeading: string;
+  periodValue: string;
+  currencyLabel: string;
+  entriesLabel: string;
+  exitsLabel: string;
+  profitLabel: string;
+  productsMovedLabel: string;
+  topProductsTitle: string;
+  tableProductLabel: string;
+  tableQuantityLabel: string;
+  emptyPeriodLabel: string;
+  footer: string;
+};
+
 function exportFolder() {
   const folder = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
   if (!folder) {
@@ -72,34 +90,21 @@ function assertReportSummary(summary: ReportSummary) {
   }
 }
 
-function periodLabel(period: ReportSummary['period']) {
-  switch (period) {
-    case 'today':
-      return 'Hoje';
-    case 'week':
-      return 'Ultimos 7 dias';
-    case 'month':
-      return 'Ultimos 30 dias';
-    default:
-      return 'Periodo personalizado';
-  }
-}
-
-export async function exportReportCsv(summary: ReportSummary) {
+export async function exportReportCsv(summary: ReportSummary, copy: ReportExportCopy, locale = 'pt-BR') {
   assertReportSummary(summary);
 
   const rows = [
-    ['Relatorio EstoqueGuard Offline'],
-    ['Gerado em', formatShortDateTime(nowIso())],
-    ['Periodo', periodLabel(summary.period)],
-    ['Moeda', summary.currency],
+    [copy.brand],
+    [copy.generatedAtLabel, formatShortDateTime(nowIso(), locale)],
+    [copy.periodHeading, copy.periodValue],
+    [copy.currencyLabel, summary.currency],
     [],
-    ['Entradas', formatMoney(summary.entriesValueCents, summary.currency)],
-    ['Saidas', formatMoney(summary.exitsValueCents, summary.currency)],
-    ['Lucro estimado', formatMoney(summary.estimatedProfitCents ?? 0, summary.currency)],
-    ['Produtos movimentados', summary.movedProductsCount],
+    [copy.entriesLabel, formatMoney(summary.entriesValueCents, summary.currency, locale)],
+    [copy.exitsLabel, formatMoney(summary.exitsValueCents, summary.currency, locale)],
+    [copy.profitLabel, formatMoney(summary.estimatedProfitCents ?? 0, summary.currency, locale)],
+    [copy.productsMovedLabel, summary.movedProductsCount],
     [],
-    ['Produto', 'Quantidade movimentada'],
+    [copy.tableProductLabel, copy.tableQuantityLabel],
     ...summary.topProductsByQuantity.map((product) => [product.productName, product.quantity]),
   ];
   const csv = rows.map((row) => row.map(csvCell).join(',')).join('\n');
@@ -116,7 +121,7 @@ export async function exportReportCsv(summary: ReportSummary) {
   return fileUri;
 }
 
-export async function exportReportPdf(summary: ReportSummary) {
+export async function exportReportPdf(summary: ReportSummary, copy: ReportExportCopy, locale = 'pt-BR') {
   assertReportSummary(summary);
 
   const generatedAt = nowIso();
@@ -254,48 +259,48 @@ export async function exportReportPdf(summary: ReportSummary) {
         <main class="page">
           <section class="header">
             <div>
-              <div class="brand">EstoqueGuard Offline</div>
-              <h1>Relatorio de estoque</h1>
-              <div class="muted">Gerado em ${escapeHtml(formatShortDateTime(generatedAt))}</div>
+              <div class="brand">${escapeHtml(copy.brand)}</div>
+              <h1>${escapeHtml(copy.title)}</h1>
+              <div class="muted">${escapeHtml(copy.generatedAtLabel)} ${escapeHtml(formatShortDateTime(generatedAt, locale))}</div>
             </div>
-            <div class="pill">${escapeHtml(periodLabel(summary.period))}</div>
+            <div class="pill">${escapeHtml(copy.periodValue)}</div>
           </section>
 
           <section class="metrics">
             <div class="metric">
-              <div class="metric-label">Entradas</div>
-              <div class="metric-value">${escapeHtml(formatMoney(summary.entriesValueCents, summary.currency))}</div>
+              <div class="metric-label">${escapeHtml(copy.entriesLabel)}</div>
+              <div class="metric-value">${escapeHtml(formatMoney(summary.entriesValueCents, summary.currency, locale))}</div>
             </div>
             <div class="metric">
-              <div class="metric-label">Saidas</div>
-              <div class="metric-value">${escapeHtml(formatMoney(summary.exitsValueCents, summary.currency))}</div>
+              <div class="metric-label">${escapeHtml(copy.exitsLabel)}</div>
+              <div class="metric-value">${escapeHtml(formatMoney(summary.exitsValueCents, summary.currency, locale))}</div>
             </div>
             <div class="metric">
-              <div class="metric-label">Lucro estimado</div>
-              <div class="metric-value">${escapeHtml(formatMoney(summary.estimatedProfitCents ?? 0, summary.currency))}</div>
+              <div class="metric-label">${escapeHtml(copy.profitLabel)}</div>
+              <div class="metric-value">${escapeHtml(formatMoney(summary.estimatedProfitCents ?? 0, summary.currency, locale))}</div>
             </div>
             <div class="metric">
-              <div class="metric-label">Produtos movimentados</div>
+              <div class="metric-label">${escapeHtml(copy.productsMovedLabel)}</div>
               <div class="metric-value">${escapeHtml(summary.movedProductsCount)}</div>
             </div>
           </section>
 
           <section>
-            <h2>Principais produtos</h2>
+            <h2>${escapeHtml(copy.topProductsTitle)}</h2>
             ${
               rows
                 ? `<table>
                     <thead>
-                      <tr><th>#</th><th>Produto</th><th class="number">Quantidade</th></tr>
+                      <tr><th>#</th><th>${escapeHtml(copy.tableProductLabel)}</th><th class="number">${escapeHtml(copy.tableQuantityLabel)}</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
                   </table>`
-                : '<div class="empty">Sem dados no periodo.</div>'
+                : `<div class="empty">${escapeHtml(copy.emptyPeriodLabel)}</div>`
             }
           </section>
 
           <section class="footer muted">
-            Relatorio gerado localmente. Nenhum dado foi enviado para servidores externos.
+            ${escapeHtml(copy.footer)}
           </section>
         </main>
       </body>

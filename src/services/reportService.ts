@@ -104,11 +104,11 @@ export async function getReportSummary(period: ReportPeriod = 'month'): Promise<
   };
 }
 
-export async function getReportCards(period: ReportPeriod = 'month') {
+export async function getReportCards(period: ReportPeriod = 'month', locale = 'pt-BR') {
   const summary = await getReportSummary(period);
   return {
     summary,
-    formattedEntries: formatMoney(summary.entriesValueCents, summary.currency),
-    formattedExits: formatMoney(summary.exitsValueCents, summary.currency),
+    formattedEntries: formatMoney(summary.entriesValueCents, summary.currency, locale),
+    formattedExits: formatMoney(summary.exitsValueCents, summary.currency, locale),
   };
 }

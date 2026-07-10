@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAlerts } from '@/hooks/useAlerts';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 
 function getAlertLabel(kind: string, t: (key: string) => string) {
   switch (kind) {
@@ -50,7 +51,7 @@ export default function AlertsScreen() {
       {loading ? (
         <EmptyState title={t('alerts.title')} description={t('common.loading')} />
       ) : error ? (
-        <EmptyState title={t('alerts.title')} description={error} />
+        <EmptyState title={t('alerts.title')} description={translateAppError(error, t)} />
       ) : alerts.length === 0 ? (
         <EmptyState title={t('alerts.emptyTitle')} description={t('alerts.emptyBody')} />
       ) : (

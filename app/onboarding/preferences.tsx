@@ -63,10 +63,10 @@ export default function PreferencesScreen() {
           label={t('settings.language')}
           value={language}
           options={[
-            { value: 'system', label: t('settings.themeSystem') },
-            { value: 'pt-BR', label: 'PT-BR' },
-            { value: 'en', label: 'EN' },
-            { value: 'es', label: 'ES' },
+            { value: 'system', label: t('settings.languageSystem') },
+            { value: 'pt-BR', label: t('settings.languagePortuguese') },
+            { value: 'en', label: t('settings.languageEnglish') },
+            { value: 'es', label: t('settings.languageSpanish') },
           ]}
           disabled={saving}
           onChange={setLanguage}
@@ -80,9 +80,9 @@ export default function PreferencesScreen() {
           label={t('settings.currency')}
           value={currency}
           options={[
-            { value: 'BRL', label: 'BRL' },
-            { value: 'USD', label: 'USD' },
-            { value: 'EUR', label: 'EUR' },
+            { value: 'BRL', label: t('settings.currencyBrl') },
+            { value: 'USD', label: t('settings.currencyUsd') },
+            { value: 'EUR', label: t('settings.currencyEur') },
           ]}
           disabled={saving}
           onChange={setCurrency}

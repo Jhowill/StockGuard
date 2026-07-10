@@ -8,6 +8,7 @@ import { PrivacyMask } from '@/components/ui/PrivacyMask';
 import { AppProvider } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
+import { useI18n } from '@/hooks/useI18n';
 
 function AppStatusBar() {
   const { mode } = useAppTheme();
@@ -17,12 +18,13 @@ function AppStatusBar() {
 
 function AppShell() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const { isReady, hasCompletedOnboarding, appLockEnabled, isUnlocked } = useAppState();
 
   if (!isReady) {
     return (
       <ScreenContainer padded>
-        <LoadingState title="Inicializando app" description="Preparando dados locais e seguranca." />
+        <LoadingState title={t('splash.initializing')} description={t('splash.preparing')} />
       </ScreenContainer>
     );
   }

@@ -11,6 +11,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useAppState } from '@/state/app-state';
 import { authenticateWithBiometric, canUseBiometricUnlock, isBiometricEnabled, verifyPin } from '@/services/securityService';
 
@@ -71,7 +72,10 @@ export default function UnlockScreen() {
     setBusy(true);
     setError(undefined);
     try {
-      const result = await authenticateWithBiometric();
+      const result = await authenticateWithBiometric({
+        promptMessage: t('securityFlow.unlockBiometricPrompt'),
+        fallbackLabel: t('securityFlow.usePin'),
+      });
       if (!result.success) {
         setError(t('securityFlow.biometricAuthFailed'));
         return;
@@ -107,12 +111,12 @@ export default function UnlockScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone="info" label={t('securityFlow.appLocked')} />
         <AppCard.Text>{t('securityFlow.unlockBody')}</AppCard.Text>
-        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText={t('securityFlow.pinHelper')} placeholder="0000" />
+        <AppInput label={t('securityFlow.pinTitle')} secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText={t('securityFlow.pinHelper')} placeholder={t('securityFlow.pinPlaceholder')} />
         <AppButton label={busy ? '...' : t('securityFlow.unlockPin')} disabled={busy} onPress={() => void handleUnlock()} />
         {biometricAvailable ? <AppButton label={t('securityFlow.unlockBiometric')} variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>
 
-      {error ? <EmptyState title={t('securityFlow.unlockFailed')} description={error} icon="lock-closed-outline" /> : null}
+      {error ? <EmptyState title={t('securityFlow.unlockFailed')} description={translateAppError(error, t)} icon="lock-closed-outline" /> : null}
     </ScreenContainer>
   );
 }
