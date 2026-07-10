@@ -18,6 +18,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useBackup } from '@/hooks/useBackup';
 import { useI18n } from '@/hooks/useI18n';
+import { showRewardedInterstitial } from '@/services/adsService';
 import { consumeFeatureUse, grantFeatureUnlock } from '@/services/rewardedAccessService';
 import { formatShortDateTime } from '@/utils/date-format';
 
@@ -56,6 +57,11 @@ export default function BackupScreen() {
       if (encrypted) {
         const allowed = await canUseFeature('encrypted_backup');
         if (!allowed) {
+          const adResult = await showRewardedInterstitial('encrypted_backup');
+          if (adResult.status !== 'success') {
+            const reason = adResult.status === 'failed' ? adResult.reason : 'E necessario assistir o anuncio para liberar o backup criptografado.';
+            throw new Error(reason);
+          }
           await grantFeatureUnlock('encrypted_backup');
         }
       }

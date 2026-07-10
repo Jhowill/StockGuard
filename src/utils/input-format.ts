@@ -129,7 +129,22 @@ export function formatMoneyInputFromCents(value?: number | null) {
 }
 
 export function normalizeGeneralNumber(value: string) {
-  return value.trim().replace(/\s+/g, '').replace(',', '.');
+  const cleaned = trimNumericDigits(value);
+  if (!cleaned) {
+    return '';
+  }
+
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+
+  if (lastComma >= 0 && lastDot >= 0) {
+    const decimalIndex = Math.max(lastComma, lastDot);
+    const integer = cleaned.slice(0, decimalIndex).replace(/\D/g, '');
+    const fraction = cleaned.slice(decimalIndex + 1).replace(/\D/g, '');
+    return fraction ? `${integer || '0'}.${fraction}` : integer;
+  }
+
+  return cleaned.replace(/\s+/g, '').replace(',', '.');
 }
 
 export function normalizeMoneyNumber(value: string) {

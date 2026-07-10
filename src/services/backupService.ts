@@ -16,7 +16,10 @@ import type { ProductRecord } from '@/database/repositories/productRepository';
 import type { Category } from '@/types/category';
 import type { Supplier } from '@/types/supplier';
 import type { StockMovementRecord } from '@/database/repositories/stockMovementRepository';
-import type { AdEntitlement } from '@/types/ads';
+import type { AdEntitlement, AdEntitlementType, AdSource, PremiumFeature } from '@/types/ads';
+import type { CurrencyCode, AppLanguage, ThemeMode, UsageType } from '@/types/settings';
+import type { ProductUnit } from '@/types/product';
+import type { StockMovementType } from '@/types/stock';
 
 export type BackupPayload = {
   app: 'EstoqueGuard Offline';
@@ -39,6 +42,28 @@ type EncryptedBackupEnvelope = {
   exportedAt: string;
   payload: string;
 };
+
+const statusValues = ['active', 'archived'] as const;
+const productUnits: ProductUnit[] = ['unit', 'kg', 'g', 'l', 'ml', 'm', 'cm', 'box', 'pack', 'pair', 'service_item'];
+const movementTypes: StockMovementType[] = ['in', 'out', 'loss', 'return', 'adjustment_positive', 'adjustment_negative', 'initial_balance'];
+const themeModes: ThemeMode[] = ['system', 'light', 'dark'];
+const languages: AppLanguage[] = ['system', 'pt-BR', 'en', 'es'];
+const currencies: CurrencyCode[] = ['BRL', 'USD', 'EUR'];
+const usageTypes: UsageType[] = ['store', 'workshop', 'personal', 'service', 'other'];
+const consentValues: AppSettingsRecord['personalizedAdsConsent'][] = ['unknown', 'granted', 'denied'];
+const entitlementTypes: AdEntitlementType[] = ['temporary_ad_free', 'temporary_feature_unlock', 'usage_feature_unlock'];
+const entitlementSources: AdSource[] = ['rewarded_ad', 'rewarded_interstitial'];
+const entitlementStatuses: AdEntitlement['status'][] = ['active', 'expired', 'consumed', 'revoked'];
+const premiumFeatures: PremiumFeature[] = [
+  'advanced_pdf_reports',
+  'csv_export',
+  'barcode_scanner',
+  'encrypted_backup',
+  'profit_analysis',
+  'advanced_history',
+  'unlimited_categories',
+  'batch_expiration_control',
+];
 
 function backupFolder() {
   const folder = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
@@ -104,6 +129,82 @@ function assertBackupPayload(payload: Partial<BackupPayload>) {
   }
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isFiniteNonNegativeNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function pickAllowed<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === 'string' && allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+function normalizeBoolean(value: unknown, fallback: boolean) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function normalizeNonNegativeNumber(value: unknown, fallback = 0): number {
+  return isFiniteNonNegativeNumber(value) ? value : fallback;
+}
+
+function normalizeOptionalNonNegativeNumber(value: unknown): number | undefined {
+  return isFiniteNonNegativeNumber(value) ? value : undefined;
+}
+
+function normalizeIsoString(value: unknown, fallback = nowIso()): string {
+  return isNonEmptyString(value) ? value.trim() : fallback;
+}
+
+function assertBackupRecords(payload: Partial<BackupPayload>) {
+  const categories = payload.categories ?? [];
+  const suppliers = payload.suppliers ?? [];
+  const products = payload.products ?? [];
+  const movements = payload.stockMovements ?? [];
+
+  for (const category of categories) {
+    if (!isNonEmptyString(category.id) || !isNonEmptyString(category.name) || !isFiniteNonNegativeNumber(category.sortOrder)) {
+      throw new Error('INVALID_BACKUP_CATEGORY');
+    }
+  }
+
+  for (const supplier of suppliers) {
+    if (!isNonEmptyString(supplier.id) || !isNonEmptyString(supplier.name)) {
+      throw new Error('INVALID_BACKUP_SUPPLIER');
+    }
+  }
+
+  for (const product of products) {
+    if (
+      !isNonEmptyString(product.id)
+      || !isNonEmptyString(product.name)
+      || !isFiniteNonNegativeNumber(product.quantity)
+      || !isFiniteNonNegativeNumber(product.minQuantity)
+      || !productUnits.includes(product.unit)
+      || !currencies.includes(product.currency)
+    ) {
+      throw new Error('INVALID_BACKUP_PRODUCT');
+    }
+  }
+
+  const productIds = new Set(products.map((product) => product.id));
+  for (const movement of movements) {
+    if (
+      !isNonEmptyString(movement.id)
+      || !isNonEmptyString(movement.productId)
+      || !productIds.has(movement.productId)
+      || !movementTypes.includes(movement.type)
+      || !isFiniteNonNegativeNumber(movement.quantity)
+      || !isFiniteNonNegativeNumber(movement.previousQuantity)
+      || !isFiniteNonNegativeNumber(movement.newQuantity)
+      || !currencies.includes(movement.currency)
+    ) {
+      throw new Error('INVALID_BACKUP_MOVEMENT');
+    }
+  }
+}
+
 function encryptPayload(payload: BackupPayload, password: string): EncryptedBackupEnvelope {
   if (password.trim().length < 6) {
     throw new Error('BACKUP_PASSWORD_TOO_SHORT');
@@ -137,12 +238,129 @@ function decryptPayload(envelope: EncryptedBackupEnvelope, password?: string) {
   }
 }
 
+function normalizeRestoreCategories(categories: Category[]) {
+  return categories.map((category) => ({
+    ...category,
+    id: category.id.trim(),
+    name: category.name.trim(),
+    colorToken: isNonEmptyString(category.colorToken) ? category.colorToken.trim() : undefined,
+    iconName: isNonEmptyString(category.iconName) ? category.iconName.trim() : undefined,
+    sortOrder: Math.trunc(normalizeNonNegativeNumber(category.sortOrder)),
+    status: pickAllowed(category.status, statusValues, 'active'),
+    createdAt: normalizeIsoString(category.createdAt),
+    updatedAt: normalizeIsoString(category.updatedAt),
+  }));
+}
+
+function normalizeRestoreSuppliers(suppliers: Supplier[]) {
+  return suppliers.map((supplier) => ({
+    ...supplier,
+    id: supplier.id.trim(),
+    name: supplier.name.trim(),
+    phone: isNonEmptyString(supplier.phone) ? supplier.phone.trim() : undefined,
+    email: isNonEmptyString(supplier.email) ? supplier.email.trim() : undefined,
+    document: isNonEmptyString(supplier.document) ? supplier.document.trim() : undefined,
+    address: isNonEmptyString(supplier.address) ? supplier.address.trim() : undefined,
+    notes: isNonEmptyString(supplier.notes) ? supplier.notes.trim() : undefined,
+    status: pickAllowed(supplier.status, statusValues, 'active'),
+    createdAt: normalizeIsoString(supplier.createdAt),
+    updatedAt: normalizeIsoString(supplier.updatedAt),
+  }));
+}
+
 function normalizeRestoreProducts(products: ProductRecord[], categoryIds: Set<string>, supplierIds: Set<string>) {
   return products.map((product) => ({
     ...product,
+    id: product.id.trim(),
+    name: product.name.trim(),
+    description: isNonEmptyString(product.description) ? product.description.trim() : undefined,
+    sku: isNonEmptyString(product.sku) ? product.sku.trim() : undefined,
+    barcode: isNonEmptyString(product.barcode) ? product.barcode.trim() : undefined,
     categoryId: product.categoryId && categoryIds.has(product.categoryId) ? product.categoryId : null,
     supplierId: product.supplierId && supplierIds.has(product.supplierId) ? product.supplierId : null,
+    quantity: normalizeNonNegativeNumber(product.quantity),
+    minQuantity: normalizeNonNegativeNumber(product.minQuantity),
+    unit: pickAllowed(product.unit, productUnits, 'unit'),
+    costPriceCents: normalizeOptionalNonNegativeNumber(product.costPriceCents),
+    salePriceCents: normalizeOptionalNonNegativeNumber(product.salePriceCents),
+    currency: pickAllowed(product.currency, currencies, 'BRL'),
+    expirationDate: isNonEmptyString(product.expirationDate) ? product.expirationDate.trim() : undefined,
+    batchCode: isNonEmptyString(product.batchCode) ? product.batchCode.trim() : undefined,
+    location: isNonEmptyString(product.location) ? product.location.trim() : undefined,
+    imageUri: isNonEmptyString(product.imageUri) ? product.imageUri.trim() : undefined,
+    notes: isNonEmptyString(product.notes) ? product.notes.trim() : undefined,
+    status: pickAllowed(product.status, statusValues, 'active'),
+    createdAt: normalizeIsoString(product.createdAt),
+    updatedAt: normalizeIsoString(product.updatedAt),
+    archivedAt: isNonEmptyString(product.archivedAt) ? product.archivedAt.trim() : undefined,
   }));
+}
+
+function normalizeRestoreMovements(movements: StockMovementRecord[], productIds: Set<string>) {
+  return movements
+    .filter((movement) => productIds.has(movement.productId))
+    .map((movement) => ({
+      ...movement,
+      id: movement.id.trim(),
+      productId: movement.productId.trim(),
+      type: pickAllowed(movement.type, movementTypes, 'in'),
+      reason: isNonEmptyString(movement.reason) ? movement.reason.trim() : 'restore',
+      quantity: normalizeNonNegativeNumber(movement.quantity),
+      previousQuantity: normalizeNonNegativeNumber(movement.previousQuantity),
+      newQuantity: normalizeNonNegativeNumber(movement.newQuantity),
+      unitCostCents: normalizeOptionalNonNegativeNumber(movement.unitCostCents),
+      unitSalePriceCents: normalizeOptionalNonNegativeNumber(movement.unitSalePriceCents),
+      totalCostCents: normalizeOptionalNonNegativeNumber(movement.totalCostCents),
+      totalSaleCents: normalizeOptionalNonNegativeNumber(movement.totalSaleCents),
+      currency: pickAllowed(movement.currency, currencies, 'BRL'),
+      note: isNonEmptyString(movement.note) ? movement.note.trim() : undefined,
+      createdAt: normalizeIsoString(movement.createdAt),
+    }));
+}
+
+function normalizeRestoredSettings(settings: AppSettingsRecord, fallback: AppSettingsRecord): AppSettingsRecord {
+  return {
+    ...fallback,
+    ...settings,
+    id: 'default',
+    theme: pickAllowed(settings.theme, themeModes, fallback.theme),
+    language: pickAllowed(settings.language, languages, fallback.language),
+    currency: pickAllowed(settings.currency, currencies, fallback.currency),
+    usageType: pickAllowed(settings.usageType, usageTypes, fallback.usageType),
+    onboardingCompleted: normalizeBoolean(settings.onboardingCompleted, fallback.onboardingCompleted),
+    appLockEnabled: normalizeBoolean(settings.appLockEnabled, fallback.appLockEnabled),
+    biometricUnlockEnabled: normalizeBoolean(settings.biometricUnlockEnabled, false),
+    hideFinancialValues: normalizeBoolean(settings.hideFinancialValues, fallback.hideFinancialValues),
+    adsEnabled: normalizeBoolean(settings.adsEnabled, fallback.adsEnabled),
+    personalizedAdsConsent: pickAllowed(settings.personalizedAdsConsent, consentValues, 'unknown'),
+    expirationWarningDays: Math.max(1, Math.trunc(normalizeNonNegativeNumber(settings.expirationWarningDays, fallback.expirationWarningDays))),
+    lowStockWarningEnabled: normalizeBoolean(settings.lowStockWarningEnabled, fallback.lowStockWarningEnabled),
+    expirationWarningEnabled: normalizeBoolean(settings.expirationWarningEnabled, fallback.expirationWarningEnabled),
+    backupReminderEnabled: normalizeBoolean(settings.backupReminderEnabled, fallback.backupReminderEnabled),
+    lastBackupAt: isNonEmptyString(settings.lastBackupAt) ? settings.lastBackupAt.trim() : null,
+    createdAt: isNonEmptyString(settings.createdAt) ? settings.createdAt : fallback.createdAt,
+    updatedAt: nowIso(),
+  };
+}
+
+function normalizeRestoreEntitlements(entitlements: AdEntitlement[]) {
+  return entitlements
+    .filter((entitlement) => isNonEmptyString(entitlement.id))
+    .map((entitlement) => ({
+      ...entitlement,
+      id: entitlement.id.trim(),
+      type: pickAllowed(entitlement.type, entitlementTypes, 'usage_feature_unlock'),
+      source: pickAllowed(entitlement.source, entitlementSources, 'rewarded_interstitial'),
+      featureKey: entitlement.featureKey ? pickAllowed(entitlement.featureKey, premiumFeatures, 'csv_export') : undefined,
+      startedAt: normalizeIsoString(entitlement.startedAt),
+      expiresAt: isNonEmptyString(entitlement.expiresAt) ? entitlement.expiresAt.trim() : undefined,
+      remainingUses: normalizeOptionalNonNegativeNumber(entitlement.remainingUses),
+      dailyUseDate: isNonEmptyString(entitlement.dailyUseDate) ? entitlement.dailyUseDate.trim() : nowIso().slice(0, 10),
+      dailyUseCount: Math.trunc(normalizeNonNegativeNumber(entitlement.dailyUseCount)),
+      status: pickAllowed(entitlement.status, entitlementStatuses, 'active'),
+      createdAt: normalizeIsoString(entitlement.createdAt),
+      updatedAt: normalizeIsoString(entitlement.updatedAt),
+    }));
 }
 
 export async function exportBackupFile(password?: string) {
@@ -203,6 +421,7 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
   }
 
   assertBackupPayload(parsed);
+  assertBackupRecords(parsed);
   try {
     await exportBackupFile();
   } catch {
@@ -211,15 +430,16 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
 
   const fallbackSettings = await getSettings();
   const nextSettings = parsed.appSettings && typeof parsed.appSettings === 'object'
-    ? { ...fallbackSettings, ...parsed.appSettings }
+    ? normalizeRestoredSettings(parsed.appSettings, fallbackSettings)
     : fallbackSettings;
-  const categories = Array.isArray(parsed.categories) ? parsed.categories : [];
-  const suppliers = Array.isArray(parsed.suppliers) ? parsed.suppliers : [];
+  const categories = Array.isArray(parsed.categories) ? normalizeRestoreCategories(parsed.categories) : [];
+  const suppliers = Array.isArray(parsed.suppliers) ? normalizeRestoreSuppliers(parsed.suppliers) : [];
   const categoryIds = new Set(categories.map((category) => category.id).filter((id): id is string => typeof id === 'string' && id.trim().length > 0));
   const supplierIds = new Set(suppliers.map((supplier) => supplier.id).filter((id): id is string => typeof id === 'string' && id.trim().length > 0));
   const products = Array.isArray(parsed.products) ? normalizeRestoreProducts(parsed.products, categoryIds, supplierIds) : [];
-  const stockMovements = Array.isArray(parsed.stockMovements) ? parsed.stockMovements : [];
-  const adEntitlements = Array.isArray(parsed.adEntitlements) ? parsed.adEntitlements : [];
+  const productIds = new Set(products.map((product) => product.id));
+  const stockMovements = Array.isArray(parsed.stockMovements) ? normalizeRestoreMovements(parsed.stockMovements, productIds) : [];
+  const adEntitlements = Array.isArray(parsed.adEntitlements) ? normalizeRestoreEntitlements(parsed.adEntitlements) : [];
 
   await withTransaction(async (db) => {
     await db.execAsync('DELETE FROM stock_movements;');
@@ -393,6 +613,11 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
 export async function shareBackupFile(fileUri: string) {
   if (!(await Sharing.isAvailableAsync())) {
     throw new Error('SHARING_UNAVAILABLE');
+  }
+
+  const fileInfo = await FileSystem.getInfoAsync(fileUri);
+  if (!fileInfo.exists || fileInfo.isDirectory) {
+    throw new Error('BACKUP_FILE_NOT_FOUND');
   }
 
   await Sharing.shareAsync(fileUri);

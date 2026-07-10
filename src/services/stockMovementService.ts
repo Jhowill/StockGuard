@@ -38,6 +38,25 @@ function assertOptionalMoney(value: number | undefined, field: string) {
   }
 }
 
+function resolveMovementPrices(
+  movementType: StockMovementType,
+  input: Pick<CreateStockMovementInput, 'unitCostCents' | 'unitSalePriceCents'>,
+  product: { costPriceCents?: number | null; salePriceCents?: number | null },
+  quantity: number,
+) {
+  const unitCostCents = input.unitCostCents ?? product.costPriceCents ?? null;
+  const unitSalePriceCents = input.unitSalePriceCents ?? product.salePriceCents ?? null;
+  const shouldTrackCost = movementType === 'in' || movementType === 'return' || movementType === 'loss' || movementType === 'adjustment_positive' || movementType === 'adjustment_negative';
+  const shouldTrackSale = movementType === 'out';
+
+  return {
+    unitCostCents,
+    unitSalePriceCents,
+    totalCostCents: shouldTrackCost && unitCostCents != null ? Math.round(unitCostCents * quantity) : null,
+    totalSaleCents: shouldTrackSale && unitSalePriceCents != null ? Math.round(unitSalePriceCents * quantity) : null,
+  };
+}
+
 export async function createStockMovement(input: CreateStockMovementInput) {
   if (!input.productId.trim()) {
     throw new Error('PRODUCT_ID_MISSING');
@@ -61,8 +80,7 @@ export async function createStockMovement(input: CreateStockMovementInput) {
       throw new Error('INSUFFICIENT_STOCK');
     }
 
-    const totalCostCents = input.unitCostCents != null ? input.unitCostCents * input.quantity : null;
-    const totalSaleCents = input.unitSalePriceCents != null ? input.unitSalePriceCents * input.quantity : null;
+    const prices = resolveMovementPrices(input.type, input, product, input.quantity);
 
     const movement: StockMovementRecord = await createMovement({
       productId: product.id,
@@ -71,10 +89,10 @@ export async function createStockMovement(input: CreateStockMovementInput) {
       quantity: input.quantity,
       previousQuantity: product.quantity,
       newQuantity,
-      unitCostCents: input.unitCostCents ?? null,
-      unitSalePriceCents: input.unitSalePriceCents ?? null,
-      totalCostCents,
-      totalSaleCents,
+      unitCostCents: prices.unitCostCents,
+      unitSalePriceCents: prices.unitSalePriceCents,
+      totalCostCents: prices.totalCostCents,
+      totalSaleCents: prices.totalSaleCents,
       currency: input.currency,
       note: input.note ?? null,
     });
