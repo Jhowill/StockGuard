@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -7,11 +9,13 @@ import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
 import { authenticateWithBiometric, canUseBiometricUnlock, isBiometricEnabled, verifyPin } from '@/services/securityService';
 
 export default function UnlockScreen() {
   const { unlockApp, biometricUnlockEnabled } = useAppState();
+  const { palette } = useAppTheme();
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | undefined>();
   const [biometricAvailable, setBiometricAvailable] = useState(false);
@@ -84,10 +88,24 @@ export default function UnlockScreen() {
     <ScreenContainer scroll padded>
       <AppHeader title="Desbloquear" subtitle="Proteja seu estoque com PIN ou biometria." />
 
+      <AppCard variant="hero" style={styles.heroCard}>
+        <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
+          <Ionicons name="lock-closed-outline" size={24} color={palette.primary} />
+        </View>
+        <View style={styles.heroCopy}>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>Acesso protegido ao seu estoque</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Use PIN ou biometria para liberar o app com rapidez e segurança.</Text>
+        </View>
+        <View style={styles.heroBadges}>
+          <StatusBadge tone="info" label="App bloqueado" />
+          <StatusBadge tone={biometricAvailable ? 'success' : 'warning'} label={biometricAvailable ? 'Biometria pronta' : 'Biometria indisponivel'} />
+        </View>
+      </AppCard>
+
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone="info" label="App bloqueado" />
         <AppCard.Text>Digite o PIN ou use a biometria, se estiver configurada.</AppCard.Text>
-        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText="Somente números." placeholder="0000" />
+        <AppInput label="PIN" secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText="Somente numeros." placeholder="0000" />
         <AppButton label={busy ? '...' : 'Desbloquear com PIN'} disabled={busy} onPress={() => void handleUnlock()} />
         {biometricAvailable ? <AppButton label="Desbloquear com biometria" variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>
@@ -98,3 +116,33 @@ export default function UnlockScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  heroCard: {
+    gap: 14,
+  },
+  heroIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  heroBody: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  heroBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+});

@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -17,7 +18,7 @@ export default function OnboardingDoneScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Pronto!" subtitle="Seu ambiente inicial esta configurado." />
+      <AppHeader title="Pronto!" subtitle="Seu ambiente inicial esta configurado." variant="page" onBackPress={() => router.back()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
@@ -27,6 +28,7 @@ export default function OnboardingDoneScreen() {
         <Text style={[styles.heroBody, { color: palette.textMuted }]}>
           Voce ja pode cadastrar produtos, movimentar o estoque e consultar alertas offline.
         </Text>
+        <StatusBadge tone="success" label="Etapa 4 de 4" />
       </AppCard>
 
       <AppButton

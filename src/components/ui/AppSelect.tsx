@@ -13,9 +13,10 @@ type Props<T extends string> = {
   value: T;
   options: Array<SelectOption<T>>;
   onChange: (value: T) => void;
+  disabled?: boolean;
 };
 
-export function AppSelect<T extends string>({ label, helperText, value, options, onChange }: Props<T>) {
+export function AppSelect<T extends string>({ label, helperText, value, options, onChange, disabled = false }: Props<T>) {
   const { palette } = useAppTheme();
 
   return (
@@ -29,6 +30,7 @@ export function AppSelect<T extends string>({ label, helperText, value, options,
               label={option.label}
               variant={value === option.value ? 'primary' : 'ghost'}
               style={styles.option}
+              disabled={disabled}
               onPress={() => onChange(option.value)}
             />
           ))}

@@ -1,6 +1,8 @@
 import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -12,6 +14,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useBackup } from '@/hooks/useBackup';
 import { useI18n } from '@/hooks/useI18n';
@@ -20,6 +23,7 @@ import { formatShortDateTime } from '@/utils/date-format';
 
 export default function BackupScreen() {
   const { t } = useI18n();
+  const { palette } = useAppTheme();
   const { backups, loading, error, createBackup, restoreBackup, shareBackup } = useBackup();
   const { canUseFeature } = useFeatureGate('encrypted_backup');
   const [fileUri, setFileUri] = useState('');
@@ -28,6 +32,7 @@ export default function BackupScreen() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
+  const latestBackup = backups[0];
 
   const pickBackupFile = async () => {
     try {
@@ -90,6 +95,21 @@ export default function BackupScreen() {
   return (
     <ScreenContainer scroll padded>
       <AppHeader title={t('backup.title')} subtitle={t('backup.subtitle')} variant="page" onBackPress={() => router.back()} />
+
+      <AppCard variant="hero" style={styles.heroCard}>
+        <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}
+        >
+          <Ionicons name="archive-outline" size={24} color={palette.primary} />
+        </View>
+        <View style={styles.heroCopy}>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>Backup e restauracao em um bloco unico</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>Mantenha arquivos locais organizados e prontos para recuperar se precisar.</Text>
+        </View>
+        <View style={styles.heroBadges}>
+          <StatusBadge tone={latestBackup ? 'success' : 'info'} label={latestBackup ? 'Backup recente' : 'Sem backup ainda'} />
+          <StatusBadge tone="info" label={backups.length > 0 ? `${backups.length} arquivos` : '0 arquivos'} />
+        </View>
+      </AppCard>
 
       <AdPolicyNotice
         title={t('ads.backupTitle')}
@@ -188,3 +208,33 @@ export default function BackupScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  heroCard: {
+    gap: 14,
+  },
+  heroIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  heroBody: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  heroBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+});
