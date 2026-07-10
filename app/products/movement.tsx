@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -8,23 +9,29 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { MovementTypePicker } from '@/components/movement/MovementTypePicker';
 import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
 import { createStockMovement } from '@/services/stockMovementService';
 import { showRequiredStockSaveInterstitial } from '@/services/adsService';
 import { useProducts } from '@/hooks/useProducts';
 import { useAppState } from '@/state/app-state';
 import { useI18n } from '@/hooks/useI18n';
-import type { StockMovementType } from '@/types/stock';
 import { parsePositiveNumber } from '@/utils/validators';
+import type { StockMovementType } from '@/types/stock';
 
-const movementTypes: Array<{ value: StockMovementType; label: string }> = [
-  { value: 'in', label: 'Entrada' },
-  { value: 'out', label: 'Saida' },
-  { value: 'return', label: 'Devolucao' },
-  { value: 'loss', label: 'Perda' },
-  { value: 'adjustment_positive', label: 'Ajuste +' },
-  { value: 'adjustment_negative', label: 'Ajuste -' },
-];
+function getMovementDirection(type: StockMovementType) {
+  return type === 'in' || type === 'return' || type === 'adjustment_positive' ? 1 : -1;
+}
+
+const movementLabels: Record<StockMovementType, string> = {
+  in: 'Entrada',
+  out: 'Saída',
+  loss: 'Perda',
+  return: 'Devolução',
+  adjustment_positive: 'Ajuste +',
+  adjustment_negative: 'Ajuste -',
+  initial_balance: 'Saldo inicial',
+};
 
 export default function MovementScreen() {
   const { productId } = useLocalSearchParams<{ productId?: string }>();
@@ -47,11 +54,9 @@ export default function MovementScreen() {
 
   const quantityToMove = parsePositiveNumber(quantity);
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
-  const resultingQuantity = selectedProduct
-    ? type === 'in' || type === 'return' || type === 'adjustment_positive'
-      ? selectedProduct.quantity + quantityToMove
-      : selectedProduct.quantity - quantityToMove
-    : null;
+  const direction = getMovementDirection(type);
+  const movementImpact = direction * quantityToMove;
+  const resultingQuantity = selectedProduct ? selectedProduct.quantity + movementImpact : null;
 
   const canSave = Boolean(selectedProduct && quantityToMove > 0 && !saving && (resultingQuantity == null || resultingQuantity >= 0));
 
@@ -61,7 +66,7 @@ export default function MovementScreen() {
     }
 
     if (!selectedProduct || !canSave) {
-      setError(resultingQuantity != null && resultingQuantity < 0 ? 'Saldo insuficiente para essa saida.' : 'Selecione um produto e informe uma quantidade valida.');
+      setError(resultingQuantity != null && resultingQuantity < 0 ? 'Saldo insuficiente para essa saída.' : 'Selecione um produto e informe uma quantidade válida.');
       return;
     }
 
@@ -84,7 +89,7 @@ export default function MovementScreen() {
       });
       router.replace(`/products/${selectedProduct.id}`);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a movimentacao.');
+      setError(nextError instanceof Error ? nextError.message : 'Não foi possível salvar a movimentação.');
     } finally {
       setSaving(false);
     }
@@ -126,25 +131,50 @@ export default function MovementScreen() {
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Tipo</AppCard.Title>
-        {movementTypes.map((item) => (
-          <AppButton key={item.value} label={item.label} variant={type === item.value ? 'primary' : 'ghost'} onPress={() => setType(item.value)} />
-        ))}
+        <AppCard.Title>Tipo de movimentação</AppCard.Title>
+        <AppCard.Text>
+          Escolha o tipo pelo efeito no saldo. Os blocos em destaque ajudam a evitar erros de registro.
+        </AppCard.Text>
+        <MovementTypePicker value={type} onChange={setType} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppInput label="Quantidade" placeholder="0" keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={quantity} onChangeText={setQuantity} />
-        <AppInput label="Motivo" placeholder="Selecione uma categoria" value={reason} onChangeText={setReason} />
-        <AppInput label="Observacao" placeholder="Digite uma observacao" multiline value={notes} onChangeText={setNotes} />
+        <AppInput
+          label="Quantidade"
+          placeholder="0"
+          keyboardType="decimal-pad"
+          mask="decimal"
+          maskOptions={{ maxFractionDigits: 3 }}
+          value={quantity}
+          onChangeText={setQuantity}
+        />
+        <AppInput label="Motivo" placeholder="Selecione um motivo" value={reason} onChangeText={setReason} />
+        <AppInput label="Observação" placeholder="Digite uma observação" multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 
       {selectedProduct ? (
-        <AppCard>
+        <AppCard style={styles.summaryCard}>
+          <AppCard.Title>Resumo antes de salvar</AppCard.Title>
+        <View style={styles.summaryRow}>
+            <View style={styles.summaryBlock}>
+              <AppCard.Text>Atual</AppCard.Text>
+              <StatusBadge tone="info" label={String(selectedProduct.quantity)} />
+            </View>
+            <View style={styles.summaryBlock}>
+              <AppCard.Text>Movimento</AppCard.Text>
+              <StatusBadge tone={movementImpact >= 0 ? 'success' : 'warning'} label={`${movementImpact >= 0 ? '+' : ''}${quantityToMove}`} />
+            </View>
+            <View style={styles.summaryBlock}>
+              <AppCard.Text>Novo saldo</AppCard.Text>
+              <StatusBadge
+                tone={resultingQuantity != null && resultingQuantity < selectedProduct.quantity ? 'warning' : 'success'}
+                label={String(resultingQuantity ?? selectedProduct.quantity)}
+              />
+            </View>
+          </View>
+          <AppCard.Text>Tipo selecionado: {movementLabels[type]}</AppCard.Text>
           <AppCard.Text>
-            {selectedProduct.name} | atual {selectedProduct.quantity} | novo{' '}
-            {type === 'in' || type === 'return' || type === 'adjustment_positive'
-              ? selectedProduct.quantity + quantityToMove
-              : selectedProduct.quantity - quantityToMove}
+            {selectedProduct.name} vai {movementImpact >= 0 ? 'receber' : 'perder'} {quantityToMove} {selectedProduct.unit}.
           </AppCard.Text>
         </AppCard>
       ) : null}
@@ -160,8 +190,8 @@ export default function MovementScreen() {
 
       <ConfirmDialog
         visible={confirmSave}
-        title="Confirmar movimentacao?"
-        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar. O anuncio obrigatorio precisa terminar para concluir o salvamento."
+        title="Confirmar movimentação?"
+        message="Revise o tipo, a quantidade e o impacto no saldo antes de gravar. O anúncio obrigatório precisa terminar para concluir o salvamento."
         confirmLabel="Salvar"
         onCancel={() => setConfirmSave(false)}
         onConfirm={async () => {
@@ -172,3 +202,19 @@ export default function MovementScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  summaryCard: {
+    gap: 14,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  summaryBlock: {
+    flex: 1,
+    minWidth: 88,
+    gap: 6,
+  },
+});

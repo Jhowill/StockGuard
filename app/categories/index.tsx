@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -30,6 +31,15 @@ export default function CategoriesScreen() {
     return 'layers-outline' as keyof typeof Ionicons.glyphMap;
   };
 
+  const resetForm = () => {
+    setEditingId(null);
+    setName('');
+    setColorToken('');
+    setIconName('');
+    setSortOrder('0');
+    setActionError(undefined);
+  };
+
   const handleSave = async () => {
     if (busy) {
       return;
@@ -52,15 +62,11 @@ export default function CategoriesScreen() {
     try {
       if (editingId) {
         await edit(editingId, input);
-        setEditingId(null);
       } else {
         await create(input);
       }
 
-      setName('');
-      setColorToken('');
-      setIconName('');
-      setSortOrder('0');
+      resetForm();
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a categoria.');
     } finally {
@@ -90,16 +96,18 @@ export default function CategoriesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." />
+      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." actionLabel="Novo" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? 'Editar categoria' : 'Nova categoria'}</AppCard.Title>
+        <AppCard.Text>Use este formulário para criar novas categorias ou editar a selecionada na lista abaixo.</AppCard.Text>
+        {editingId ? <StatusBadge tone="info" label="Editando" /> : null}
         <AppInput label="Nome" value={name} onChangeText={setName} />
         <AppInput label="Cor" value={colorToken} onChangeText={setColorToken} />
         <AppInput label="Icone" value={iconName} onChangeText={setIconName} />
         <AppInput label="Ordem" keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
         <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
-        {editingId ? <AppButton label="Cancelar" variant="ghost" onPress={() => setEditingId(null)} /> : null}
+        {editingId ? <AppButton label="Cancelar edicao" variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
       {actionError ? <EmptyState title="Categorias" description={actionError} /> : null}
@@ -119,31 +127,35 @@ export default function CategoriesScreen() {
               subtitle={category.colorToken ?? 'Sem cor'}
               trailing={<StatusBadge tone={category.status === 'active' ? 'success' : 'info'} label={String(category.sortOrder)} />}
             />
-            <AppButton
-              label="Editar"
-              variant="secondary"
-              onPress={() => {
-                setEditingId(category.id);
-                setName(category.name);
-                setColorToken(category.colorToken ?? '');
-                setIconName(category.iconName ?? '');
-                setSortOrder(String(category.sortOrder));
-              }}
-            />
-            <AppButton
-              label="Arquivar"
-              variant="ghost"
-              disabled={busy}
-              onPress={() => setArchiveId(category.id)}
-            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <AppButton
+                label="Editar"
+                variant="secondary"
+                style={{ flex: 1 }}
+                onPress={() => {
+                  setEditingId(category.id);
+                  setName(category.name);
+                  setColorToken(category.colorToken ?? '');
+                  setIconName(category.iconName ?? '');
+                  setSortOrder(String(category.sortOrder));
+                }}
+              />
+              <AppButton
+                label="Excluir"
+                variant="danger"
+                style={{ flex: 1 }}
+                disabled={busy}
+                onPress={() => setArchiveId(category.id)}
+              />
+            </View>
           </AppCard>
         ))
       )}
       <ConfirmDialog
         visible={Boolean(archiveId)}
-        title="Arquivar categoria?"
-        message="Categorias com produtos vinculados nao serao arquivadas ate que os produtos sejam movidos."
-        confirmLabel="Arquivar"
+        title="Excluir categoria?"
+        message="A exclusao arquiva a categoria sem apagar o historico. Categorias com produtos vinculados precisam ser liberadas antes."
+        confirmLabel="Excluir"
         danger
         onCancel={() => setArchiveId(null)}
         onConfirm={() => void handleArchive()}

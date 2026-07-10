@@ -2,7 +2,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 type Props = {
   label: string;
@@ -16,12 +16,15 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
   const { palette } = useAppTheme();
   const isPrimary = variant === 'primary';
   const isSecondary = variant === 'secondary';
+  const isDanger = variant === 'danger';
   const backgroundColor = isPrimary
     ? palette.primary
     : isSecondary
       ? palette.surfaceMuted
+      : isDanger
+        ? palette.danger
       : 'transparent';
-  const textColor = isPrimary ? palette.primaryText : palette.text;
+  const textColor = isDanger ? '#FFFFFF' : isPrimary ? palette.primaryText : palette.text;
 
   return (
     <Pressable
@@ -33,6 +36,7 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
           backgroundColor,
           borderColor: palette.border,
         },
+        variant === 'danger' && styles.danger,
         variant === 'ghost' && styles.ghost,
         pressed ? styles.pressed : null,
         disabled ? styles.disabled : null,
@@ -55,6 +59,9 @@ const styles = StyleSheet.create({
   },
   ghost: {
     backgroundColor: 'transparent',
+  },
+  danger: {
+    borderColor: 'transparent',
   },
   pressed: {
     opacity: 0.82,

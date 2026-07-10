@@ -33,7 +33,7 @@ export function ConfirmDialog({
           <Text style={[styles.message, { color: palette.textMuted }]}>{message}</Text>
           <View style={styles.actions}>
             <AppButton label={cancelLabel} variant="ghost" style={styles.action} onPress={onCancel} />
-            <AppButton label={confirmLabel} variant={danger ? 'secondary' : 'primary'} style={styles.action} onPress={onConfirm} />
+            <AppButton label={confirmLabel} variant={danger ? 'danger' : 'primary'} style={styles.action} onPress={onConfirm} />
           </View>
         </Pressable>
       </Pressable>

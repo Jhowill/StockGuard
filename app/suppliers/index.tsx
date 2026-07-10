@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -18,6 +19,14 @@ export default function SuppliersScreen() {
   const [actionError, setActionError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [archiveId, setArchiveId] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setName('');
+    setPhone('');
+    setEmail('');
+    setActionError(undefined);
+  };
 
   const handleSave = async () => {
     if (busy) {
@@ -40,14 +49,11 @@ export default function SuppliersScreen() {
     try {
       if (editingId) {
         await edit(editingId, input);
-        setEditingId(null);
       } else {
         await create(input);
       }
 
-      setName('');
-      setPhone('');
-      setEmail('');
+      resetForm();
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar o fornecedor.');
     } finally {
@@ -77,15 +83,17 @@ export default function SuppliersScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." />
+      <AppHeader title="Fornecedores" subtitle="Cadastre e mantenha contatos." actionLabel="Novo" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? 'Editar fornecedor' : 'Novo fornecedor'}</AppCard.Title>
+        <AppCard.Text>Toque em Novo para limpar o formulário ou em Editar para carregar os dados do item escolhido.</AppCard.Text>
+        {editingId ? <StatusBadge tone="info" label="Editando" /> : null}
         <AppInput label="Nome" value={name} onChangeText={setName} />
         <AppInput label="Telefone" value={phone} onChangeText={setPhone} />
         <AppInput label="E-mail" value={email} onChangeText={setEmail} />
         <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
-        {editingId ? <AppButton label="Cancelar" variant="ghost" onPress={() => setEditingId(null)} /> : null}
+        {editingId ? <AppButton label="Cancelar edicao" variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
       {actionError ? <EmptyState title="Fornecedores" description={actionError} /> : null}
@@ -105,30 +113,34 @@ export default function SuppliersScreen() {
               subtitle={supplier.phone ?? supplier.email ?? 'Sem contato'}
               trailing={<StatusBadge tone={supplier.status === 'active' ? 'success' : 'info'} label={supplier.status} />}
             />
-            <AppButton
-              label="Editar"
-              variant="secondary"
-              onPress={() => {
-                setEditingId(supplier.id);
-                setName(supplier.name);
-                setPhone(supplier.phone ?? '');
-                setEmail(supplier.email ?? '');
-              }}
-            />
-            <AppButton
-              label="Arquivar"
-              variant="ghost"
-              disabled={busy}
-              onPress={() => setArchiveId(supplier.id)}
-            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <AppButton
+                label="Editar"
+                variant="secondary"
+                style={{ flex: 1 }}
+                onPress={() => {
+                  setEditingId(supplier.id);
+                  setName(supplier.name);
+                  setPhone(supplier.phone ?? '');
+                  setEmail(supplier.email ?? '');
+                }}
+              />
+              <AppButton
+                label="Excluir"
+                variant="danger"
+                style={{ flex: 1 }}
+                disabled={busy}
+                onPress={() => setArchiveId(supplier.id)}
+              />
+            </View>
           </AppCard>
         ))
       )}
       <ConfirmDialog
         visible={Boolean(archiveId)}
-        title="Arquivar fornecedor?"
-        message="Fornecedores com produtos vinculados nao serao arquivados ate que o vinculo seja removido."
-        confirmLabel="Arquivar"
+        title="Excluir fornecedor?"
+        message="A exclusao arquiva o fornecedor sem apagar o historico. Fornecedores com produtos vinculados precisam ser liberados antes."
+        confirmLabel="Excluir"
         danger
         onCancel={() => setArchiveId(null)}
         onConfirm={() => void handleArchive()}
