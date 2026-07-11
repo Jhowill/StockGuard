@@ -45,6 +45,23 @@ for (const dependency of ['expo-font', 'expo-constants', 'expo-linking', 'react-
   if (!pkg.dependencies?.[dependency]) failures.push(`${dependency} must be a direct dependency`);
 }
 
+if (!fs.existsSync('package-lock.json')) {
+  failures.push('package-lock.json is required for reproducible builds');
+}
+
+for (const [name, version] of Object.entries({ ...pkg.dependencies, ...pkg.devDependencies })) {
+  if (version === '*' || version === 'latest' || String(version).trim() === '') {
+    failures.push(`${name} must use a bounded dependency version`);
+  }
+}
+
+for (const file of ['app/_layout.tsx', 'src/database/db.ts', 'src/services/backupService.ts']) {
+  const source = fs.readFileSync(file, 'utf8');
+  if (/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(source)) {
+    failures.push(`${file} contains private key material`);
+  }
+}
+
 if (app.extra?.EXPO_PUBLIC_ADS_TEST_MODE === 'true') {
   failures.push('Production config must not enable AdMob test mode');
 }

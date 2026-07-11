@@ -11,7 +11,7 @@ import { createBackupRecord } from '@/database/repositories/backupRecordReposito
 import { createAuditLog } from '@/database/repositories/auditLogRepository';
 import { SCHEMA_VERSION } from '@/database/schema';
 import { nowIso } from '@/utils/date';
-import { isValidIsoDate } from '@/utils/validators';
+import { INPUT_LIMITS, isValidIsoDate, isValidMoneyCents, isValidStockQuantity } from '@/utils/validators';
 import type { AppSettingsRecord } from '@/database/repositories/settingsRepository';
 import type { ProductRecord } from '@/database/repositories/productRepository';
 import type { Category } from '@/types/category';
@@ -23,6 +23,7 @@ import type { ProductUnit } from '@/types/product';
 import type { StockMovementType } from '@/types/stock';
 
 const MAX_BACKUP_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_BACKUP_RECORDS = 100_000;
 
 export type BackupPayload = {
   app: 'EstoqueGuard Offline';
@@ -136,6 +137,21 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function isBoundedString(value: unknown, maxLength: number): value is string {
+  return isNonEmptyString(value) && value.trim().length <= maxLength;
+}
+
+function assertUniqueIds(records: Array<{ id: string }>, code: string) {
+  const ids = new Set<string>();
+  for (const record of records) {
+    const id = record.id.trim();
+    if (ids.has(id)) {
+      throw new Error(code);
+    }
+    ids.add(id);
+  }
+}
+
 function isFiniteNonNegativeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
@@ -156,6 +172,10 @@ function normalizeOptionalNonNegativeNumber(value: unknown): number | undefined 
   return isFiniteNonNegativeNumber(value) ? value : undefined;
 }
 
+function isOptionalMoneyCents(value: unknown) {
+  return value == null || isValidMoneyCents(value);
+}
+
 function normalizeIsoString(value: unknown, fallback = nowIso()): string {
   return isNonEmptyString(value) ? value.trim() : fallback;
 }
@@ -166,24 +186,37 @@ function assertBackupRecords(payload: Partial<BackupPayload>) {
   const products = payload.products ?? [];
   const movements = payload.stockMovements ?? [];
 
+  if ([categories, suppliers, products, movements].some((records) => records.length > MAX_BACKUP_RECORDS)) {
+    throw new Error('BACKUP_RECORD_LIMIT_EXCEEDED');
+  }
+
+  assertUniqueIds(categories, 'DUPLICATE_BACKUP_CATEGORY');
+  assertUniqueIds(suppliers, 'DUPLICATE_BACKUP_SUPPLIER');
+  assertUniqueIds(products, 'DUPLICATE_BACKUP_PRODUCT');
+  assertUniqueIds(movements, 'DUPLICATE_BACKUP_MOVEMENT');
+
   for (const category of categories) {
-    if (!isNonEmptyString(category.id) || !isNonEmptyString(category.name) || !isFiniteNonNegativeNumber(category.sortOrder)) {
+    if (!isBoundedString(category.id, INPUT_LIMITS.identifier) || !isBoundedString(category.name, INPUT_LIMITS.name) || !isFiniteNonNegativeNumber(category.sortOrder)) {
       throw new Error('INVALID_BACKUP_CATEGORY');
     }
   }
 
   for (const supplier of suppliers) {
-    if (!isNonEmptyString(supplier.id) || !isNonEmptyString(supplier.name)) {
+    if (!isBoundedString(supplier.id, INPUT_LIMITS.identifier) || !isBoundedString(supplier.name, INPUT_LIMITS.name)) {
       throw new Error('INVALID_BACKUP_SUPPLIER');
     }
   }
 
   for (const product of products) {
     if (
-      !isNonEmptyString(product.id)
-      || !isNonEmptyString(product.name)
-      || !isFiniteNonNegativeNumber(product.quantity)
-      || !isFiniteNonNegativeNumber(product.minQuantity)
+      !isBoundedString(product.id, INPUT_LIMITS.identifier)
+      || !isBoundedString(product.name, INPUT_LIMITS.name)
+      || (product.description != null && String(product.description).length > INPUT_LIMITS.description)
+      || (product.notes != null && String(product.notes).length > INPUT_LIMITS.notes)
+      || !isValidStockQuantity(product.quantity)
+      || !isValidStockQuantity(product.minQuantity)
+      || !isOptionalMoneyCents(product.costPriceCents)
+      || !isOptionalMoneyCents(product.salePriceCents)
       || !productUnits.includes(product.unit)
       || !currencies.includes(product.currency)
       || !isValidIsoDate(product.expirationDate)
@@ -195,13 +228,17 @@ function assertBackupRecords(payload: Partial<BackupPayload>) {
   const productIds = new Set(products.map((product) => product.id));
   for (const movement of movements) {
     if (
-      !isNonEmptyString(movement.id)
-      || !isNonEmptyString(movement.productId)
+      !isBoundedString(movement.id, INPUT_LIMITS.identifier)
+      || !isBoundedString(movement.productId, INPUT_LIMITS.identifier)
       || !productIds.has(movement.productId)
       || !movementTypes.includes(movement.type)
-      || !isFiniteNonNegativeNumber(movement.quantity)
-      || !isFiniteNonNegativeNumber(movement.previousQuantity)
-      || !isFiniteNonNegativeNumber(movement.newQuantity)
+      || !isValidStockQuantity(movement.quantity)
+      || !isValidStockQuantity(movement.previousQuantity)
+      || !isValidStockQuantity(movement.newQuantity)
+      || !isOptionalMoneyCents(movement.unitCostCents)
+      || !isOptionalMoneyCents(movement.unitSalePriceCents)
+      || !isOptionalMoneyCents(movement.totalCostCents)
+      || !isOptionalMoneyCents(movement.totalSaleCents)
       || !currencies.includes(movement.currency)
     ) {
       throw new Error('INVALID_BACKUP_MOVEMENT');
@@ -396,7 +433,7 @@ export async function exportBackupFile(password?: string) {
     action: 'backup_created',
     entityType: 'backup',
     entityId: record.id,
-    metadataJson: JSON.stringify({ encrypted, fileName }),
+    metadataJson: JSON.stringify({ encrypted }),
   });
   return { fileUri, fileName, record, payload };
 }
@@ -620,7 +657,7 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
     action: 'backup_restored',
     entityType: 'backup',
     entityId: record.id,
-    metadataJson: JSON.stringify({ fileUri, encrypted: record.encrypted }),
+    metadataJson: JSON.stringify({ encrypted: record.encrypted }),
   });
 
   return { record, payload: parsed as BackupPayload };

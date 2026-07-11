@@ -4,11 +4,30 @@ import { migrations } from './migrations';
 import { SCHEMA_VERSION } from './schema';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let transactionQueue: Promise<void> = Promise.resolve();
+
+export type DatabaseHealth = {
+  integrity: 'ok';
+  foreignKeyViolations: number;
+  schemaVersion: number;
+};
 
 async function openDatabase() {
   const db = await SQLite.openDatabaseAsync('estoqueguard.db');
-  await db.execAsync('PRAGMA foreign_keys = ON;');
+  await db.execAsync(`
+    PRAGMA foreign_keys = ON;
+    PRAGMA busy_timeout = 5000;
+    PRAGMA journal_mode = WAL;
+    PRAGMA synchronous = NORMAL;
+  `);
   return db;
+}
+
+async function assertDatabaseQuickCheck(db: SQLite.SQLiteDatabase) {
+  const integrity = await db.getFirstAsync<{ quick_check: string }>('PRAGMA quick_check(1)');
+  if (integrity?.quick_check !== 'ok') {
+    throw new Error('DATABASE_INTEGRITY_CHECK_FAILED');
+  }
 }
 
 async function initializeDatabase() {
@@ -64,6 +83,8 @@ async function initializeDatabase() {
     }
   }
 
+  await assertDatabaseQuickCheck(db);
+
   const settings = await db.getFirstAsync<{ id: string }>(
     'SELECT id FROM app_settings WHERE id = ?',
     'default',
@@ -102,18 +123,47 @@ export async function resetDatabaseCache() {
   dbPromise = null;
 }
 
+export async function getDatabaseHealth(): Promise<DatabaseHealth> {
+  const db = await getDatabase();
+  const integrity = await db.getFirstAsync<{ integrity_check: string }>('PRAGMA integrity_check');
+  if (integrity?.integrity_check !== 'ok') {
+    throw new Error('DATABASE_INTEGRITY_CHECK_FAILED');
+  }
+  const foreignKeyRows = await db.getAllAsync('PRAGMA foreign_key_check');
+  const migration = await db.getFirstAsync<{ version: number | null }>(
+    'SELECT MAX(version) AS version FROM schema_migrations',
+  );
+
+  return {
+    integrity: 'ok',
+    foreignKeyViolations: foreignKeyRows.length,
+    schemaVersion: migration?.version ?? 0,
+  };
+}
+
 export async function withDatabase<T>(callback: (db: SQLite.SQLiteDatabase) => Promise<T>) {
   const db = await getDatabase();
   return callback(db);
 }
 
 export async function withTransaction<T>(callback: (db: SQLite.SQLiteDatabase) => Promise<T>) {
-  const db = await getDatabase();
-  let result!: T;
-  await db.withTransactionAsync(async () => {
-    result = await callback(db);
+  const previous = transactionQueue;
+  let release!: () => void;
+  transactionQueue = new Promise<void>((resolve) => {
+    release = resolve;
   });
-  return result;
+
+  await previous.catch(() => undefined);
+  try {
+    const db = await getDatabase();
+    let result!: T;
+    await db.withTransactionAsync(async () => {
+      result = await callback(db);
+    });
+    return result;
+  } finally {
+    release();
+  }
 }
 
 export { SCHEMA_VERSION };

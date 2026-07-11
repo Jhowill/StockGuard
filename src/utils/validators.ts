@@ -1,7 +1,25 @@
 import { normalizeGeneralNumber, normalizeMoneyNumber } from '@/utils/input-format';
 
+export const INPUT_LIMITS = {
+  name: 120,
+  shortText: 160,
+  description: 1000,
+  notes: 2000,
+  identifier: 128,
+  uri: 2048,
+} as const;
+
+export const MAX_STOCK_QUANTITY = 1_000_000_000_000;
+export const MAX_MONEY_CENTS = Number.MAX_SAFE_INTEGER;
+
 export function isNonEmptyString(value: string | undefined | null) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+export function assertTextLength(value: string | null | undefined, maxLength: number, code: string) {
+  if (value != null && value.trim().length > maxLength) {
+    throw new Error(code);
+  }
 }
 
 export function parseFiniteNumber(value: string, fallback = 0) {
@@ -38,7 +56,16 @@ export function parseMoneyToCents(value: string) {
     return null;
   }
 
-  return Math.round(parsed * 100);
+  const cents = Math.round(parsed * 100);
+  return Number.isSafeInteger(cents) && cents <= MAX_MONEY_CENTS ? cents : null;
+}
+
+export function isValidStockQuantity(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= MAX_STOCK_QUANTITY;
+}
+
+export function isValidMoneyCents(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= MAX_MONEY_CENTS;
 }
 
 export function isValidIsoDate(value: string | undefined | null) {

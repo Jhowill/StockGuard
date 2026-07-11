@@ -3,7 +3,7 @@ import { getDatabase } from '../db';
 import { createAuditLog } from './auditLogRepository';
 import type { ProductUnit } from '@/types/product';
 import { nowIso } from '@/utils/date';
-import { isValidIsoDate } from '@/utils/validators';
+import { assertTextLength, INPUT_LIMITS, isValidIsoDate, isValidMoneyCents, isValidStockQuantity } from '@/utils/validators';
 
 export type ProductRecord = {
   id: string;
@@ -108,7 +108,7 @@ function mapProduct(row: ProductRow): ProductRecord {
 }
 
 function assertNonNegativeNumber(value: number, code: string) {
-  if (!Number.isFinite(value) || value < 0) {
+  if (!isValidStockQuantity(value)) {
     throw new Error(code);
   }
 }
@@ -118,7 +118,7 @@ function assertOptionalNonNegativeInteger(value: number | null | undefined, code
     return;
   }
 
-  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+  if (!isValidMoneyCents(value)) {
     throw new Error(code);
   }
 }
@@ -135,6 +135,17 @@ function validateProduct(record: Pick<ProductRecord, 'name' | 'quantity' | 'minQ
   if (!isValidIsoDate(record.expirationDate)) {
     throw new Error('INVALID_PRODUCT_EXPIRATION_DATE');
   }
+}
+
+function validateProductText(record: ProductRecord) {
+  assertTextLength(record.name, INPUT_LIMITS.name, 'PRODUCT_NAME_TOO_LONG');
+  assertTextLength(record.description, INPUT_LIMITS.description, 'PRODUCT_DESCRIPTION_TOO_LONG');
+  assertTextLength(record.sku, INPUT_LIMITS.identifier, 'PRODUCT_SKU_TOO_LONG');
+  assertTextLength(record.barcode, INPUT_LIMITS.identifier, 'PRODUCT_BARCODE_TOO_LONG');
+  assertTextLength(record.batchCode, INPUT_LIMITS.shortText, 'PRODUCT_BATCH_TOO_LONG');
+  assertTextLength(record.location, INPUT_LIMITS.shortText, 'PRODUCT_LOCATION_TOO_LONG');
+  assertTextLength(record.imageUri, INPUT_LIMITS.uri, 'PRODUCT_IMAGE_URI_TOO_LONG');
+  assertTextLength(record.notes, INPUT_LIMITS.notes, 'PRODUCT_NOTES_TOO_LONG');
 }
 
 async function assertUniqueBarcode(barcode: string | null | undefined, ignoreProductId?: string) {
@@ -237,6 +248,7 @@ export async function createProduct(input: CreateProductInput) {
     archivedAt: null,
   };
   validateProduct(product);
+  validateProductText(product);
   await assertUniqueBarcode(product.barcode);
   await assertUniqueSku(product.sku);
   await assertActiveCategoryExists(product.categoryId);
@@ -277,7 +289,6 @@ export async function createProduct(input: CreateProductInput) {
     action: 'product_created',
     entityType: 'product',
     entityId: product.id,
-    metadataJson: JSON.stringify({ name: product.name }),
   });
 
   return product;
@@ -297,6 +308,7 @@ export async function updateProduct(input: UpdateProductInput) {
     updatedAt: nowIso(),
   };
   validateProduct(next);
+  validateProductText(next);
   await assertUniqueBarcode(next.barcode, next.id);
   await assertUniqueSku(next.sku, next.id);
   await assertActiveCategoryExists(next.categoryId);
@@ -336,7 +348,6 @@ export async function updateProduct(input: UpdateProductInput) {
     action: 'product_updated',
     entityType: 'product',
     entityId: next.id,
-    metadataJson: JSON.stringify({ name: next.name }),
   });
 
   return next;

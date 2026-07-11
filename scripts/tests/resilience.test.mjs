@@ -221,3 +221,65 @@ test('Home value privacy and per-unit pricing remain wired', () => {
   assert.match(i18n, /showValues: 'Show financial values'/);
   assert.match(i18n, /showValues: 'Mostrar valores financieros'/);
 });
+
+test('SQLite uses defensive connection settings and exposes a full health check', () => {
+  const database = read('src/database/db.ts');
+
+  assert.match(database, /PRAGMA foreign_keys = ON/);
+  assert.match(database, /PRAGMA busy_timeout = 5000/);
+  assert.match(database, /PRAGMA journal_mode = WAL/);
+  assert.match(database, /PRAGMA quick_check\(1\)/);
+  assert.match(database, /export async function getDatabaseHealth/);
+  assert.match(database, /PRAGMA integrity_check/);
+  assert.match(database, /PRAGMA foreign_key_check/);
+  assert.match(database, /transactionQueue/);
+  assert.match(database, /await previous\.catch/);
+});
+
+test('backup restore rejects oversized collections and duplicate identifiers', () => {
+  const backup = read('src/services/backupService.ts');
+
+  assert.match(backup, /MAX_BACKUP_RECORDS = 100_000/);
+  assert.match(backup, /assertUniqueIds\(categories/);
+  assert.match(backup, /assertUniqueIds\(suppliers/);
+  assert.match(backup, /assertUniqueIds\(products/);
+  assert.match(backup, /assertUniqueIds\(movements/);
+  assert.match(backup, /INPUT_LIMITS\.description/);
+  assert.match(backup, /INPUT_LIMITS\.notes/);
+});
+
+test('critical writes enforce domain limits and movement serialization', () => {
+  const products = read('src/database/repositories/productRepository.ts');
+  const categories = read('src/database/repositories/categoryRepository.ts');
+  const suppliers = read('src/database/repositories/supplierRepository.ts');
+  const movements = read('src/services/stockMovementService.ts');
+
+  assert.match(products, /validateProductText\(product\)/);
+  assert.match(products, /validateProductText\(next\)/);
+  assert.match(categories, /INVALID_CATEGORY_SORT_ORDER/);
+  assert.match(suppliers, /assertUniqueSupplierName/);
+  assert.match(suppliers, /validateSupplierText/);
+  assert.match(movements, /withProductMovementLock/);
+  assert.match(movements, /productMovementQueues/);
+  assert.match(movements, /isValidStockQuantity/);
+  assert.match(movements, /INVALID_MOVEMENT_TOTAL/);
+  assert.match(products, /isValidMoneyCents/);
+});
+
+test('render failures are contained by the root error boundary', () => {
+  const layout = read('app/_layout.tsx');
+  const boundary = read('src/components/ui/AppErrorBoundary.tsx');
+
+  assert.match(layout, /<AppErrorBoundary>/);
+  assert.match(boundary, /getDerivedStateFromError/);
+  assert.match(boundary, /componentDidCatch/);
+  assert.match(boundary, /router\.replace\('\/'\)/);
+});
+
+test('audit metadata excludes product names and local backup paths', () => {
+  const products = read('src/database/repositories/productRepository.ts');
+  const backup = read('src/services/backupService.ts');
+
+  assert.doesNotMatch(products, /metadataJson: JSON\.stringify\(\{ name:/);
+  assert.doesNotMatch(backup, /metadataJson: JSON\.stringify\(\{ fileUri/);
+});

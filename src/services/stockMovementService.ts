@@ -9,6 +9,7 @@ import {
 import { createMovement, type StockMovementRecord } from '@/database/repositories/stockMovementRepository';
 import type { CurrencyCode } from '@/types/settings';
 import type { StockMovementType } from '@/types/stock';
+import { assertTextLength, INPUT_LIMITS, isValidMoneyCents, isValidStockQuantity } from '@/utils/validators';
 
 type CreateStockMovementInput = {
   productId: string;
@@ -20,6 +21,29 @@ type CreateStockMovementInput = {
   note?: string;
   currency: CurrencyCode;
 };
+
+const productMovementQueues = new Map<string, Promise<void>>();
+
+async function withProductMovementLock<T>(productId: string, operation: () => Promise<T>): Promise<T> {
+  const key = productId.trim();
+  const previous = productMovementQueues.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const queued = previous.catch(() => undefined).then(() => current);
+  productMovementQueues.set(key, queued);
+
+  await previous.catch(() => undefined);
+  try {
+    return await operation();
+  } finally {
+    release();
+    if (productMovementQueues.get(key) === queued) {
+      productMovementQueues.delete(key);
+    }
+  }
+}
 
 function calculateNewQuantity(previousQuantity: number, movementType: StockMovementType, quantity: number) {
   let result: number;
@@ -39,7 +63,7 @@ function assertOptionalMoney(value: number | undefined, field: string) {
     return;
   }
 
-  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+  if (!isValidMoneyCents(value)) {
     throw new Error(field);
   }
 }
@@ -68,12 +92,14 @@ async function createStockMovementRecord(input: CreateStockMovementInput) {
     throw new Error('PRODUCT_ID_MISSING');
   }
 
-  if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
+  if (!isValidStockQuantity(input.quantity) || input.quantity <= 0) {
     throw new Error('INVALID_QUANTITY');
   }
 
   assertOptionalMoney(input.unitCostCents, 'INVALID_UNIT_COST');
   assertOptionalMoney(input.unitSalePriceCents, 'INVALID_UNIT_SALE_PRICE');
+  assertTextLength(input.reason, INPUT_LIMITS.shortText, 'MOVEMENT_REASON_TOO_LONG');
+  assertTextLength(input.note, INPUT_LIMITS.notes, 'MOVEMENT_NOTE_TOO_LONG');
 
   const product = await findProductById(input.productId);
   if (!product) {
@@ -84,8 +110,17 @@ async function createStockMovementRecord(input: CreateStockMovementInput) {
   if (newQuantity < 0) {
     throw new Error('INSUFFICIENT_STOCK');
   }
+  if (!isValidStockQuantity(newQuantity)) {
+    throw new Error('INVALID_QUANTITY');
+  }
 
   const prices = resolveMovementPrices(input.type, input, product, input.quantity);
+  if (
+    (prices.totalCostCents != null && !isValidMoneyCents(prices.totalCostCents))
+    || (prices.totalSaleCents != null && !isValidMoneyCents(prices.totalSaleCents))
+  ) {
+    throw new Error('INVALID_MOVEMENT_TOTAL');
+  }
 
   const movement: StockMovementRecord = await createMovement({
     productId: product.id,
@@ -119,12 +154,12 @@ async function createStockMovementRecord(input: CreateStockMovementInput) {
 }
 
 export async function createStockMovement(input: CreateStockMovementInput) {
-  return withTransaction(() => createStockMovementRecord(input));
+  return withProductMovementLock(input.productId, () => withTransaction(() => createStockMovementRecord(input)));
 }
 
 export async function createProductWithInitialStock(input: CreateProductInput) {
   const initialQuantity = input.initialQuantity ?? input.quantity ?? 0;
-  if (!Number.isFinite(initialQuantity) || initialQuantity < 0) {
+  if (!isValidStockQuantity(initialQuantity)) {
     throw new Error('INVALID_PRODUCT_QUANTITY');
   }
 
