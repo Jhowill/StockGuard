@@ -32,7 +32,7 @@ export default function AlertsScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('alerts.title')} subtitle={t('alerts.subtitle')} rightAction={<Ionicons name="alert-circle-outline" size={22} color={palette.primary} />} />
+      <AppHeader title={t('alerts.title')} subtitle={t('alerts.subtitle')} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>

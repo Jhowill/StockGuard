@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,9 +10,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
 import { useCategories } from '@/hooks/useCategories';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import { useProducts } from '@/hooks/useProducts';
 import { createStockMovement } from '@/services/stockMovementService';
@@ -117,11 +116,6 @@ export default function MovementScreen() {
         subtitle={t('movement.subtitle')}
         variant="page"
         onBackPress={() => router.back()}
-        rightAction={
-          <View style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
-            <Ionicons name="swap-horizontal-outline" size={18} color={palette.text} />
-          </View>
-        }
       />
 
       <View style={styles.sectionHeader}>
@@ -302,14 +296,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 88,
     gap: 6,
-  },
-  headerAction: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.88,

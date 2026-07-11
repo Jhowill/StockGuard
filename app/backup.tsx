@@ -48,6 +48,10 @@ export default function BackupScreen() {
     return backup.format;
   };
 
+  const formatBackupType = (type: 'export' | 'import') => (
+    type === 'import' ? t('backup.restore') : t('common.export')
+  );
+
   const pickBackupFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -169,7 +173,7 @@ export default function BackupScreen() {
           <AppCard key={backup.id}>
             <AppCard.Row
               icon="archive-outline"
-              title={backup.fileName ?? backup.type}
+              title={backup.fileName ?? formatBackupType(backup.type)}
               subtitle={formatShortDateTime(backup.createdAt, language)}
               trailing={<StatusBadge tone={backup.status === 'success' ? 'success' : 'danger'} label={formatBackupLabel(backup)} />}
             />

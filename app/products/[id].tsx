@@ -32,6 +32,19 @@ function getStatusLabel(status: string, t: (key: string) => string) {
   }
 }
 
+function getMovementReasonLabel(reason: string, t: (key: string) => string) {
+  switch (reason) {
+    case 'initial_setup':
+      return t('movement.reasonInitialSetup');
+    case 'restore':
+      return t('movement.reasonRestore');
+    case 'other':
+      return t('movement.reasonOther');
+    default:
+      return reason;
+  }
+}
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, language } = useI18n();
@@ -153,7 +166,7 @@ export default function ProductDetailScreen() {
             <AppCard.Row
               key={movement.id}
               icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : 'swap-horizontal-outline'}
-              title={movement.reason}
+              title={getMovementReasonLabel(movement.reason, t)}
               subtitle={formatShortDateTime(movement.createdAt, language)}
               trailing={<StatusBadge tone={movement.type === 'in' ? 'success' : movement.type === 'out' ? 'warning' : 'info'} label={String(movement.quantity)} />}
             />

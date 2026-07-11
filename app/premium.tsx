@@ -20,41 +20,17 @@ import type { PremiumFeature } from '@/types/ads';
 const features: Array<{ key: PremiumFeature; labelKey: string; descriptionKey: string }> = [
   { key: 'advanced_pdf_reports', labelKey: 'premium.advancedPdf', descriptionKey: 'premium.advancedPdfBody' },
   { key: 'csv_export', labelKey: 'premium.csvExport', descriptionKey: 'premium.csvExportBody' },
-  { key: 'barcode_scanner', labelKey: 'premium.barcodeScanner', descriptionKey: 'premium.barcodeScannerBody' },
   { key: 'encrypted_backup', labelKey: 'premium.encryptedBackup', descriptionKey: 'premium.encryptedBackupBody' },
-  { key: 'profit_analysis', labelKey: 'premium.profitAnalysis', descriptionKey: 'premium.profitAnalysisBody' },
-  { key: 'advanced_history', labelKey: 'premium.advancedHistory', descriptionKey: 'premium.advancedHistoryBody' },
-  { key: 'unlimited_categories', labelKey: 'premium.unlimitedCategories', descriptionKey: 'premium.unlimitedCategoriesBody' },
-  { key: 'batch_expiration_control', labelKey: 'premium.batchExpiration', descriptionKey: 'premium.batchExpirationBody' },
 ];
 
 export default function PremiumScreen() {
   const { t } = useI18n();
   const { palette } = useAppTheme();
-  const { isTemporaryAdFree, adFreeExpiresAt, grantTemporaryAdFree, grantFeatureUnlock, error: adsError } = useAdsAccess();
+  const { grantFeatureUnlock, error: adsError } = useAdsAccess();
   const [selectedFeature, setSelectedFeature] = useState<PremiumFeature>('advanced_pdf_reports');
   const { state, refreshAccess, error: featureError } = useFeatureGate(selectedFeature);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
-
-  const handleAdFree = async () => {
-    if (busy) {
-      return;
-    }
-
-    setBusy(true);
-    setActionError(undefined);
-    try {
-      const result = await grantTemporaryAdFree();
-      if (result.status === 'failed') {
-        setActionError(result.reason);
-      }
-    } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : t('premium.rewardFailed'));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleFeatureUnlock = async () => {
     if (busy) {
@@ -83,7 +59,6 @@ export default function PremiumScreen() {
         subtitle={t('premium.subtitle')}
         variant="page"
         onBackPress={() => router.back()}
-        rightAction={<Ionicons name="ribbon-outline" size={22} color={palette.primary} />}
       />
 
       <AppCard variant="hero" style={styles.heroCard}>
@@ -95,10 +70,6 @@ export default function PremiumScreen() {
           <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('premium.heroBody')}</Text>
         </View>
         <View style={styles.heroBadges}>
-          <StatusBadge
-            tone={isTemporaryAdFree ? 'success' : 'info'}
-            label={isTemporaryAdFree ? t('premium.until', { date: adFreeExpiresAt ?? t('premium.now') }) : t('premium.adsActive')}
-          />
           <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? t('premium.unlocked') : t('premium.blocked')} />
         </View>
       </AppCard>
@@ -108,16 +79,6 @@ export default function PremiumScreen() {
       {actionError || adsError || featureError ? (
         <EmptyState title={t('premium.rewards')} description={translateAppError(actionError ?? adsError ?? featureError ?? t('premium.loadFailed'), t)} />
       ) : null}
-
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>{t('premium.temporaryAdFree')}</AppCard.Title>
-        <AppCard.Text>{t('premium.temporaryAdFreeBody')}</AppCard.Text>
-        <StatusBadge
-          tone={isTemporaryAdFree ? 'success' : 'info'}
-          label={isTemporaryAdFree ? t('premium.until', { date: adFreeExpiresAt ?? t('premium.now') }) : t('premium.active')}
-        />
-        <AppButton label={busy ? '...' : t('premium.watchAd')} disabled={busy} onPress={() => void handleAdFree()} />
-      </AppCard>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('premium.unlockFeature')}</AppCard.Title>

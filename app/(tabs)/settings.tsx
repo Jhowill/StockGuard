@@ -21,6 +21,7 @@ import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
 import { useAppState, type AppLanguage, type CurrencyCode, type ThemeMode } from '@/state/app-state';
 import { deleteAllUserData } from '@/services/dataService';
+import { clearSecuritySecrets } from '@/services/securityService';
 import { showPrivacyOptions } from '@/services/adsService';
 
 const PRIVACY_POLICY_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/PRIVACY_POLICY.md';
@@ -134,9 +135,40 @@ export default function SettingsScreen() {
 
   const openExternalUrl = async (url: string) => {
     try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        throw new Error('EXTERNAL_LINK_UNAVAILABLE');
+      }
       await Linking.openURL(url);
     } catch (nextError) {
       setActionError(nextError instanceof Error ? nextError.message : t('settings.linkFailed'));
+    }
+  };
+
+  const resetPreferences = async () => {
+    if (saving) {
+      return;
+    }
+
+    setSaving(true);
+    setActionError(undefined);
+    try {
+      await saveSettings({
+        onboardingCompleted: false,
+        userName: null,
+        theme: 'system',
+        language: 'system',
+        currency: 'BRL',
+        usageType: 'other',
+        appLockEnabled: false,
+        biometricUnlockEnabled: false,
+        hideFinancialValues: false,
+      });
+      await clearSecuritySecrets();
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.saveFailed'));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -263,19 +295,8 @@ export default function SettingsScreen() {
         <AppButton
           label={t('settings.resetPreferences')}
           variant="ghost"
-          onPress={() =>
-            void safeSave({
-              onboardingCompleted: false,
-              userName: null,
-              theme: 'system',
-              language: 'system',
-              currency: 'BRL',
-              usageType: 'other',
-              appLockEnabled: false,
-              biometricUnlockEnabled: false,
-              hideFinancialValues: false,
-            })
-          }
+          disabled={saving}
+          onPress={() => void resetPreferences()}
         />
       </AppCard>
 

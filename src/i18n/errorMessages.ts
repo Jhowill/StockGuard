@@ -36,6 +36,7 @@ const errorKeyMap: Record<string, string> = {
   PRODUCT_UPDATE_FAILED: 'errors.productSaveFailed',
   EXPORT_FOLDER_UNAVAILABLE: 'errors.exportFolderUnavailable',
   EXPORT_FILE_NOT_FOUND: 'errors.exportFileNotFound',
+  EXTERNAL_LINK_UNAVAILABLE: 'settings.linkFailed',
   REPORT_SUMMARY_INVALID: 'errors.reportSummaryInvalid',
   INVALID_QUANTITY: 'errors.invalidQuantity',
   INSUFFICIENT_STOCK: 'errors.insufficientStock',

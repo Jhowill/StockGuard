@@ -115,7 +115,7 @@ export default function ReportsScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('reports.title')} subtitle={t('reports.subtitle')} rightAction={<Ionicons name="bar-chart-outline" size={22} color={palette?.primary ?? undefined} />} />
+      <AppHeader title={t('reports.title')} subtitle={t('reports.subtitle')} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>

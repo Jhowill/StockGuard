@@ -38,3 +38,37 @@ test('legal documents and release checklist remain wired into the app', () => {
   assert.match(checklist, /App Store/);
   assert.match(checklist, /Data Safety/);
 });
+
+test('visible actions lead only to implemented features', () => {
+  const premium = read('app/premium.tsx');
+  const movement = read('app/products/movement.tsx');
+  const reports = read('app/(tabs)/reports.tsx');
+  const alerts = read('app/(tabs)/alerts.tsx');
+
+  assert.doesNotMatch(premium, /key: 'barcode_scanner'|key: 'profit_analysis'|key: 'advanced_history'|key: 'unlimited_categories'|key: 'batch_expiration_control'/);
+  assert.doesNotMatch(premium, /grantTemporaryAdFree|temporaryAdFree/);
+  assert.doesNotMatch(movement, /rightAction=/);
+  assert.doesNotMatch(reports, /rightAction=/);
+  assert.doesNotMatch(alerts, /rightAction=/);
+});
+
+test('preference reset clears native security secrets and external links are validated', () => {
+  const settings = read('app/(tabs)/settings.tsx');
+
+  assert.match(settings, /await clearSecuritySecrets\(\)/);
+  assert.match(settings, /await Linking\.canOpenURL\(url\)/);
+});
+
+test('internal movement reason codes are localized before display', () => {
+  const detail = read('app/products/[id].tsx');
+
+  assert.match(detail, /getMovementReasonLabel\(movement\.reason, t\)/);
+  assert.doesNotMatch(detail, /title=\{movement\.reason\}/);
+});
+
+test('backup history does not expose internal record types', () => {
+  const backup = read('app/backup.tsx');
+
+  assert.match(backup, /formatBackupType\(backup\.type\)/);
+  assert.doesNotMatch(backup, /backup\.fileName \?\? backup\.type/);
+});
