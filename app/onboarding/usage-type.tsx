@@ -65,8 +65,8 @@ export default function UsageTypeScreen() {
       ))}
 
       <AppButton
-        label={saving ? '...' : t('onboardingPrefs.next')}
-        disabled={saving}
+        label={t('onboardingPrefs.next')}
+        loading={saving}
         onPress={async () => {
           if (!canContinue || saving) return;
 

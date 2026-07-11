@@ -9,6 +9,7 @@ import { AppInput } from '@/components/ui/AppInput';
 import { AppModalSelect } from '@/components/ui/AppModalSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppState } from '@/state/app-state';
@@ -143,7 +144,7 @@ export default function MovementScreen() {
       />
 
       {loading ? (
-        <EmptyState title={t('products.title')} description={t('common.loading')} icon="cube-outline" />
+        <LoadingState title={t('products.title')} description={t('common.loading')} />
       ) : products.length === 0 ? (
         <EmptyState
           title={t('products.title')}
@@ -243,8 +244,7 @@ export default function MovementScreen() {
         </AppCard>
       ) : null}
 
-      <AppButton label={saving ? '...' : t('movement.save')} disabled={!canSave} onPress={() => setConfirmSave(true)} />
-      <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
+      <AppButton label={t('movement.save')} loading={saving} disabled={!canSave} onPress={() => setConfirmSave(true)} />
 
       <ConfirmDialog
         visible={confirmSave}

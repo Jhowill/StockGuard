@@ -139,3 +139,22 @@ test('new product keeps the requested compact and modal selection layout', () =>
   assert.match(modalSelect, /accessibilityState=\{\{ checked: selected \}\}/);
   assert.match(input, /formatMoneyInput\(text\)/);
 });
+
+test('navigation and inventory refinements remain consistent', () => {
+  const header = read('src/components/ui/AppHeader.tsx');
+  const settings = read('app/(tabs)/settings.tsx');
+  const editProduct = read('app/products/edit.tsx');
+  const products = read('app/(tabs)/products.tsx');
+  const alertsHook = read('src/hooks/useAlerts.ts');
+  const home = read('app/(tabs)/index.tsx');
+
+  assert.match(header, /actionIcon\?: keyof typeof Ionicons\.glyphMap/);
+  assert.match(header, /resolvedActionIcon \?/);
+  assert.match(settings, /router\.push\('\/categories'\)/);
+  assert.match(settings, /router\.push\('\/suppliers'\)/);
+  assert.match(editProduct, /const dirty = Boolean\(initialSignature && currentSignature !== initialSignature\)/);
+  assert.match(editProduct, /visible=\{confirmExit\}/);
+  assert.match(products, /settings\?\.expirationWarningDays \?\? 7/);
+  assert.match(alertsHook, /getExpiringProducts\(settings\.expirationWarningDays\)/);
+  assert.match(home, /movement\.adjustmentNegative/);
+});

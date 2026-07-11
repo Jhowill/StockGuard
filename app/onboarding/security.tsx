@@ -78,8 +78,8 @@ export default function SecurityScreen() {
       {error ? <EmptyState title={t('settings.security')} description={translateAppError(error, t)} /> : null}
 
       <AppButton
-        label={saving ? '...' : t('onboarding.finish')}
-        disabled={saving}
+        label={t('onboarding.finish')}
+        loading={saving}
         onPress={async () => {
           const saved = await safeSave({ hideFinancialValues, onboardingCompleted: true });
           if (saved) {

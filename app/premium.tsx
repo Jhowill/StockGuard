@@ -101,7 +101,7 @@ export default function PremiumScreen() {
           ))}
         </View>
         <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? t('premium.unlocked') : t('premium.blocked')} />
-        <AppButton label={busy ? '...' : t('premium.watchUnlock')} variant="secondary" disabled={busy} onPress={() => void handleFeatureUnlock()} />
+        <AppButton label={t('premium.watchUnlock')} variant="secondary" loading={busy} onPress={() => void handleFeatureUnlock()} />
       </AppCard>
     </ScreenContainer>
   );

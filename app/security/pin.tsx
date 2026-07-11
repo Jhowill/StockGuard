@@ -88,7 +88,7 @@ export default function PinSecurityScreen() {
         <AppCard.Text>{t('securityFlow.pinBody')}</AppCard.Text>
         <AppInput label={t('securityFlow.newPin')} secureTextEntry keyboardType="number-pad" maxLength={8} value={pin} onChangeText={setPinValue} helperText={t('securityFlow.pinExample')} />
         <AppInput label={t('securityFlow.confirmPin')} secureTextEntry keyboardType="number-pad" maxLength={8} value={confirmPin} onChangeText={setConfirmPin} helperText={t('securityFlow.confirmPinHelper')} />
-        <AppButton label={busy ? '...' : t('securityFlow.savePin')} disabled={busy} onPress={() => void save()} />
+        <AppButton label={t('securityFlow.savePin')} loading={busy} onPress={() => void save()} />
         <AppButton label={t('securityFlow.removePin')} variant="secondary" disabled={busy} onPress={() => void remove()} />
       </AppCard>
 

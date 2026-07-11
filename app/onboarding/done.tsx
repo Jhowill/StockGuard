@@ -32,8 +32,8 @@ export default function OnboardingDoneScreen() {
       </AppCard>
 
       <AppButton
-        label={busy ? '...' : t('onboarding.enterApp')}
-        disabled={busy}
+        label={t('onboarding.enterApp')}
+        loading={busy}
         onPress={async () => {
           if (busy) {
             return;

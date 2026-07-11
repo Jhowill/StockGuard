@@ -6,6 +6,7 @@ import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { PremiumLock } from '@/components/ui/PremiumLock';
@@ -151,7 +152,7 @@ export default function ReportsScreen() {
       </AppCard>
 
       {loading ? (
-        <EmptyState title={t('reports.title')} description={t('common.loading')} icon="bar-chart-outline" />
+        <LoadingState title={t('reports.title')} description={t('common.loading')} />
       ) : error ? (
         <EmptyState title={t('reports.title')} description={translateAppError(error, t)} icon="bar-chart-outline" actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
       ) : summary ? (
@@ -187,8 +188,8 @@ export default function ReportsScreen() {
           <AppCard style={{ gap: 12 }}>
             <AppCard.Title>{t('reports.overview')}</AppCard.Title>
             <AppCard.Text>{t('reports.overviewBody')}</AppCard.Text>
-            <AppButton label={exporting ? '...' : t('reports.exportCsv')} variant="secondary" disabled={exporting} onPress={() => void exportReport('csv')} />
-            <AppButton label={exporting ? '...' : t('reports.generatePdf')} disabled={exporting} onPress={() => void exportReport('pdf')} />
+            <AppButton label={t('reports.exportCsv')} variant="secondary" loading={exporting} onPress={() => void exportReport('csv')} />
+            <AppButton label={t('reports.generatePdf')} loading={exporting} onPress={() => void exportReport('pdf')} />
           </AppCard>
 
           {lockedFeature ? (

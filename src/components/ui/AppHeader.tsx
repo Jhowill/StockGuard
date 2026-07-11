@@ -10,6 +10,7 @@ type Props = {
   variant?: 'default' | 'page';
   onBackPress?: () => void;
   actionLabel?: string;
+  actionIcon?: keyof typeof Ionicons.glyphMap;
   onActionPress?: () => void;
   rightAction?: ReactNode;
 };
@@ -20,17 +21,21 @@ export function AppHeader({
   variant = 'default',
   onBackPress,
   actionLabel,
+  actionIcon,
   onActionPress,
   rightAction,
 }: Props) {
   const { palette } = useAppTheme();
   const isPage = variant === 'page';
   const iconOnlyAction = actionLabel?.trim() === '+';
+  const resolvedActionIcon = iconOnlyAction ? 'add' : actionIcon;
 
   return (
     <View style={[styles.wrapper, isPage ? styles.pageWrapper : null]}>
       {isPage ? (
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={title}
           onPress={onBackPress ? onBackPress : () => router.back()}
           hitSlop={10}
           style={[styles.navButton, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
@@ -53,11 +58,11 @@ export function AppHeader({
             hitSlop={10}
             style={[styles.iconOnlyAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
           >
-            <Ionicons name="add" size={24} color={palette.primary} />
+            <Ionicons name={resolvedActionIcon ?? 'add'} size={24} color={palette.primary} />
           </Pressable>
         ) : (
-          <Pressable onPress={onActionPress} hitSlop={8} style={[styles.action, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
-            <Ionicons name="add" size={22} color={palette.primary} />
+          <Pressable accessibilityRole="button" accessibilityLabel={actionLabel} onPress={onActionPress} hitSlop={8} style={[styles.action, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+            {resolvedActionIcon ? <Ionicons name={resolvedActionIcon} size={20} color={palette.primary} /> : null}
             <Text style={[styles.actionText, { color: palette.primary }]}>{actionLabel}</Text>
           </Pressable>
         )

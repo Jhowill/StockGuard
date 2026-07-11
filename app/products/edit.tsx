@@ -93,6 +93,8 @@ export default function ProductEditScreen() {
   const [error, setError] = useState<string | undefined>();
   const [actionError, setActionError] = useState<string | undefined>();
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [initialSignature, setInitialSignature] = useState('');
   const [quickCreateMode, setQuickCreateMode] = useState<'category' | 'supplier' | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -129,6 +131,9 @@ export default function ProductEditScreen() {
           return;
         }
 
+        const nextMinQuantity = formatDecimalInput(String(product.minQuantity));
+        const nextCostPrice = formatMoneyInputFromCents(product.costPriceCents);
+        const nextSalePrice = formatMoneyInputFromCents(product.salePriceCents);
         setCategories(nextCategories);
         setSuppliers(nextSuppliers);
         setName(product.name);
@@ -138,14 +143,31 @@ export default function ProductEditScreen() {
         setCategoryId(product.categoryId ?? '');
         setSupplierId(product.supplierId ?? '');
         setUnit(product.unit);
-        setMinQuantity(formatDecimalInput(String(product.minQuantity)));
-        setCostPrice(formatMoneyInputFromCents(product.costPriceCents));
-        setSalePrice(formatMoneyInputFromCents(product.salePriceCents));
+        setMinQuantity(nextMinQuantity);
+        setCostPrice(nextCostPrice);
+        setSalePrice(nextSalePrice);
         setExpirationDate(product.expirationDate ?? '');
         setBatchCode(product.batchCode ?? '');
         setLocation(product.location ?? '');
         setImageUri(product.imageUri ?? '');
         setNotes(product.notes ?? '');
+        setInitialSignature(JSON.stringify({
+          name: product.name,
+          description: product.description ?? '',
+          sku: product.sku ?? '',
+          barcode: product.barcode ?? '',
+          categoryId: product.categoryId ?? '',
+          supplierId: product.supplierId ?? '',
+          unit: product.unit,
+          minQuantity: nextMinQuantity,
+          costPrice: nextCostPrice,
+          salePrice: nextSalePrice,
+          expirationDate: product.expirationDate ?? '',
+          batchCode: product.batchCode ?? '',
+          location: product.location ?? '',
+          imageUri: product.imageUri ?? '',
+          notes: product.notes ?? '',
+        }));
       } catch {
         setError(t('productDetail.loadFailed'));
       } finally {
@@ -155,6 +177,32 @@ export default function ProductEditScreen() {
   }, [productId, t]);
 
   const canSave = useMemo(() => name.trim().length > 0 && !saving, [name, saving]);
+  const currentSignature = useMemo(() => JSON.stringify({
+    name,
+    description,
+    sku,
+    barcode,
+    categoryId,
+    supplierId,
+    unit,
+    minQuantity,
+    costPrice,
+    salePrice,
+    expirationDate,
+    batchCode,
+    location,
+    imageUri,
+    notes,
+  }), [name, description, sku, barcode, categoryId, supplierId, unit, minQuantity, costPrice, salePrice, expirationDate, batchCode, location, imageUri, notes]);
+  const dirty = Boolean(initialSignature && currentSignature !== initialSignature);
+
+  const handleBack = () => {
+    if (dirty) {
+      setConfirmExit(true);
+      return;
+    }
+    router.back();
+  };
 
   const pickImage = async () => {
     try {
@@ -256,7 +304,7 @@ export default function ProductEditScreen() {
         title={t('productDetail.edit')}
         subtitle={t('productDetail.title')}
         variant="page"
-        onBackPress={() => router.back()}
+        onBackPress={handleBack}
         rightAction={
           <Pressable onPress={() => void handleSave()} hitSlop={10} style={[styles.headerAction, { backgroundColor: palette.primary }]}>
             <Ionicons name="checkmark" size={20} color={palette.primaryText} />
@@ -375,9 +423,21 @@ export default function ProductEditScreen() {
 
       {actionError ? <ErrorState description={translateAppError(actionError, t)} /> : null}
 
-      <AppButton label={saving ? '...' : t('common.save')} disabled={!canSave} onPress={() => void handleSave()} />
+      <AppButton label={t('common.save')} loading={saving} disabled={!canSave} onPress={() => void handleSave()} />
       <AppButton label={t('common.archive')} variant="secondary" disabled={saving} onPress={() => setConfirmArchive(true)} />
-      <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
+
+      <ConfirmDialog
+        visible={confirmExit}
+        title={t('productNew.discardTitle')}
+        message={t('productNew.discardBody')}
+        confirmLabel={t('common.continue')}
+        danger
+        onCancel={() => setConfirmExit(false)}
+        onConfirm={() => {
+          setConfirmExit(false);
+          router.back();
+        }}
+      />
 
       <ConfirmDialog
         visible={confirmArchive}

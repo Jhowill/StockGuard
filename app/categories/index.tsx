@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useCategories } from '@/hooks/useCategories';
@@ -99,7 +100,7 @@ export default function CategoriesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('categories.title')} subtitle={t('categories.subtitle')} actionLabel={t('categories.newAction')} onActionPress={resetForm} />
+      <AppHeader title={t('categories.title')} subtitle={t('categories.subtitle')} actionLabel={t('categories.newAction')} actionIcon="add" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{editingId ? t('categories.edit') : t('categories.new')}</AppCard.Title>
@@ -109,14 +110,14 @@ export default function CategoriesScreen() {
         <AppInput label={t('categories.color')} placeholder={t('categories.colorPlaceholder')} helperText={t('categories.colorHelper')} value={colorToken} onChangeText={setColorToken} />
         <AppInput label={t('categories.icon')} placeholder={t('categories.iconPlaceholder')} helperText={t('categories.iconHelper')} value={iconName} onChangeText={setIconName} />
         <AppInput label={t('categories.order')} placeholder={t('categories.orderPlaceholder')} helperText={t('categories.orderHelper')} keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
-        <AppButton label={busy ? '...' : editingId ? t('common.save') : t('common.create')} disabled={busy} onPress={() => void handleSave()} />
+        <AppButton label={editingId ? t('common.save') : t('common.create')} loading={busy} onPress={() => void handleSave()} />
         {editingId ? <AppButton label={t('common.cancel')} variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
       {actionError ? <EmptyState title={t('categories.title')} description={translateAppError(actionError, t)} icon="layers-outline" /> : null}
 
       {loading ? (
-        <EmptyState title={t('categories.title')} description={t('common.loading')} icon="layers-outline" />
+        <LoadingState title={t('categories.title')} description={t('common.loading')} />
       ) : error ? (
         <EmptyState title={t('categories.title')} description={translateAppError(error, t)} icon="layers-outline" />
       ) : categories.length === 0 ? (

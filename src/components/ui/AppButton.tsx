@@ -1,5 +1,5 @@
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -10,9 +10,10 @@ type Props = {
   variant?: Variant;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  loading?: boolean;
 };
 
-export function AppButton({ label, onPress, variant = 'primary', style, disabled = false }: Props) {
+export function AppButton({ label, onPress, variant = 'primary', style, disabled = false, loading = false }: Props) {
   const { palette } = useAppTheme();
   const isPrimary = variant === 'primary';
   const isSecondary = variant === 'secondary';
@@ -29,8 +30,11 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
 
   return (
     <Pressable
-      disabled={disabled}
-      onPress={disabled ? undefined : onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      disabled={disabled || loading}
+      onPress={disabled || loading ? undefined : onPress}
       style={({ pressed }) => [
         styles.button,
         {
@@ -42,11 +46,14 @@ export function AppButton({ label, onPress, variant = 'primary', style, disabled
         variant === 'danger' && styles.danger,
         variant === 'ghost' && styles.ghost,
         pressed ? styles.pressed : null,
-        disabled ? styles.disabled : null,
+        disabled || loading ? styles.disabled : null,
         style,
       ]}
     >
-      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      <View style={styles.content}>
+        {loading ? <ActivityIndicator size="small" color={textColor} /> : null}
+        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -63,9 +70,7 @@ const styles = StyleSheet.create({
   primary: {
     borderColor: 'transparent',
   },
-  secondary: {
-    borderColor: 'transparent',
-  },
+  secondary: {},
   danger: {
     borderColor: 'transparent',
   },
@@ -81,5 +86,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 });

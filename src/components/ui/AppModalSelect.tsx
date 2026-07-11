@@ -154,12 +154,6 @@ export function AppModalSelect<T extends string>({
                 );
               }}
             />
-            {onAdd ? (
-              <Pressable onPress={handleAdd} style={({ pressed }) => [styles.modalAdd, { borderColor: palette.border }, pressed ? styles.pressed : null]}>
-                <Ionicons name="add-circle-outline" size={20} color={palette.primary} />
-                <Text style={[styles.modalAddLabel, { color: palette.primary }]}>{t('common.add')}</Text>
-              </Pressable>
-            ) : null}
           </View>
         </View>
       </Modal>
@@ -186,8 +180,6 @@ const styles = StyleSheet.create({
   optionTextBlock: { flex: 1, gap: 2 },
   optionLabel: { flex: 1, fontSize: 15, fontWeight: '700' },
   optionDescription: { fontSize: 12, lineHeight: 17 },
-  modalAdd: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: 1 },
-  modalAddLabel: { fontSize: 14, fontWeight: '800' },
   emptyState: { gap: 4, borderRadius: 16, borderWidth: 1, padding: 16 },
   emptyStateTitle: { fontSize: 14, fontWeight: '800' },
   emptyStateBody: { fontSize: 12, lineHeight: 17 },

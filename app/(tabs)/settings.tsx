@@ -290,6 +290,8 @@ export default function SettingsScreen() {
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('settings.data')}</AppCard.Title>
         <AppCard.Text>{t('settings.dataBody')}</AppCard.Text>
+        <AppButton label={t('settings.manageCategories')} variant="secondary" onPress={() => router.push('/categories')} />
+        <AppButton label={t('settings.manageSuppliers')} variant="secondary" onPress={() => router.push('/suppliers')} />
         <AppButton label={t('settings.backup')} variant="secondary" onPress={() => router.push('/backup')} />
         <AppButton label={t('settings.premium')} variant="ghost" onPress={() => router.push('/premium')} />
         <AppButton

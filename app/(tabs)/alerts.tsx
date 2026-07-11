@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -49,7 +50,7 @@ export default function AlertsScreen() {
       </AppCard>
 
       {loading ? (
-        <EmptyState title={t('alerts.title')} description={t('common.loading')} />
+        <LoadingState title={t('alerts.title')} description={t('common.loading')} />
       ) : error ? (
         <EmptyState title={t('alerts.title')} description={translateAppError(error, t)} />
       ) : alerts.length === 0 ? (

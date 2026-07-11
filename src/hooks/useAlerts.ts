@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getExpiringProducts, getLowStockProducts, listProducts, type ProductRecord } from '@/database/repositories/productRepository';
+import { getSettings } from '@/database/repositories/settingsRepository';
 
 export type AlertItem = {
   id: string;
@@ -18,10 +19,11 @@ export function useAlerts() {
     setLoading(true);
     setError(undefined);
     try {
+      const settings = await getSettings();
       const [products, lowStock, expiringSoon] = await Promise.all([
         listProducts(),
-        getLowStockProducts(),
-        getExpiringProducts(),
+        settings.lowStockWarningEnabled ? getLowStockProducts() : Promise.resolve([]),
+        settings.expirationWarningEnabled ? getExpiringProducts(settings.expirationWarningDays) : Promise.resolve([]),
       ]);
 
       const zeroStock = products.filter((product) => product.quantity === 0);

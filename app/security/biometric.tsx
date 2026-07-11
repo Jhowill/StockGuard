@@ -105,7 +105,7 @@ export default function BiometricSecurityScreen() {
         <StatusBadge tone={settings?.biometricUnlockEnabled ? 'success' : 'info'} label={settings?.biometricUnlockEnabled ? t('securityFlow.biometricEnabled') : t('securityFlow.biometricDisabled')} />
         <StatusBadge tone={available ? 'success' : 'warning'} label={available ? t('securityFlow.available') : t('securityFlow.unavailable')} />
         <AppCard.Text>{t('securityFlow.biometricBody')}</AppCard.Text>
-        <AppButton label={busy ? '...' : t('securityFlow.enableBiometric')} disabled={busy || !available} onPress={() => void enable()} />
+        <AppButton label={t('securityFlow.enableBiometric')} loading={busy} disabled={!available} onPress={() => void enable()} />
         <AppButton label={t('securityFlow.disableBiometric')} variant="secondary" disabled={busy} onPress={() => void disable()} />
       </AppCard>
 

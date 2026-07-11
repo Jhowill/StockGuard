@@ -7,6 +7,7 @@ import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -63,7 +64,7 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer padded>
-        <EmptyState title={t('productDetail.title')} description={t('common.loading')} icon="cube-outline" />
+        <LoadingState title={t('productDetail.title')} description={t('common.loading')} />
       </ScreenContainer>
     );
   }
@@ -98,7 +99,7 @@ export default function ProductDetailScreen() {
             <Ionicons name="cube-outline" size={42} color={palette.primary} />
             <Text style={[styles.heroPlaceholderTitle, { color: palette.text }]}>{t('productDetail.noImage')}</Text>
             <Text style={[styles.heroPlaceholderText, { color: palette.textMuted }]}>{t('productDetail.noImageBody')}</Text>
-            <AppButton label={t('productDetail.addImage')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
+            <AppButton label={t('productDetail.edit')} variant="secondary" onPress={() => router.push({ pathname: '/products/edit', params: { id: product.id } })} />
           </View>
         )}
 

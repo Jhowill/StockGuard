@@ -16,7 +16,7 @@ export function RewardCard({ title, description, actionLabel, busy = false, onPr
   return (
     <AppCard variant="hero" style={{ gap: 12 }}>
       <AppCard.Row icon="sparkles-outline" title={title} subtitle={description} />
-      <AppButton label={busy ? '...' : actionLabel ?? t('premium.watchAd')} disabled={busy} onPress={onPress} />
+      <AppButton label={actionLabel ?? t('premium.watchAd')} loading={busy} onPress={onPress} />
     </AppCard>
   );
 }

@@ -20,7 +20,7 @@ export function PremiumLock({ title, description, actionLabel, busy = false, onU
       <Text style={[styles.kicker, { color: palette.premium }]}>{t('common.advancedFeature')}</Text>
       <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
       <Text style={[styles.description, { color: palette.textMuted }]}>{description}</Text>
-      {onUnlock ? <AppButton label={busy ? '...' : actionLabel ?? t('common.unlockWithAd')} disabled={busy} onPress={onUnlock} /> : null}
+      {onUnlock ? <AppButton label={actionLabel ?? t('common.unlockWithAd')} loading={busy} onPress={onUnlock} /> : null}
     </View>
   );
 }

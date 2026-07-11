@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppCard } from '@/components/ui/AppCard';
+import { AppButton } from '@/components/ui/AppButton';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricCard } from '@/components/ui/MetricCard';
@@ -27,8 +28,9 @@ function getMovementLabel(type: string, t: (key: string) => string) {
     case 'return':
       return t('movement.return');
     case 'adjustment_positive':
-    case 'adjustment_negative':
       return t('movement.adjustmentPositive');
+    case 'adjustment_negative':
+      return t('movement.adjustmentNegative');
     case 'initial_balance':
       return t('movement.initialBalance');
     default:
@@ -93,7 +95,7 @@ export default function HomeScreen() {
               accessibilityLabel={t('settings.title')}
               style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
             >
-              <Ionicons name="create-outline" size={20} color={palette.text} />
+              <Ionicons name="person-outline" size={20} color={palette.text} />
             </Pressable>
             <Pressable
               onPress={() => void toggleTheme()}
@@ -174,17 +176,17 @@ export default function HomeScreen() {
         {summary.zeroStockCount > 0 || summary.lowStockCount > 0 || summary.expiringSoonCount > 0 ? (
           <View style={styles.listGap}>
             {summary.zeroStockCount > 0 ? (
-              <AppCard onPress={() => router.push({ pathname: '/(tabs)/products', params: { filter: 'zero' } })}>
+              <AppCard>
                 <AppCard.Row icon="alert-circle-outline" title={t('home.zeroStock')} subtitle={t('home.zeroStockBody', { count: summary.zeroStockCount })} trailing={<StatusBadge tone="danger" label="0" />} />
               </AppCard>
             ) : null}
             {summary.lowStockCount > 0 ? (
-              <AppCard onPress={() => router.push({ pathname: '/(tabs)/products', params: { filter: 'low' } })}>
+              <AppCard>
                 <AppCard.Row icon="warning-outline" title={t('home.lowStock')} subtitle={t('home.lowStockBody', { count: summary.lowStockCount })} trailing={<StatusBadge tone="warning" label={String(summary.lowStockCount)} />} />
               </AppCard>
             ) : null}
             {summary.expiringSoonCount > 0 ? (
-              <AppCard onPress={() => router.push({ pathname: '/(tabs)/products', params: { filter: 'expiring' } })}>
+              <AppCard>
                 <AppCard.Row icon="calendar-outline" title={t('home.expiringSoon')} subtitle={t('home.expiringSoonBody', { count: summary.expiringSoonCount })} trailing={<StatusBadge tone="info" label={String(summary.expiringSoonCount)} />} />
               </AppCard>
             ) : null}
@@ -192,6 +194,7 @@ export default function HomeScreen() {
         ) : (
           <EmptyState title={t('home.noAlerts')} description={t('home.noAlertsBody')} />
         )}
+        <AppButton label={t('home.viewAlerts')} variant="secondary" onPress={() => router.push('/(tabs)/alerts')} />
       </AppCard>
     </ScreenContainer>
   );

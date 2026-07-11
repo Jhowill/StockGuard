@@ -90,8 +90,8 @@ export default function PreferencesScreen() {
       </AppCard>
 
       <AppButton
-        label={saving ? '...' : t('onboardingPrefs.next')}
-        disabled={saving}
+        label={t('onboardingPrefs.next')}
+        loading={saving}
         onPress={async () => {
           if (saving) return;
 

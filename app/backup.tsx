@@ -146,8 +146,8 @@ export default function BackupScreen() {
           placeholder={t('backup.passwordPlaceholder')}
           helperText={t('backup.passwordHelper')}
         />
-        <AppButton label={busy ? '...' : t('backup.simple')} disabled={busy} onPress={() => void handleCreate(false)} />
-        <AppButton label={busy ? '...' : t('backup.encrypted')} variant="secondary" disabled={busy || password.trim().length < 6} onPress={() => void handleCreate(true)} />
+        <AppButton label={t('backup.simple')} loading={busy} onPress={() => void handleCreate(false)} />
+        <AppButton label={t('backup.encrypted')} variant="secondary" loading={busy} disabled={password.trim().length < 6} onPress={() => void handleCreate(true)} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>

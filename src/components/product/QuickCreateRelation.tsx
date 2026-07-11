@@ -117,7 +117,7 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
             </>
           ) : null}
           <View style={styles.actionsRow}>
-            <AppButton label={busy ? '...' : t('quickCreate.createSelect')} disabled={busy} style={styles.action} onPress={() => void save()} />
+            <AppButton label={t('quickCreate.createSelect')} loading={busy} style={styles.action} onPress={() => void save()} />
             <AppButton label={t('common.cancel')} variant="ghost" disabled={busy} style={styles.action} onPress={reset} />
           </View>
         </AppCard>

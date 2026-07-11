@@ -325,8 +325,7 @@ export default function NewProductScreen() {
 
       {error ? <ErrorState description={translateAppError(error, t)} /> : null}
 
-      <AppButton label={loading ? '...' : t('common.save')} disabled={!canSave} onPress={() => void handleSave()} />
-      <AppButton label={t('common.back')} variant="ghost" onPress={handleBack} />
+      <AppButton label={t('common.save')} loading={loading} disabled={!canSave} onPress={() => void handleSave()} />
 
       <ConfirmDialog
         visible={confirmExit}

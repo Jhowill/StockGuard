@@ -117,7 +117,7 @@ export default function UnlockScreen() {
         <StatusBadge tone="info" label={t('securityFlow.appLocked')} />
         <AppCard.Text>{t('securityFlow.unlockBody')}</AppCard.Text>
         <AppInput label={t('securityFlow.pinTitle')} secureTextEntry keyboardType="number-pad" maxLength={8} value={pin} onChangeText={setPin} helperText={t('securityFlow.pinHelper')} placeholder={t('securityFlow.pinPlaceholder')} />
-        <AppButton label={busy ? '...' : t('securityFlow.unlockPin')} disabled={busy} onPress={() => void handleUnlock()} />
+        <AppButton label={t('securityFlow.unlockPin')} loading={busy} onPress={() => void handleUnlock()} />
         {biometricAvailable ? <AppButton label={t('securityFlow.unlockBiometric')} variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>
 

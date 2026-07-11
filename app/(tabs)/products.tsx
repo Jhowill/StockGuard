@@ -7,11 +7,13 @@ import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
+import { useSettings } from '@/hooks/useSettings';
 import { useI18n } from '@/hooks/useI18n';
 import { translateAppError } from '@/i18n/errorMessages';
 
@@ -24,7 +26,7 @@ const filterOptions: Array<{ value: ProductFilter; labelKey: string }> = [
   { value: 'expiring', labelKey: 'products.expiring' },
 ];
 
-function isProductExpiring(expirationDate?: string | null) {
+function isProductExpiring(expirationDate: string | null | undefined, warningDays: number) {
   if (!expirationDate) {
     return false;
   }
@@ -36,7 +38,7 @@ function isProductExpiring(expirationDate?: string | null) {
 
   const now = new Date();
   const sevenDaysFromNow = new Date(now);
-  sevenDaysFromNow.setDate(now.getDate() + 7);
+  sevenDaysFromNow.setDate(now.getDate() + warningDays);
   return date.getTime() <= sevenDaysFromNow.getTime();
 }
 
@@ -50,12 +52,14 @@ export default function ProductsScreen() {
   const { t } = useI18n();
   const { palette } = useAppTheme();
   const { products, query, setQuery, loading, error } = useProducts();
+  const { settings } = useSettings();
   const { categories } = useCategories();
   const [activeFilter, setActiveFilter] = useState<ProductFilter>(() => normalizeFilter(filter));
   const categoryNames = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
   const lowStockCount = useMemo(() => products.filter((product) => product.quantity <= product.minQuantity).length, [products]);
   const zeroStockCount = useMemo(() => products.filter((product) => product.quantity === 0).length, [products]);
-  const expiringCount = useMemo(() => products.filter((product) => isProductExpiring(product.expirationDate)).length, [products]);
+  const expirationWarningDays = settings?.expirationWarningDays ?? 7;
+  const expiringCount = useMemo(() => products.filter((product) => isProductExpiring(product.expirationDate, expirationWarningDays)).length, [expirationWarningDays, products]);
   const filteredProducts = useMemo(() => {
     switch (activeFilter) {
       case 'low':
@@ -63,11 +67,11 @@ export default function ProductsScreen() {
       case 'zero':
         return products.filter((product) => product.quantity === 0);
       case 'expiring':
-        return products.filter((product) => isProductExpiring(product.expirationDate));
+        return products.filter((product) => isProductExpiring(product.expirationDate, expirationWarningDays));
       default:
         return products;
     }
-  }, [activeFilter, products]);
+  }, [activeFilter, expirationWarningDays, products]);
   const selectedFilterLabel = t(filterOptions.find((item) => item.value === activeFilter)?.labelKey ?? 'products.all');
 
   useEffect(() => {
@@ -110,22 +114,17 @@ export default function ProductsScreen() {
           {filterOptions.map((item) => (
             <AppButton
               key={item.value}
-              label={t(item.labelKey)}
+              label={`${t(item.labelKey)} (${item.value === 'all' ? products.length : item.value === 'low' ? lowStockCount : item.value === 'zero' ? zeroStockCount : expiringCount})`}
               variant={activeFilter === item.value ? 'primary' : 'secondary'}
               style={styles.filterButton}
               onPress={() => setActiveFilter(item.value)}
             />
           ))}
         </View>
-        <View style={styles.heroBadges}>
-          <StatusBadge tone="danger" label={t('products.zeroBadge', { count: zeroStockCount })} />
-          <StatusBadge tone="warning" label={t('products.lowBadge', { count: lowStockCount })} />
-          <StatusBadge tone="info" label={t('products.expiringBadge', { count: expiringCount })} />
-        </View>
       </AppCard>
 
       {loading ? (
-        <EmptyState title={t('products.emptyTitle')} description={t('products.emptyBody')} icon="cube-outline" />
+        <LoadingState title={t('products.title')} description={t('common.loading')} />
       ) : error ? (
         <EmptyState title={t('products.emptyTitle')} description={translateAppError(error, t)} icon="cube-outline" />
       ) : products.length === 0 ? (
