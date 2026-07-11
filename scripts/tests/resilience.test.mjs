@@ -126,3 +126,16 @@ test('product expiration dates are calendar-valid before persistence and restore
   assert.match(repository, /isValidIsoDate\(record\.expirationDate\)/);
   assert.match(backupService, /isValidIsoDate\(product\.expirationDate\)/);
 });
+
+test('new product keeps the requested compact and modal selection layout', () => {
+  const product = read('app/products/new.tsx');
+  const modalSelect = read('src/components/ui/AppModalSelect.tsx');
+  const input = read('src/components/ui/AppInput.tsx');
+
+  assert.match(product, /descriptionPlaceholder/);
+  assert.match(product, /<AppSelect compact/);
+  assert.match(product, /<AppModalSelect/);
+  assert.match(product, /inputSize="large"/);
+  assert.match(modalSelect, /accessibilityState=\{\{ checked: selected \}\}/);
+  assert.match(input, /formatMoneyInput\(text\)/);
+});

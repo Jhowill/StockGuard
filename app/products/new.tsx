@@ -7,9 +7,10 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
+import { AppModalSelect } from '@/components/ui/AppModalSelect';
 import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { QuickCreateRelation } from '@/components/product/QuickCreateRelation';
+import { QuickCreateRelation, type QuickMode } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
@@ -77,6 +78,7 @@ export default function NewProductScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -95,6 +97,7 @@ export default function NewProductScreen() {
   const [confirmExit, setConfirmExit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [quickCreateMode, setQuickCreateMode] = useState<QuickMode>(null);
 
   useEffect(() => {
     void Promise.all([listCategories(), listSuppliers()])
@@ -105,7 +108,7 @@ export default function NewProductScreen() {
       .catch(() => setError(t('productNew.loadRelationsFailed')));
   }, [t]);
 
-  const dirty = Boolean(name || sku || barcode || categoryId || supplierId || quantity !== '0' || minQuantity !== '0' || costPrice || salePrice || expirationDate || batchCode || location || imageUri || notes);
+  const dirty = Boolean(name || description || sku || barcode || categoryId || supplierId || quantity !== '0' || minQuantity !== '0' || costPrice || salePrice || expirationDate || batchCode || location || imageUri || notes);
   const parsedQuantity = parseNonNegativeNumber(quantity);
   const parsedMinQuantity = parseNonNegativeNumber(minQuantity);
   const canSave = useMemo(() => name.trim().length > 0 && !loading, [loading, name]);
@@ -149,6 +152,7 @@ export default function NewProductScreen() {
     try {
       const product = await createProductWithInitialStock({
         name: name.trim(),
+        description: description.trim() || undefined,
         sku: sku.trim() || undefined,
         barcode: barcode.trim() || undefined,
         categoryId: categoryId || undefined,
@@ -206,29 +210,42 @@ export default function NewProductScreen() {
           )}
         </AppCard>
         <AppInput label={t('productNew.name')} placeholder={t('productNew.namePlaceholder')} value={name} onChangeText={setName} />
+        <AppInput
+          label={t('productNew.description')}
+          placeholder={t('productNew.descriptionPlaceholder')}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+        />
         <AppInput label={t('productNew.sku')} placeholder={t('productNew.skuPlaceholder')} value={sku} onChangeText={setSku} />
         <AppInput label={t('productNew.barcode')} placeholder={t('productNew.barcodePlaceholder')} value={barcode} onChangeText={setBarcode} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('productNew.organization')}</AppCard.Title>
-        <AppSelect label={t('productNew.unit')} helperText={t('productNew.unitHelper')} value={unit} options={unitOptions} onChange={setUnit} />
-        <AppSelect
+        <AppSelect compact label={t('productNew.unit')} helperText={t('productNew.unitHelper')} value={unit} options={unitOptions} onChange={setUnit} />
+        <AppModalSelect
           label={t('productNew.category')}
           helperText={t('productNew.categoryHelper')}
+          placeholder={t('common.noCategory')}
           value={categoryId}
           options={[{ value: '', label: t('common.noCategory') }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setCategoryId}
+          onAdd={() => setQuickCreateMode('category')}
         />
-        <AppSelect
+        <AppModalSelect
           label={t('productNew.supplier')}
           helperText={t('productNew.supplierHelper')}
+          placeholder={t('common.noSupplier')}
           value={supplierId}
           options={[{ value: '', label: t('common.noSupplier') }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
+          onAdd={() => setQuickCreateMode('supplier')}
         />
         <QuickCreateRelation
           disabled={loading}
+          openMode={quickCreateMode}
+          onOpenModeChange={setQuickCreateMode}
           onError={setError}
           onCategoryCreated={(category) => {
             setCategories((current) => [category, ...current]);
@@ -265,30 +282,28 @@ export default function NewProductScreen() {
             style={styles.flex}
           />
         </View>
-        <View style={styles.row}>
-          <AppInput
-            label={t('productNew.cost')}
-            prefix={getCurrencyPrefix(currency)}
-            placeholder={t('productNew.moneyPlaceholder')}
-            helperText={t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}
-            keyboardType="decimal-pad"
-            mask="money"
-            value={costPrice}
-            onChangeText={setCostPrice}
-            style={styles.flex}
-          />
-          <AppInput
-            label={t('productNew.sale')}
-            prefix={getCurrencyPrefix(currency)}
-            placeholder={t('productNew.moneyPlaceholder')}
-            helperText={t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}
-            keyboardType="decimal-pad"
-            mask="money"
-            value={salePrice}
-            onChangeText={setSalePrice}
-            style={styles.flex}
-          />
-        </View>
+        <AppInput
+          inputSize="large"
+          label={t('productNew.cost')}
+          prefix={getCurrencyPrefix(currency)}
+          placeholder={t('productNew.moneyPlaceholder')}
+          helperText={t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}
+          keyboardType="decimal-pad"
+          mask="money"
+          value={costPrice}
+          onChangeText={setCostPrice}
+        />
+        <AppInput
+          inputSize="large"
+          label={t('productNew.sale')}
+          prefix={getCurrencyPrefix(currency)}
+          placeholder={t('productNew.moneyPlaceholder')}
+          helperText={t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}
+          keyboardType="decimal-pad"
+          mask="money"
+          value={salePrice}
+          onChangeText={setSalePrice}
+        />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>

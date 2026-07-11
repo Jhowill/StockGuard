@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -14,9 +14,11 @@ type Props = {
   onCategoryCreated: (category: Category) => void;
   onSupplierCreated: (supplier: Supplier) => void;
   onError: (message: string) => void;
+  openMode?: QuickMode;
+  onOpenModeChange?: (mode: QuickMode) => void;
 };
 
-type QuickMode = 'category' | 'supplier' | null;
+export type QuickMode = 'category' | 'supplier' | null;
 
 function friendlyRelationError(error: unknown, fallback: string) {
   if (!(error instanceof Error)) {
@@ -26,16 +28,24 @@ function friendlyRelationError(error: unknown, fallback: string) {
   return error.message;
 }
 
-export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCreated, onError }: Props) {
+export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCreated, onError, openMode, onOpenModeChange }: Props) {
   const { t } = useI18n();
   const [mode, setMode] = useState<QuickMode>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const isControlled = openMode !== undefined;
+
+  useEffect(() => {
+    if (isControlled) {
+      setMode(openMode ?? null);
+    }
+  }, [isControlled, openMode]);
 
   const reset = () => {
     setMode(null);
+    onOpenModeChange?.(null);
     setName('');
     setPhone('');
     setEmail('');
@@ -78,10 +88,12 @@ export function QuickCreateRelation({ disabled, onCategoryCreated, onSupplierCre
 
   return (
     <View style={styles.root}>
-      <View style={styles.actionsRow}>
-        <AppButton label={t('quickCreate.category')} variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('category')} />
-        <AppButton label={t('quickCreate.supplier')} variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('supplier')} />
-      </View>
+      {!isControlled ? (
+        <View style={styles.actionsRow}>
+          <AppButton label={t('quickCreate.category')} variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('category')} />
+          <AppButton label={t('quickCreate.supplier')} variant="secondary" disabled={disabled || busy} style={styles.action} onPress={() => setMode('supplier')} />
+        </View>
+      ) : null}
 
       {mode ? (
         <AppCard variant="hero" style={styles.quickCard}>

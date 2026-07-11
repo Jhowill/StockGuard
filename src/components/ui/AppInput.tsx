@@ -12,9 +12,10 @@ type Props = TextInputProps & {
   maskOptions?: {
     maxFractionDigits?: number;
   };
+  inputSize?: 'default' | 'large';
 };
 
-export function AppInput({ label, helperText, errorText, prefix, mask, maskOptions, onChangeText, style, multiline, ...props }: Props) {
+export function AppInput({ label, helperText, errorText, prefix, mask, maskOptions, inputSize = 'default', onChangeText, style, multiline, ...props }: Props) {
   const { palette } = useAppTheme();
   const hasError = Boolean(errorText);
   const handleChangeText: NonNullable<TextInputProps['onChangeText']> = (text) => {
@@ -51,6 +52,7 @@ export function AppInput({ label, helperText, errorText, prefix, mask, maskOptio
             backgroundColor: palette.surface,
           },
           multiline ? styles.inputShellMultiline : null,
+          inputSize === 'large' ? styles.inputShellLarge : null,
         ]}
       >
         {prefix ? (
@@ -65,6 +67,7 @@ export function AppInput({ label, helperText, errorText, prefix, mask, maskOptio
             { color: palette.text },
             prefix ? styles.inputWithPrefix : null,
             multiline ? styles.multiline : null,
+            inputSize === 'large' ? styles.inputLarge : null,
             style,
           ]}
           multiline={multiline}
@@ -107,6 +110,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     paddingVertical: 12,
+  },
+  inputShellLarge: {
+    minHeight: 62,
+    borderRadius: 18,
+  },
+  inputLarge: {
+    minHeight: 62,
+    paddingVertical: 16,
+    fontSize: 17,
+    fontWeight: '700',
   },
   inputWithPrefix: {},
   multiline: {

@@ -14,22 +14,23 @@ type Props<T extends string> = {
   options: Array<SelectOption<T>>;
   onChange: (value: T) => void;
   disabled?: boolean;
+  compact?: boolean;
 };
 
-export function AppSelect<T extends string>({ label, helperText, value, options, onChange, disabled = false }: Props<T>) {
+export function AppSelect<T extends string>({ label, helperText, value, options, onChange, disabled = false, compact = false }: Props<T>) {
   const { palette } = useAppTheme();
 
   return (
     <View style={styles.root}>
       <Text style={[styles.label, { color: palette.text }]}>{label}</Text>
-      <View style={[styles.shell, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+      <View style={[styles.shell, compact ? styles.compactShell : null, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
         <View style={styles.options}>
           {options.map((option) => (
             <AppButton
               key={option.value}
               label={option.label}
               variant={value === option.value ? 'primary' : 'ghost'}
-              style={styles.option}
+              style={[styles.option, compact ? styles.compactOption : null]}
               disabled={disabled}
               onPress={() => onChange(option.value)}
             />
@@ -63,6 +64,15 @@ const styles = StyleSheet.create({
     minHeight: 42,
     flexGrow: 1,
     flexBasis: 110,
+  },
+  compactShell: {
+    borderRadius: 16,
+    padding: 4,
+  },
+  compactOption: {
+    minHeight: 36,
+    flexBasis: '22%',
+    paddingHorizontal: 8,
   },
   helper: {
     fontSize: 12,

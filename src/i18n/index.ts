@@ -309,6 +309,9 @@ const translations = {
       addPhotoBody: 'Toque para escolher uma imagem da galeria.',
       name: 'Nome do produto',
       namePlaceholder: 'Ex: Parafuso 3/16',
+      description: 'Descricao',
+      descriptionPlaceholder: 'Ex: Parafuso zincado para uso geral',
+      selectOption: 'Selecione uma opcao',
       sku: 'SKU',
       skuPlaceholder: 'Ex: PAR316',
       barcode: 'Codigo de barras',
@@ -1190,6 +1193,18 @@ Object.assign(translationsWithFallback.en.securityFlow, {
 
 Object.assign(translationsWithFallback.es.securityFlow, {
   pinInvalid: 'Usa un PIN numerico de 4 a 8 digitos.',
+});
+
+Object.assign(translationsWithFallback.en.productNew, {
+  description: 'Description',
+  descriptionPlaceholder: 'Ex: Zinc-plated screw for general use',
+  selectOption: 'Select an option',
+});
+
+Object.assign(translationsWithFallback.es.productNew, {
+  description: 'Descripcion',
+  descriptionPlaceholder: 'Ej.: Tornillo galvanizado para uso general',
+  selectOption: 'Selecciona una opcion',
 });
 
 Object.assign(translationsWithFallback['pt-BR'].productNew, {
