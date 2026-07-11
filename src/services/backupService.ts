@@ -22,6 +22,8 @@ import type { CurrencyCode, AppLanguage, ThemeMode, UsageType } from '@/types/se
 import type { ProductUnit } from '@/types/product';
 import type { StockMovementType } from '@/types/stock';
 
+const MAX_BACKUP_FILE_BYTES = 20 * 1024 * 1024;
+
 export type BackupPayload = {
   app: 'EstoqueGuard Offline';
   schemaVersion: number;
@@ -400,6 +402,16 @@ export async function exportBackupFile(password?: string) {
 }
 
 export async function restoreBackupFile(fileUri: string, password?: string) {
+  if (!fileUri.trim()) {
+    throw new Error('INVALID_BACKUP_FILE');
+  }
+
+  const fileInfo = await FileSystem.getInfoAsync(fileUri);
+  const fileSize = (fileInfo as { size?: number }).size;
+  if (!fileInfo.exists || fileInfo.isDirectory || (typeof fileSize === 'number' && fileSize > MAX_BACKUP_FILE_BYTES)) {
+    throw new Error('INVALID_BACKUP_FILE');
+  }
+
   const raw = await FileSystem.readAsStringAsync(fileUri);
   let parsed: Partial<BackupPayload>;
 

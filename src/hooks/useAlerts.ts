@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { getExpiringProducts, getLowStockProducts, listProducts, type ProductRecord } from '@/database/repositories/productRepository';
 import { getSettings } from '@/database/repositories/settingsRepository';
@@ -15,8 +15,10 @@ export function useAlerts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(undefined);
     try {
@@ -52,17 +54,26 @@ export function useAlerts() {
         },
       ].filter((alert) => alert.count > 0) as AlertItem[];
 
-      setAlerts(nextAlerts);
+      if (requestId === requestIdRef.current) {
+        setAlerts(nextAlerts);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'ALERTS_LOAD_FAILED');
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'ALERTS_LOAD_FAILED');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       void refresh();
+      return () => {
+        requestIdRef.current += 1;
+      };
     }, [refresh]),
   );
 

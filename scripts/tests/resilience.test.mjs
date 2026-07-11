@@ -179,6 +179,30 @@ test('tab data refreshes on focus and Home supports pull to refresh', () => {
   assert.match(read('src/hooks/useAlerts.ts'), /useFocusEffect/);
 });
 
+test('large backup files are rejected before reading and migrations preserve root errors', () => {
+  const backupService = read('src/services/backupService.ts');
+  const database = read('src/database/db.ts');
+
+  assert.match(backupService, /MAX_BACKUP_FILE_BYTES = 20 \* 1024 \* 1024/);
+  assert.match(backupService, /fileSize > MAX_BACKUP_FILE_BYTES/);
+  assert.ok(backupService.indexOf('getInfoAsync(fileUri)') < backupService.indexOf('readAsStringAsync(fileUri)'));
+  assert.match(database, /try \{\s+await db\.execAsync\('ROLLBACK'\);\s+\} catch \{/);
+});
+
+test('focused data hooks ignore stale async responses', () => {
+  for (const file of [
+    'src/hooks/useProducts.ts',
+    'src/hooks/useDashboard.ts',
+    'src/hooks/useAlerts.ts',
+    'src/hooks/useReports.ts',
+    'src/hooks/useProductDetail.ts',
+  ]) {
+    const source = read(file);
+    assert.match(source, /requestIdRef/);
+    assert.match(source, /requestId === requestIdRef\.current/);
+  }
+});
+
 test('Home value privacy and per-unit pricing remain wired', () => {
   const home = read('app/(tabs)/index.tsx');
   const newProduct = read('app/products/new.tsx');

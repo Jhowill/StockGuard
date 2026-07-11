@@ -55,7 +55,11 @@ async function initializeDatabase() {
       );
       await db.execAsync('COMMIT');
     } catch (error) {
-      await db.execAsync('ROLLBACK');
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch {
+        // Preserve the original migration failure if SQLite already ended the transaction.
+      }
       throw error;
     }
   }

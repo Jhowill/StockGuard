@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { listProducts, searchProducts, type ProductRecord } from '@/database/repositories/productRepository';
 
@@ -7,23 +7,34 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const [query, setQuery] = useState('');
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(undefined);
     try {
       const list = query.trim() ? await searchProducts(query) : await listProducts();
-      setProducts(list);
+      if (requestId === requestIdRef.current) {
+        setProducts(list);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'PRODUCTS_LOAD_FAILED');
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'PRODUCTS_LOAD_FAILED');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [query]);
 
   useFocusEffect(
     useCallback(() => {
       void refresh();
+      return () => {
+        requestIdRef.current += 1;
+      };
     }, [refresh]),
   );
 
