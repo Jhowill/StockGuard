@@ -27,8 +27,18 @@ for (const key of [
   requireValue(app.extra?.[key], `${key} is required`);
 }
 
-for (const file of ['eas.json', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md']) {
+for (const file of ['README.md', '.env.example', 'eas.json', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md']) {
   if (!fs.existsSync(file)) failures.push(`${file} is required`);
+}
+
+for (const asset of [
+  app.icon,
+  app.splash?.image,
+  app.android?.adaptiveIcon?.foregroundImage,
+  app.android?.adaptiveIcon?.backgroundImage,
+  app.ios?.icon,
+]) {
+  if (asset && !fs.existsSync(asset)) failures.push(`${asset} is missing`);
 }
 
 for (const dependency of ['expo-font', 'expo-constants', 'expo-linking', 'react-native-google-mobile-ads']) {
