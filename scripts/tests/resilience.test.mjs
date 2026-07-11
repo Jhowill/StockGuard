@@ -72,3 +72,57 @@ test('backup history does not expose internal record types', () => {
   assert.match(backup, /formatBackupType\(backup\.type\)/);
   assert.doesNotMatch(backup, /backup\.fileName \?\? backup\.type/);
 });
+
+test('restore requires a safety copy before destructive database changes', () => {
+  const backupService = read('src/services/backupService.ts');
+
+  assert.match(backupService, /throw new Error\('BACKUP_SAFETY_COPY_FAILED'/);
+  assert.doesNotMatch(backupService, /continue with restore validation/);
+});
+
+test('product and initial stock are created in one transaction', () => {
+  const productScreen = read('app/products/new.tsx');
+  const movementService = read('src/services/stockMovementService.ts');
+
+  assert.match(productScreen, /createProductWithInitialStock/);
+  assert.doesNotMatch(productScreen, /await createProduct\(/);
+  assert.match(movementService, /return withTransaction\(async \(\) => \{/);
+  assert.match(movementService, /await createStockMovementRecord\(/);
+});
+
+test('financial summaries never aggregate different currencies', () => {
+  const reports = read('src/services/reportService.ts');
+  const dashboard = read('src/hooks/useDashboard.ts');
+
+  assert.match(reports, /movement\.currency === currency/);
+  assert.match(reports, /movement\.unitCostCents/);
+  assert.match(reports, /listMovements\(0\)/);
+  assert.match(reports, /revenue - cost/);
+  assert.doesNotMatch(reports, /exitsValueCents - entriesValueCents/);
+  assert.match(dashboard, /product\.currency === currency/);
+});
+
+test('stock balances are normalized to the supported decimal precision', () => {
+  const movementService = read('src/services/stockMovementService.ts');
+
+  assert.match(movementService, /Math\.round\(result \* 1000\) \/ 1000/);
+});
+
+test('PIN and biometric updates cannot leave the app locked without a credential', () => {
+  const pinScreen = read('app/security/pin.tsx');
+  const biometricScreen = read('app/security/biometric.tsx');
+  const securityService = read('src/services/securityService.ts');
+
+  assert.match(pinScreen, /setPinWithRollback/);
+  assert.match(pinScreen, /saveSettings\(\{ appLockEnabled: false, biometricUnlockEnabled: false \}\);\s+await clearPin\(\)/);
+  assert.match(securityService, /previousHash/);
+  assert.match(biometricScreen, /await disableBiometricLock\(\);\s+throw saveError/);
+});
+
+test('product expiration dates are calendar-valid before persistence and restore', () => {
+  const repository = read('src/database/repositories/productRepository.ts');
+  const backupService = read('src/services/backupService.ts');
+
+  assert.match(repository, /isValidIsoDate\(record\.expirationDate\)/);
+  assert.match(backupService, /isValidIsoDate\(product\.expirationDate\)/);
+});

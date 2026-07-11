@@ -18,6 +18,7 @@ export type DashboardSummary = {
 
 export function useDashboard() {
   const { settings } = useSettings();
+  const currency = settings?.currency ?? 'BRL';
   const [summary, setSummary] = useState<DashboardSummary>({
     totalStockValueCents: 0,
     activeProductsCount: 0,
@@ -41,7 +42,9 @@ export function useDashboard() {
       ]);
       const productMap = new Map<string, ProductRecord>(products.map((product) => [product.id, product]));
 
-      const totalStockValueCents = products.reduce(
+      const totalStockValueCents = products
+        .filter((product) => product.currency === currency)
+        .reduce(
         (sum, product) => sum + (product.quantity * (product.costPriceCents ?? 0)),
         0,
       );
@@ -62,7 +65,7 @@ export function useDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currency]);
 
   useEffect(() => {
     void refresh();

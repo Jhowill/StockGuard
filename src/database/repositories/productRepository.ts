@@ -3,6 +3,7 @@ import { getDatabase } from '../db';
 import { createAuditLog } from './auditLogRepository';
 import type { ProductUnit } from '@/types/product';
 import { nowIso } from '@/utils/date';
+import { isValidIsoDate } from '@/utils/validators';
 
 export type ProductRecord = {
   id: string;
@@ -122,7 +123,7 @@ function assertOptionalNonNegativeInteger(value: number | null | undefined, code
   }
 }
 
-function validateProduct(record: Pick<ProductRecord, 'name' | 'quantity' | 'minQuantity' | 'costPriceCents' | 'salePriceCents'>) {
+function validateProduct(record: Pick<ProductRecord, 'name' | 'quantity' | 'minQuantity' | 'costPriceCents' | 'salePriceCents' | 'expirationDate'>) {
   if (!record.name.trim()) {
     throw new Error('PRODUCT_NAME_REQUIRED');
   }
@@ -131,6 +132,9 @@ function validateProduct(record: Pick<ProductRecord, 'name' | 'quantity' | 'minQ
   assertNonNegativeNumber(record.minQuantity, 'INVALID_PRODUCT_MIN_QUANTITY');
   assertOptionalNonNegativeInteger(record.costPriceCents, 'INVALID_PRODUCT_COST_PRICE');
   assertOptionalNonNegativeInteger(record.salePriceCents, 'INVALID_PRODUCT_SALE_PRICE');
+  if (!isValidIsoDate(record.expirationDate)) {
+    throw new Error('INVALID_PRODUCT_EXPIRATION_DATE');
+  }
 }
 
 async function assertUniqueBarcode(barcode: string | null | undefined, ignoreProductId?: string) {

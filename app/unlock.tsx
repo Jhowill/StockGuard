@@ -46,6 +46,11 @@ export default function UnlockScreen() {
       return;
     }
 
+    if (!/^\d{4,8}$/.test(pin.trim())) {
+      setError(t('securityFlow.pinWrong'));
+      return;
+    }
+
     setBusy(true);
     setError(undefined);
     try {
@@ -111,7 +116,7 @@ export default function UnlockScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone="info" label={t('securityFlow.appLocked')} />
         <AppCard.Text>{t('securityFlow.unlockBody')}</AppCard.Text>
-        <AppInput label={t('securityFlow.pinTitle')} secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPin} helperText={t('securityFlow.pinHelper')} placeholder={t('securityFlow.pinPlaceholder')} />
+        <AppInput label={t('securityFlow.pinTitle')} secureTextEntry keyboardType="number-pad" maxLength={8} value={pin} onChangeText={setPin} helperText={t('securityFlow.pinHelper')} placeholder={t('securityFlow.pinPlaceholder')} />
         <AppButton label={busy ? '...' : t('securityFlow.unlockPin')} disabled={busy} onPress={() => void handleUnlock()} />
         {biometricAvailable ? <AppButton label={t('securityFlow.unlockBiometric')} variant="secondary" disabled={busy} onPress={() => void handleBiometric()} /> : null}
       </AppCard>

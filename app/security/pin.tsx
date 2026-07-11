@@ -13,7 +13,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
-import { clearPin, setPin } from '@/services/securityService';
+import { clearPin, setPinWithRollback } from '@/services/securityService';
 
 export default function PinSecurityScreen() {
   const { settings, saveSettings } = useSettings();
@@ -29,8 +29,8 @@ export default function PinSecurityScreen() {
       return;
     }
 
-    if (pin.trim().length < 4) {
-      setError(t('securityFlow.pinShort'));
+    if (!/^\d{4,8}$/.test(pin.trim())) {
+      setError(t('securityFlow.pinInvalid'));
       return;
     }
 
@@ -42,8 +42,7 @@ export default function PinSecurityScreen() {
     setBusy(true);
     setError(undefined);
     try {
-      await setPin(pin.trim());
-      await saveSettings({ appLockEnabled: true });
+      await setPinWithRollback(pin.trim(), () => saveSettings({ appLockEnabled: true }));
       router.back();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t('securityFlow.pinSaveFailed'));
@@ -60,8 +59,8 @@ export default function PinSecurityScreen() {
     setBusy(true);
     setError(undefined);
     try {
-      await clearPin();
       await saveSettings({ appLockEnabled: false, biometricUnlockEnabled: false });
+      await clearPin();
       router.back();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t('securityFlow.pinRemoveFailed'));
@@ -87,8 +86,8 @@ export default function PinSecurityScreen() {
       <AppCard style={{ gap: 12 }}>
         <StatusBadge tone={settings?.appLockEnabled ? 'success' : 'info'} label={settings?.appLockEnabled ? t('securityFlow.enabled') : t('securityFlow.disabled')} />
         <AppCard.Text>{t('securityFlow.pinBody')}</AppCard.Text>
-        <AppInput label={t('securityFlow.newPin')} secureTextEntry keyboardType="number-pad" value={pin} onChangeText={setPinValue} helperText={t('securityFlow.pinExample')} />
-        <AppInput label={t('securityFlow.confirmPin')} secureTextEntry keyboardType="number-pad" value={confirmPin} onChangeText={setConfirmPin} helperText={t('securityFlow.confirmPinHelper')} />
+        <AppInput label={t('securityFlow.newPin')} secureTextEntry keyboardType="number-pad" maxLength={8} value={pin} onChangeText={setPinValue} helperText={t('securityFlow.pinExample')} />
+        <AppInput label={t('securityFlow.confirmPin')} secureTextEntry keyboardType="number-pad" maxLength={8} value={confirmPin} onChangeText={setConfirmPin} helperText={t('securityFlow.confirmPinHelper')} />
         <AppButton label={busy ? '...' : t('securityFlow.savePin')} disabled={busy} onPress={() => void save()} />
         <AppButton label={t('securityFlow.removePin')} variant="secondary" disabled={busy} onPress={() => void remove()} />
       </AppCard>

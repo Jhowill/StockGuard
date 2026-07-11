@@ -11,6 +11,7 @@ import { createBackupRecord } from '@/database/repositories/backupRecordReposito
 import { createAuditLog } from '@/database/repositories/auditLogRepository';
 import { SCHEMA_VERSION } from '@/database/schema';
 import { nowIso } from '@/utils/date';
+import { isValidIsoDate } from '@/utils/validators';
 import type { AppSettingsRecord } from '@/database/repositories/settingsRepository';
 import type { ProductRecord } from '@/database/repositories/productRepository';
 import type { Category } from '@/types/category';
@@ -183,6 +184,7 @@ function assertBackupRecords(payload: Partial<BackupPayload>) {
       || !isFiniteNonNegativeNumber(product.minQuantity)
       || !productUnits.includes(product.unit)
       || !currencies.includes(product.currency)
+      || !isValidIsoDate(product.expirationDate)
     ) {
       throw new Error('INVALID_BACKUP_PRODUCT');
     }
@@ -426,7 +428,7 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
   try {
     await exportBackupFile();
   } catch {
-    // If the safety backup cannot be created, continue with restore validation.
+    throw new Error('BACKUP_SAFETY_COPY_FAILED');
   }
 
   const fallbackSettings = await getSettings();

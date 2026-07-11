@@ -55,7 +55,12 @@ export default function BiometricSecurityScreen() {
       }
 
       await enableBiometricLock();
-      await saveSettings({ biometricUnlockEnabled: true });
+      try {
+        await saveSettings({ biometricUnlockEnabled: true });
+      } catch (saveError) {
+        await disableBiometricLock();
+        throw saveError;
+      }
       router.back();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t('securityFlow.biometricEnableFailed'));
@@ -72,8 +77,8 @@ export default function BiometricSecurityScreen() {
     setBusy(true);
     setError(undefined);
     try {
-      await disableBiometricLock();
       await saveSettings({ biometricUnlockEnabled: false });
+      await disableBiometricLock();
       router.back();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t('securityFlow.biometricDisableFailed'));

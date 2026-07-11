@@ -15,6 +15,22 @@ export async function setPin(pin: string) {
   return hashed;
 }
 
+export async function setPinWithRollback(pin: string, persistEnabledState: () => Promise<unknown>) {
+  const previousHash = await SecureStore.getItemAsync(PIN_HASH_KEY);
+  await setPin(pin);
+
+  try {
+    await persistEnabledState();
+  } catch (error) {
+    if (previousHash) {
+      await SecureStore.setItemAsync(PIN_HASH_KEY, previousHash);
+    } else {
+      await clearPin();
+    }
+    throw error;
+  }
+}
+
 export async function verifyPin(pin: string) {
   try {
     const stored = await SecureStore.getItemAsync(PIN_HASH_KEY);

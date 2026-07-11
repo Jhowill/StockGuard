@@ -13,9 +13,8 @@ import { QuickCreateRelation } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
-import { createProduct } from '@/database/repositories/productRepository';
 import { listSuppliers } from '@/database/repositories/supplierRepository';
-import { createStockMovement } from '@/services/stockMovementService';
+import { createProductWithInitialStock } from '@/services/stockMovementService';
 import { useAppState } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
@@ -148,13 +147,13 @@ export default function NewProductScreen() {
     setLoading(true);
     setError(undefined);
     try {
-      const product = await createProduct({
+      const product = await createProductWithInitialStock({
         name: name.trim(),
         sku: sku.trim() || undefined,
         barcode: barcode.trim() || undefined,
         categoryId: categoryId || undefined,
         supplierId: supplierId || undefined,
-        quantity: 0,
+        initialQuantity: parsedQuantity,
         minQuantity: parsedMinQuantity,
         unit,
         costPriceCents: parseMoneyToCents(costPrice),
@@ -166,16 +165,6 @@ export default function NewProductScreen() {
         imageUri: imageUri || undefined,
         notes: notes.trim() || undefined,
       });
-
-      if (parsedQuantity > 0) {
-        await createStockMovement({
-          productId: product.id,
-          type: 'initial_balance',
-          reason: 'initial_setup',
-          quantity: parsedQuantity,
-          currency,
-        });
-      }
 
       router.replace(`/products/${product.id}`);
     } catch (err) {

@@ -46,7 +46,7 @@ export default function ReportsScreen() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | undefined>();
   const [lockedFeature, setLockedFeature] = useState<PremiumFeature | undefined>();
-  const { summary, loading, error, refresh } = useReports(period);
+  const { summary, loading, error, refresh } = useReports(period, currency);
   const { canUseFeature } = useFeatureGate('csv_export');
   const currentPeriodLabel = t(periodKeys[period]);
   const exportCopy = {
@@ -158,11 +158,11 @@ export default function ReportsScreen() {
         <>
           <View style={styles.metricRows}>
             <View style={styles.metricRow}>
-              <MetricCard compact label={t('reports.entries')} value={formatMoney(summary.entriesValueCents, currency, language)} />
-              <MetricCard compact label={t('reports.exits')} value={formatMoney(summary.exitsValueCents, currency, language)} />
+              <MetricCard compact label={t('reports.entries')} value={formatMoney(summary.entriesValueCents, summary.currency, language)} />
+              <MetricCard compact label={t('reports.exits')} value={formatMoney(summary.exitsValueCents, summary.currency, language)} />
             </View>
             <View style={styles.metricRow}>
-              <MetricCard compact label={t('reports.profit')} value={formatMoney(summary.estimatedProfitCents ?? 0, currency, language)} />
+              <MetricCard compact label={t('reports.profit')} value={formatMoney(summary.estimatedProfitCents ?? 0, summary.currency, language)} />
               <MetricCard compact label={t('reports.products')} value={String(summary.movedProductsCount)} />
             </View>
           </View>
