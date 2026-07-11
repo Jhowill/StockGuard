@@ -8,6 +8,7 @@ type Props = TextInputProps & {
   helperText?: string;
   errorText?: string;
   prefix?: string;
+  suffix?: string;
   mask?: 'money' | 'decimal' | 'date';
   maskOptions?: {
     maxFractionDigits?: number;
@@ -15,7 +16,7 @@ type Props = TextInputProps & {
   inputSize?: 'default' | 'large';
 };
 
-export function AppInput({ label, helperText, errorText, prefix, mask, maskOptions, inputSize = 'default', onChangeText, style, multiline, ...props }: Props) {
+export function AppInput({ label, helperText, errorText, prefix, suffix, mask, maskOptions, inputSize = 'default', onChangeText, style, multiline, ...props }: Props) {
   const { palette } = useAppTheme();
   const hasError = Boolean(errorText);
   const handleChangeText: NonNullable<TextInputProps['onChangeText']> = (text) => {
@@ -66,6 +67,7 @@ export function AppInput({ label, helperText, errorText, prefix, mask, maskOptio
             styles.input,
             { color: palette.text },
             prefix ? styles.inputWithPrefix : null,
+            suffix ? styles.inputWithSuffix : null,
             multiline ? styles.multiline : null,
             inputSize === 'large' ? styles.inputLarge : null,
             style,
@@ -74,6 +76,11 @@ export function AppInput({ label, helperText, errorText, prefix, mask, maskOptio
           onChangeText={handleChangeText}
           {...props}
         />
+        {suffix ? (
+          <View style={[styles.prefixBadge, styles.suffixBadge, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+            <Text style={[styles.prefixText, { color: palette.text }]}>{suffix}</Text>
+          </View>
+        ) : null}
       </View>
       {errorText ? (
         <Text style={[styles.helper, { color: palette.danger }]}>{errorText}</Text>
@@ -111,6 +118,12 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
   },
+  inputWithPrefix: {
+    marginLeft: 2,
+  },
+  inputWithSuffix: {
+    marginRight: 2,
+  },
   inputShellLarge: {
     minHeight: 62,
     borderRadius: 18,
@@ -121,7 +134,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
   },
-  inputWithPrefix: {},
   multiline: {
     minHeight: 96,
     textAlignVertical: 'top',
@@ -136,6 +148,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
+  },
+  suffixBadge: {
+    minWidth: 44,
   },
   prefixText: {
     fontSize: 12,

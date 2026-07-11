@@ -133,8 +133,8 @@ test('new product keeps the requested compact and modal selection layout', () =>
   const input = read('src/components/ui/AppInput.tsx');
 
   assert.match(product, /descriptionPlaceholder/);
-  assert.match(product, /<AppSelect compact/);
   assert.match(product, /<AppModalSelect/);
+  assert.match(product, /QuickCreateRelation/);
   assert.match(product, /inputSize="large"/);
   assert.match(modalSelect, /accessibilityState=\{\{ checked: selected \}\}/);
   assert.match(input, /formatMoneyInput\(text\)/);

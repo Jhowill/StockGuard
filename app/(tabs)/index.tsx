@@ -85,15 +85,26 @@ export default function HomeScreen() {
         title={greeting}
         subtitle={t('home.subtitle')}
         rightAction={
-          <Pressable
-            onPress={() => void toggleTheme()}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={mode === 'dark' ? t('home.toggleLight') : t('home.toggleDark')}
-            style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
-          >
-            <Ionicons name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={22} color={palette.text} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => router.push('/(tabs)/settings')}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.title')}
+              style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
+            >
+              <Ionicons name="create-outline" size={20} color={palette.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => void toggleTheme()}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={mode === 'dark' ? t('home.toggleLight') : t('home.toggleDark')}
+              style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
+            >
+              <Ionicons name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={22} color={palette.text} />
+            </Pressable>
+          </View>
         }
       />
 
@@ -189,6 +200,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   heroCard: {
     gap: 18,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   headerAction: {
     width: 36,

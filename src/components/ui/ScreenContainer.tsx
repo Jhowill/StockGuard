@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -13,12 +13,15 @@ export function ScreenContainer({ children, scroll = false, padded = false }: Pr
   const { palette } = useAppTheme();
 
   const content = scroll ? (
-    <ScrollView
-      contentContainerStyle={[styles.content, padded && styles.padded]}
-      showsVerticalScrollIndicator={false}
-    >
-      {children}
-    </ScrollView>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        contentContainerStyle={[styles.content, padded && styles.padded]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   ) : (
     <View style={[styles.content, padded && styles.padded]}>{children}</View>
   );
@@ -34,11 +37,15 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+  flex: {
+    flex: 1,
+  },
   content: {
     flexGrow: 1,
     gap: 16,
   },
   padded: {
     padding: 16,
+    paddingBottom: 28,
   },
 });

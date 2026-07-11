@@ -7,7 +7,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
-import { AppSelect } from '@/components/ui/AppSelect';
+import { AppModalSelect } from '@/components/ui/AppModalSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QuickCreateRelation } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -46,7 +46,7 @@ function getCurrencyPrefixDisplay(currency: string) {
   }
 
   if (currency === 'EUR') {
-    return '€';
+    return '\u20AC';
   }
 
   return 'R$';
@@ -93,7 +93,9 @@ export default function ProductEditScreen() {
   const [error, setError] = useState<string | undefined>();
   const [actionError, setActionError] = useState<string | undefined>();
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [quickCreateMode, setQuickCreateMode] = useState<'category' | 'supplier' | null>(null);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -130,6 +132,7 @@ export default function ProductEditScreen() {
         setCategories(nextCategories);
         setSuppliers(nextSuppliers);
         setName(product.name);
+        setDescription(product.description ?? '');
         setSku(product.sku ?? '');
         setBarcode(product.barcode ?? '');
         setCategoryId(product.categoryId ?? '');
@@ -183,6 +186,7 @@ export default function ProductEditScreen() {
       const next = await updateProduct({
         id: productId,
         name: name.trim(),
+        description: description.trim() || undefined,
         sku: sku.trim() || undefined,
         barcode: barcode.trim() || undefined,
         categoryId: categoryId || undefined,
@@ -274,29 +278,49 @@ export default function ProductEditScreen() {
           )}
         </AppCard>
         <AppInput label={t('productNew.name')} placeholder={t('productNew.namePlaceholder')} value={name} onChangeText={setName} />
+        <AppInput
+          label={t('productNew.description')}
+          placeholder={t('productNew.descriptionPlaceholder')}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+        />
         <AppInput label={t('productNew.sku')} placeholder={t('productNew.skuPlaceholder')} value={sku} onChangeText={setSku} />
         <AppInput label={t('productNew.barcode')} placeholder={t('productNew.barcodePlaceholder')} value={barcode} onChangeText={setBarcode} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('productNew.organization')}</AppCard.Title>
-        <AppSelect label={t('productNew.unit')} helperText={t('productNew.unitHelper')} value={unit} options={unitOptions} onChange={setUnit} />
-        <AppSelect
+        <AppModalSelect
+          label={t('productNew.unit')}
+          helperText={t('productNew.unitHelper')}
+          placeholder={t('productNew.unit')}
+          value={unit}
+          options={unitOptions}
+          onChange={setUnit}
+        />
+        <AppModalSelect
           label={t('productNew.category')}
           helperText={t('productNew.categoryHelper')}
+          placeholder={t('common.noCategory')}
           value={categoryId}
           options={[{ value: '', label: t('common.noCategory') }, ...categories.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setCategoryId}
+          onAdd={() => setQuickCreateMode('category')}
         />
-        <AppSelect
+        <AppModalSelect
           label={t('productNew.supplier')}
           helperText={t('productNew.supplierHelper')}
+          placeholder={t('common.noSupplier')}
           value={supplierId}
           options={[{ value: '', label: t('common.noSupplier') }, ...suppliers.map((item) => ({ value: item.id, label: item.name }))]}
           onChange={setSupplierId}
+          onAdd={() => setQuickCreateMode('supplier')}
         />
         <QuickCreateRelation
           disabled={saving}
+          openMode={quickCreateMode}
+          onOpenModeChange={setQuickCreateMode}
           onError={setActionError}
           onCategoryCreated={(category) => {
             setCategories((current) => [category, ...current]);
@@ -311,8 +335,18 @@ export default function ProductEditScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('productNew.stockValues')}</AppCard.Title>
-        <AppInput label={t('productNew.minQuantity')} helperText={t('productNew.minHelper')} keyboardType="decimal-pad" mask="decimal" maskOptions={{ maxFractionDigits: 3 }} value={minQuantity} onChangeText={setMinQuantity} />
         <AppInput
+          inputSize="large"
+          label={t('productNew.minQuantity')}
+          helperText={t('productNew.minHelper')}
+          keyboardType="decimal-pad"
+          mask="decimal"
+          maskOptions={{ maxFractionDigits: 3 }}
+          value={minQuantity}
+          onChangeText={setMinQuantity}
+        />
+        <AppInput
+          inputSize="large"
           label={t('productNew.cost')}
           prefix={getCurrencyPrefixDisplay(currency)}
           placeholder={t('productNew.moneyPlaceholder')}
@@ -323,6 +357,7 @@ export default function ProductEditScreen() {
           onChangeText={setCostPrice}
         />
         <AppInput
+          inputSize="large"
           label={t('productNew.sale')}
           prefix={getCurrencyPrefixDisplay(currency)}
           placeholder={t('productNew.moneyPlaceholder')}

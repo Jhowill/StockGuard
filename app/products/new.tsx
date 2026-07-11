@@ -8,7 +8,6 @@ import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { AppModalSelect } from '@/components/ui/AppModalSelect';
-import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QuickCreateRelation, type QuickMode } from '@/components/product/QuickCreateRelation';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -223,7 +222,14 @@ export default function NewProductScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('productNew.organization')}</AppCard.Title>
-        <AppSelect compact label={t('productNew.unit')} helperText={t('productNew.unitHelper')} value={unit} options={unitOptions} onChange={setUnit} />
+        <AppModalSelect
+          label={t('productNew.unit')}
+          helperText={t('productNew.unitHelper')}
+          placeholder={t('productNew.unit')}
+          value={unit}
+          options={unitOptions}
+          onChange={setUnit}
+        />
         <AppModalSelect
           label={t('productNew.category')}
           helperText={t('productNew.categoryHelper')}
@@ -260,28 +266,26 @@ export default function NewProductScreen() {
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('productNew.stockValues')}</AppCard.Title>
-        <View style={styles.row}>
-          <AppInput
-            label={t('productNew.quantity')}
-            helperText={t('productNew.decimalHelper')}
-            keyboardType="decimal-pad"
-            mask="decimal"
-            maskOptions={{ maxFractionDigits: 3 }}
-            value={quantity}
-            onChangeText={setQuantity}
-            style={styles.flex}
-          />
-          <AppInput
-            label={t('productNew.minQuantity')}
-            helperText={t('productNew.minHelper')}
-            keyboardType="decimal-pad"
-            mask="decimal"
-            maskOptions={{ maxFractionDigits: 3 }}
-            value={minQuantity}
-            onChangeText={setMinQuantity}
-            style={styles.flex}
-          />
-        </View>
+        <AppInput
+          inputSize="large"
+          label={t('productNew.quantity')}
+          helperText={t('productNew.decimalHelper')}
+          keyboardType="decimal-pad"
+          mask="decimal"
+          maskOptions={{ maxFractionDigits: 3 }}
+          value={quantity}
+          onChangeText={setQuantity}
+        />
+        <AppInput
+          inputSize="large"
+          label={t('productNew.minQuantity')}
+          helperText={t('productNew.minHelper')}
+          keyboardType="decimal-pad"
+          mask="decimal"
+          maskOptions={{ maxFractionDigits: 3 }}
+          value={minQuantity}
+          onChangeText={setMinQuantity}
+        />
         <AppInput
           inputSize="large"
           label={t('productNew.cost')}
@@ -363,13 +367,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     textAlign: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  flex: {
-    flex: 1,
   },
   headerAction: {
     width: 40,

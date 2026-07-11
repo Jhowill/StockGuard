@@ -48,7 +48,7 @@ function getMovementReasonLabel(reason: string, t: (key: string) => string) {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, language } = useI18n();
-  const { currency } = useAppState();
+  const { currency, hideFinancialValues } = useAppState();
   const { palette } = useAppTheme();
   const { categories } = useCategories();
   const { suppliers } = useSuppliers();
@@ -102,23 +102,23 @@ export default function ProductDetailScreen() {
           </View>
         )}
 
-        <View style={styles.heroBody}>
-          <View style={styles.heroTop}>
-            <View style={styles.heroCopy}>
-              <Text style={[styles.heroLabel, { color: palette.textMuted }]}>{t('productDetail.product')}</Text>
-              <Text style={[styles.heroTitle, { color: palette.text }]}>{product.name}</Text>
-              <Text style={[styles.heroSubtitle, { color: palette.textMuted }]}>
-                {categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
-              </Text>
+          <View style={styles.heroBody}>
+            <View style={styles.heroTop}>
+              <View style={styles.heroCopy}>
+                <Text style={[styles.heroLabel, { color: palette.textMuted }]}>{t('productDetail.product')}</Text>
+                <Text style={[styles.heroTitle, { color: palette.text }]}>{product.name}</Text>
+                <Text style={[styles.heroSubtitle, { color: palette.textMuted }]}>
+                  {categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
+                </Text>
+              </View>
+              <StatusBadge tone={stockTone} label={getStatusLabel(product.status, t)} />
             </View>
-            <StatusBadge tone={stockTone} label={getStatusLabel(product.status, t)} />
-          </View>
 
-          <View style={styles.heroMeta}>
-            <StatusBadge tone="info" label={product.unit} />
-            <StatusBadge tone="success" label={product.sku ?? t('common.noSku')} />
-          </View>
-          <AppCard.Text>{product.notes ?? t('productDetail.noNotes')}</AppCard.Text>
+            <View style={styles.heroMeta}>
+              <StatusBadge tone="info" label={product.unit} />
+              <StatusBadge tone="success" label={product.sku ?? t('common.noSku')} />
+            </View>
+          <AppCard.Text>{product.description ?? product.notes ?? t('productDetail.noNotes')}</AppCard.Text>
         </View>
       </AppCard>
 
@@ -128,7 +128,23 @@ export default function ProductDetailScreen() {
           <MetricCard compact label={t('productDetail.minQuantity')} value={String(product.minQuantity)} />
         </View>
         <View style={styles.metricsRow}>
-          <MetricCard compact label={t('productDetail.value')} value={formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency, language)} />
+          <MetricCard
+            compact
+            label={t('productNew.cost')}
+            value={hideFinancialValues ? '••••••' : formatMoney(product.costPriceCents ?? 0, currency, language)}
+          />
+          <MetricCard
+            compact
+            label={t('productNew.sale')}
+            value={hideFinancialValues ? '••••••' : formatMoney(product.salePriceCents ?? 0, currency, language)}
+          />
+        </View>
+        <View style={styles.metricsRow}>
+          <MetricCard
+            compact
+            label={t('productDetail.value')}
+            value={hideFinancialValues ? '••••••' : formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency, language)}
+          />
           <MetricCard compact label={t('productDetail.location')} value={product.location ?? t('common.noLocation')} />
         </View>
       </View>
@@ -139,6 +155,7 @@ export default function ProductDetailScreen() {
           title={t('productDetail.details')}
           subtitle={t('productDetail.categoryLine', { value: categoryNames.get(product.categoryId ?? '') ?? t('common.noCategory') })}
         />
+        {product.description ? <AppCard.Text>{product.description}</AppCard.Text> : null}
         <AppCard.Text>{t('productDetail.supplierLine', { value: supplierNames.get(product.supplierId ?? '') ?? t('common.noSupplier') })}</AppCard.Text>
         <AppCard.Text>{t('productDetail.skuLine', { value: product.sku ?? t('common.noSku') })}</AppCard.Text>
         <AppCard.Text>{t('productDetail.locationLine', { value: product.location ?? t('common.noLocation') })}</AppCard.Text>

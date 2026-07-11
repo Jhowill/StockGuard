@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppInput } from './AppInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import type { SelectOption } from './AppSelect';
@@ -14,6 +15,8 @@ type Props<T extends string> = {
   onChange: (value: T) => void;
   onAdd?: () => void;
   disabled?: boolean;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 };
 
 export function AppModalSelect<T extends string>({
@@ -25,19 +28,36 @@ export function AppModalSelect<T extends string>({
   onChange,
   onAdd,
   disabled = false,
+  searchable = false,
+  searchPlaceholder,
 }: Props<T>) {
   const { palette } = useAppTheme();
   const { t } = useI18n();
   const [visible, setVisible] = useState(false);
+  const [query, setQuery] = useState('');
   const selectedLabel = options.find((option) => option.value === value)?.label ?? placeholder;
+
+  const filteredOptions = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!searchable || !normalizedQuery) {
+      return options;
+    }
+
+    return options.filter((option) => {
+      const haystack = `${option.label} ${option.description ?? ''}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [options, query, searchable]);
 
   const select = (nextValue: T) => {
     onChange(nextValue);
     setVisible(false);
+    setQuery('');
   };
 
   const handleAdd = () => {
     setVisible(false);
+    setQuery('');
     onAdd?.();
   };
 
@@ -82,7 +102,8 @@ export function AppModalSelect<T extends string>({
       {helperText ? <Text style={[styles.helper, { color: palette.textMuted }]}>{helperText}</Text> : null}
 
       <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
-        <Pressable style={[styles.backdrop, { backgroundColor: palette.overlay }]} onPress={() => setVisible(false)}>
+        <View style={[styles.backdrop, { backgroundColor: palette.overlay }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setVisible(false)} />
           <View style={[styles.modalCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleBlock}>
@@ -93,10 +114,24 @@ export function AppModalSelect<T extends string>({
                 <Ionicons name="close" size={22} color={palette.textMuted} />
               </Pressable>
             </View>
+            {searchable ? (
+              <AppInput
+                label={t('common.search')}
+                placeholder={searchPlaceholder ?? t('products.searchPlaceholder')}
+                value={query}
+                onChangeText={setQuery}
+              />
+            ) : null}
             <FlatList
-              data={options}
+              data={filteredOptions}
               keyExtractor={(option) => option.value || '__empty__'}
               contentContainerStyle={styles.list}
+              ListEmptyComponent={(
+                <View style={[styles.emptyState, { borderColor: palette.border, backgroundColor: palette.surfaceMuted }]}>
+                  <Text style={[styles.emptyStateTitle, { color: palette.text }]}>{t('products.noFilterTitle')}</Text>
+                  <Text style={[styles.emptyStateBody, { color: palette.textMuted }]}>{t('products.noFilterBody')}</Text>
+                </View>
+              )}
               renderItem={({ item }) => {
                 const selected = item.value === value;
                 return (
@@ -110,18 +145,23 @@ export function AppModalSelect<T extends string>({
                       pressed ? styles.pressed : null,
                     ]}
                   >
-                    <Text style={[styles.optionLabel, { color: palette.text }]}>{item.label}</Text>
+                    <View style={styles.optionTextBlock}>
+                      <Text style={[styles.optionLabel, { color: palette.text }]}>{item.label}</Text>
+                      {item.description ? <Text style={[styles.optionDescription, { color: palette.textMuted }]}>{item.description}</Text> : null}
+                    </View>
                     <Ionicons name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={selected ? palette.primary : palette.textMuted} />
                   </Pressable>
                 );
               }}
             />
-            {onAdd ? <Pressable onPress={handleAdd} style={[styles.modalAdd, { borderColor: palette.border }]}>
-              <Ionicons name="add-circle-outline" size={20} color={palette.primary} />
-              <Text style={[styles.modalAddLabel, { color: palette.primary }]}>{t('common.add')}</Text>
-            </Pressable> : null}
+            {onAdd ? (
+              <Pressable onPress={handleAdd} style={({ pressed }) => [styles.modalAdd, { borderColor: palette.border }, pressed ? styles.pressed : null]}>
+                <Ionicons name="add-circle-outline" size={20} color={palette.primary} />
+                <Text style={[styles.modalAddLabel, { color: palette.primary }]}>{t('common.add')}</Text>
+              </Pressable>
+            ) : null}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
@@ -143,9 +183,14 @@ const styles = StyleSheet.create({
   modalSubtitle: { fontSize: 12 },
   list: { gap: 8 },
   option: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderRadius: 16, borderWidth: 1, paddingHorizontal: 14 },
+  optionTextBlock: { flex: 1, gap: 2 },
   optionLabel: { flex: 1, fontSize: 15, fontWeight: '700' },
+  optionDescription: { fontSize: 12, lineHeight: 17 },
   modalAdd: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: 1 },
   modalAddLabel: { fontSize: 14, fontWeight: '800' },
+  emptyState: { gap: 4, borderRadius: 16, borderWidth: 1, padding: 16 },
+  emptyStateTitle: { fontSize: 14, fontWeight: '800' },
+  emptyStateBody: { fontSize: 12, lineHeight: 17 },
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.55 },
 });

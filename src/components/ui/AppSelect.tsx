@@ -5,6 +5,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 export type SelectOption<T extends string> = {
   value: T;
   label: string;
+  description?: string;
 };
 
 type Props<T extends string> = {

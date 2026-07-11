@@ -1,18 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { MovementTypePicker } from '@/components/movement/MovementTypePicker';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
+import { AppModalSelect } from '@/components/ui/AppModalSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppState } from '@/state/app-state';
 import { useCategories } from '@/hooks/useCategories';
-import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import { useProducts } from '@/hooks/useProducts';
 import { createStockMovement } from '@/services/stockMovementService';
@@ -50,11 +50,27 @@ const movementLabelKeys: Record<StockMovementType, string> = {
   initial_balance: 'movement.initialBalance',
 };
 
+function getUnitSuffix(unit: string) {
+  switch (unit) {
+    case 'unit':
+      return 'un';
+    case 'box':
+      return 'cx';
+    case 'pack':
+      return 'pct';
+    case 'pair':
+      return 'par';
+    case 'service_item':
+      return 'srv';
+    default:
+      return unit;
+  }
+}
+
 export default function MovementScreen() {
   const { productId } = useLocalSearchParams<{ productId?: string }>();
   const initialProductId = useMemo(() => (Array.isArray(productId) ? productId[0] : productId) ?? '', [productId]);
   const { t } = useI18n();
-  const { palette } = useAppTheme();
   const { currency } = useAppState();
   const { products, loading } = useProducts();
   const { categories } = useCategories();
@@ -74,6 +90,14 @@ export default function MovementScreen() {
   const quantityToMove = parsePositiveNumber(quantity);
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
   const categoryNames = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
+  const productOptions = useMemo(
+    () => products.map((product) => ({
+      value: product.id,
+      label: product.name,
+      description: `${categoryNames.get(product.categoryId ?? '') ?? t('common.noCategory')} - ${product.quantity} ${getUnitSuffix(product.unit)}`,
+    })),
+    [categoryNames, products, t],
+  );
   const direction = getMovementDirection(type);
   const movementImpact = direction * quantityToMove;
   const resultingQuantity = selectedProduct ? selectedProduct.quantity + movementImpact : null;
@@ -118,27 +142,6 @@ export default function MovementScreen() {
         onBackPress={() => router.back()}
       />
 
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('movement.productStep')}</Text>
-        <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>{t('movement.productStepBody')}</Text>
-      </View>
-
-      {selectedProduct ? (
-        <AppCard variant="hero" style={styles.selectedProductCard}>
-          <AppCard.Row
-            icon="cube-outline"
-            title={selectedProduct.name}
-            subtitle={categoryNames.get(selectedProduct.categoryId ?? '') ?? selectedProduct.unit}
-            trailing={
-              <StatusBadge
-                tone={selectedProduct.quantity === 0 ? 'danger' : selectedProduct.quantity <= selectedProduct.minQuantity ? 'warning' : 'success'}
-                label={`${selectedProduct.quantity} ${selectedProduct.unit}`}
-              />
-            }
-          />
-        </AppCard>
-      ) : null}
-
       {loading ? (
         <EmptyState title={t('products.title')} description={t('common.loading')} icon="cube-outline" />
       ) : products.length === 0 ? (
@@ -150,53 +153,49 @@ export default function MovementScreen() {
           onActionPress={() => router.push('/products/new')}
         />
       ) : (
-        <AppCard style={{ gap: 12 }}>
-          <AppCard.Title>{selectedProduct ? t('movement.changeProduct') : t('movement.chooseProduct')}</AppCard.Title>
-          <View style={styles.productList}>
-            {products.map((product) => {
-              const selected = selectedProductId === product.id;
+        <>
+          <AppCard style={{ gap: 12 }}>
+            <AppCard.Title>{t('movement.productStep')}</AppCard.Title>
+            <AppCard.Text>{t('movement.productStepBody')}</AppCard.Text>
+            <AppModalSelect
+              label={selectedProduct ? t('movement.changeProduct') : t('movement.chooseProduct')}
+              placeholder={t('movement.chooseProduct')}
+              helperText={selectedProduct ? `${selectedProduct.name} - ${categoryNames.get(selectedProduct.categoryId ?? '') ?? t('common.noCategory')}` : t('movement.productStepBody')}
+              value={selectedProductId}
+              options={productOptions}
+              onChange={setSelectedProductId}
+              searchable
+              searchPlaceholder={t('products.searchPlaceholder')}
+            />
+            {selectedProduct ? (
+              <AppCard variant="hero" style={styles.selectedProductCard}>
+                <AppCard.Row
+                  icon="cube-outline"
+                  title={selectedProduct.name}
+                  subtitle={categoryNames.get(selectedProduct.categoryId ?? '') ?? selectedProduct.unit}
+                  trailing={
+                    <StatusBadge
+                      tone={selectedProduct.quantity === 0 ? 'danger' : selectedProduct.quantity <= selectedProduct.minQuantity ? 'warning' : 'success'}
+                      label={`${selectedProduct.quantity} ${getUnitSuffix(selectedProduct.unit)}`}
+                    />
+                  }
+                />
+                <View style={styles.summaryMeta}>
+                  <StatusBadge tone="info" label={`${t('productDetail.minQuantity')}: ${selectedProduct.minQuantity}`} />
+                  <StatusBadge tone="success" label={selectedProduct.location ?? t('common.noLocation')} />
+                </View>
+              </AppCard>
+            ) : null}
+          </AppCard>
 
-              return (
-                <Pressable
-                  key={product.id}
-                  onPress={() => setSelectedProductId(product.id)}
-                  style={({ pressed }) => [
-                    styles.productRow,
-                    {
-                      backgroundColor: selected ? palette.surfaceMuted : palette.surface,
-                      borderColor: selected ? palette.primary : palette.border,
-                    },
-                    pressed ? styles.pressed : null,
-                  ]}
-                >
-                  <AppCard.Row
-                    icon={selected ? 'checkmark-circle-outline' : 'cube-outline'}
-                    title={product.name}
-                    subtitle={categoryNames.get(product.categoryId ?? '') ?? product.unit}
-                    trailing={
-                      <StatusBadge
-                        tone={product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success'}
-                        label={String(product.quantity)}
-                      />
-                    }
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        </AppCard>
+          <MovementTypePicker value={type} onChange={setType} />
+        </>
       )}
-
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('movement.whatHappened')}</Text>
-        <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>{t('movement.whatHappenedBody')}</Text>
-      </View>
-
-      <MovementTypePicker value={type} onChange={setType} />
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('movement.quantityDetails')}</AppCard.Title>
         <AppInput
+          inputSize="large"
           helperText={t('productNew.decimalHelper')}
           label={t('movement.quantity')}
           placeholder="0"
@@ -205,9 +204,10 @@ export default function MovementScreen() {
           maskOptions={{ maxFractionDigits: 3 }}
           value={quantity}
           onChangeText={setQuantity}
+          suffix={selectedProduct ? getUnitSuffix(selectedProduct.unit) : undefined}
         />
         <AppInput label={t('movement.reason')} placeholder={t('movement.reasonPlaceholder')} value={reason} onChangeText={setReason} />
-        <AppInput label={t('movement.notes')} placeholder={t('movement.notesPlaceholder')} multiline value={notes} onChangeText={setNotes} />
+        <AppInput inputSize="large" label={t('movement.notes')} placeholder={t('movement.notesPlaceholder')} multiline value={notes} onChangeText={setNotes} />
       </AppCard>
 
       {selectedProduct ? (
@@ -232,7 +232,7 @@ export default function MovementScreen() {
           </View>
           <AppCard.Text>{t('movement.selectedType', { type: t(movementLabelKeys[type]) })}</AppCard.Text>
           <AppCard.Text>
-            {t('movement.impactText', { product: selectedProduct.name, action: t(getMovementActionKey(type)), quantity: quantityToMove, unit: selectedProduct.unit })}
+            {t('movement.impactText', { product: selectedProduct.name, action: t(getMovementActionKey(type)), quantity: quantityToMove, unit: getUnitSuffix(selectedProduct.unit) })}
           </AppCard.Text>
         </AppCard>
       ) : null}
@@ -262,27 +262,13 @@ export default function MovementScreen() {
 }
 
 const styles = StyleSheet.create({
-  sectionHeader: {
-    gap: 4,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
   selectedProductCard: {
     gap: 12,
   },
-  productList: {
-    gap: 10,
-  },
-  productRow: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 12,
+  summaryMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   summaryCard: {
     gap: 14,
@@ -296,8 +282,5 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 88,
     gap: 6,
-  },
-  pressed: {
-    opacity: 0.88,
   },
 });
