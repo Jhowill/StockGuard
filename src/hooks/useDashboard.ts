@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { getExpiringProducts, getLowStockProducts, listProducts, type ProductRecord } from '@/database/repositories/productRepository';
 import { getRecentMovements, type StockMovementRecord } from '@/database/repositories/stockMovementRepository';
 import { useSettings } from './useSettings';
@@ -36,8 +37,8 @@ export function useDashboard() {
     try {
       const [products, lowStockProducts, expiringSoonProducts, movements] = await Promise.all([
         listProducts(),
-        getLowStockProducts(),
-        getExpiringProducts(),
+        settings?.lowStockWarningEnabled === false ? Promise.resolve([]) : getLowStockProducts(),
+        settings?.expirationWarningEnabled === false ? Promise.resolve([]) : getExpiringProducts(settings?.expirationWarningDays ?? 7),
         getRecentMovements(5),
       ]);
       const productMap = new Map<string, ProductRecord>(products.map((product) => [product.id, product]));
@@ -65,11 +66,13 @@ export function useDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [currency]);
+  }, [currency, settings?.expirationWarningDays, settings?.expirationWarningEnabled, settings?.lowStockWarningEnabled]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh, settings]);
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   return {
     summary,

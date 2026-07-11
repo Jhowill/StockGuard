@@ -79,7 +79,7 @@ export default function HomeScreen() {
       : t('home.noRecentActivity');
 
   return (
-    <ScreenContainer scroll padded>
+    <ScreenContainer scroll padded onRefresh={() => void refresh()} refreshing={loading}>
       <View style={[styles.glow, styles.glowTop, { backgroundColor: palette.primary }]} />
       <View style={[styles.glow, styles.glowBottom, { backgroundColor: palette.premium }]} />
 

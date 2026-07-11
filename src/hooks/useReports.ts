@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { getReportSummary, type ReportPeriod, type ReportSummary } from '@/services/reportService';
 import type { CurrencyCode } from '@/types/settings';
 
@@ -20,9 +21,11 @@ export function useReports(period: ReportPeriod = 'month', currency: CurrencyCod
     }
   }, [currency, period]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   return {
     summary,

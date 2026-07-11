@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -7,9 +7,11 @@ type Props = {
   children: ReactNode;
   scroll?: boolean;
   padded?: boolean;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 };
 
-export function ScreenContainer({ children, scroll = false, padded = false }: Props) {
+export function ScreenContainer({ children, scroll = false, padded = false, onRefresh, refreshing = false }: Props) {
   const { palette } = useAppTheme();
 
   const content = scroll ? (
@@ -18,6 +20,7 @@ export function ScreenContainer({ children, scroll = false, padded = false }: Pr
         contentContainerStyle={[styles.content, padded && styles.padded]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.primary} colors={[palette.primary]} /> : undefined}
       >
         {children}
       </ScrollView>

@@ -51,7 +51,7 @@ export default function ProductsScreen() {
   const { filter } = useLocalSearchParams<{ filter?: string }>();
   const { t } = useI18n();
   const { palette } = useAppTheme();
-  const { products, query, setQuery, loading, error } = useProducts();
+  const { products, query, setQuery, loading, error, refresh } = useProducts();
   const { settings } = useSettings();
   const { categories } = useCategories();
   const [activeFilter, setActiveFilter] = useState<ProductFilter>(() => normalizeFilter(filter));

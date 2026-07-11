@@ -167,3 +167,14 @@ test('new product save has one guarded persistence flow', () => {
   assert.match(product, /router\.replace\(\{ pathname: '\/products\/\[id\]', params: \{ id: product\.id \} \}\)/);
   assert.match(product, /setError\(getProductCreateErrorMessage\(err, t\)\)/);
 });
+
+test('tab data refreshes on focus and Home supports pull to refresh', () => {
+  const container = read('src/components/ui/ScreenContainer.tsx');
+  const home = read('app/(tabs)/index.tsx');
+
+  assert.match(container, /RefreshControl/);
+  assert.match(container, /refreshControl=\{onRefresh/);
+  assert.match(home, /onRefresh=\{\(\) => void refresh\(\)\}/);
+  assert.match(read('src/hooks/useProducts.ts'), /useFocusEffect/);
+  assert.match(read('src/hooks/useAlerts.ts'), /useFocusEffect/);
+});

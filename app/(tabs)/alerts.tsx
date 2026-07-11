@@ -27,7 +27,7 @@ function getAlertLabel(kind: string, t: (key: string) => string) {
 
 export default function AlertsScreen() {
   const { t } = useI18n();
-  const { alerts, loading, error } = useAlerts();
+  const { alerts, loading, error, refresh } = useAlerts();
   const { palette } = useAppTheme();
   const totalAlerts = alerts.reduce((sum, alert) => sum + alert.count, 0);
 

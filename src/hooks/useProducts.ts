@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { listProducts, searchProducts, type ProductRecord } from '@/database/repositories/productRepository';
 
 export function useProducts() {
@@ -20,9 +21,11 @@ export function useProducts() {
     }
   }, [query]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   const filtered = useMemo(() => products, [products]);
 
