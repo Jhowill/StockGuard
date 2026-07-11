@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -142,7 +142,7 @@ export default function NewProductScreen() {
 
   const handleSave = async () => {
     if (loading || !name.trim()) {
-        setError(t('productNew.nameRequired'));
+      setError(t('productNew.nameRequired'));
       return;
     }
 
@@ -169,7 +169,7 @@ export default function NewProductScreen() {
         notes: notes.trim() || undefined,
       });
 
-      router.replace(`/products/${product.id}`);
+      router.replace({ pathname: '/products/[id]', params: { id: product.id } });
     } catch (err) {
       setError(getProductCreateErrorMessage(err, t));
     } finally {
@@ -186,11 +186,20 @@ export default function NewProductScreen() {
         onBackPress={handleBack}
         rightAction={
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.save')}
+            accessibilityState={{ disabled: !canSave, busy: loading }}
+            disabled={!canSave}
             onPress={() => void handleSave()}
             hitSlop={10}
-            style={[styles.headerAction, { backgroundColor: palette.primary }]}
+            style={({ pressed }) => [
+              styles.headerAction,
+              { backgroundColor: palette.primary },
+              !canSave ? styles.headerActionDisabled : null,
+              pressed ? styles.headerActionPressed : null,
+            ]}
           >
-            <Ionicons name="checkmark" size={20} color={palette.primaryText} />
+            {loading ? <ActivityIndicator size="small" color={palette.primaryText} /> : <Ionicons name="checkmark" size={20} color={palette.primaryText} />}
           </Pressable>
         }
       />
@@ -373,5 +382,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActionDisabled: {
+    opacity: 0.45,
+  },
+  headerActionPressed: {
+    opacity: 0.8,
   },
 });

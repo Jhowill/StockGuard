@@ -158,3 +158,12 @@ test('navigation and inventory refinements remain consistent', () => {
   assert.match(alertsHook, /getExpiringProducts\(settings\.expirationWarningDays\)/);
   assert.match(home, /movement\.adjustmentNegative/);
 });
+
+test('new product save has one guarded persistence flow', () => {
+  const product = read('app/products/new.tsx');
+
+  assert.match(product, /accessibilityState=\{\{ disabled: !canSave, busy: loading \}\}/);
+  assert.match(product, /disabled=\{!canSave\}/);
+  assert.match(product, /router\.replace\(\{ pathname: '\/products\/\[id\]', params: \{ id: product\.id \} \}\)/);
+  assert.match(product, /setError\(getProductCreateErrorMessage\(err, t\)\)/);
+});
