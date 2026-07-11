@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
@@ -54,27 +54,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [biometricUnlockEnabled, setBiometricUnlockEnabled] = useState(false);
   const [hideFinancialValues, setHideFinancialValues] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(true);
+  const initializationRequestRef = useRef(0);
 
   const initialize = async () => {
-      setIsReady(false);
-      setInitializationError(undefined);
-      try {
-        const settings = await getSettings();
-        setUserName(settings.userName ?? null);
-        setTheme(settings.theme);
-        setLanguage(settings.language);
-        setCurrency(settings.currency);
-        setUsageType(settings.usageType);
-        setAppLockEnabled(settings.appLockEnabled);
-        setBiometricUnlockEnabled(settings.biometricUnlockEnabled);
-        setHideFinancialValues(settings.hideFinancialValues);
-        setHasCompletedOnboarding(settings.onboardingCompleted);
-        setIsUnlocked(!settings.appLockEnabled);
-      } catch (error) {
+    const requestId = ++initializationRequestRef.current;
+    setIsReady(false);
+    setInitializationError(undefined);
+    try {
+      const settings = await getSettings();
+      if (requestId !== initializationRequestRef.current) {
+        return;
+      }
+      setUserName(settings.userName ?? null);
+      setTheme(settings.theme);
+      setLanguage(settings.language);
+      setCurrency(settings.currency);
+      setUsageType(settings.usageType);
+      setAppLockEnabled(settings.appLockEnabled);
+      setBiometricUnlockEnabled(settings.biometricUnlockEnabled);
+      setHideFinancialValues(settings.hideFinancialValues);
+      setHasCompletedOnboarding(settings.onboardingCompleted);
+      setIsUnlocked(!settings.appLockEnabled);
+    } catch (error) {
+      if (requestId === initializationRequestRef.current) {
         setInitializationError(error instanceof Error ? error.message : 'DATABASE_INITIALIZATION_FAILED');
-      } finally {
+      }
+    } finally {
+      if (requestId === initializationRequestRef.current) {
         setIsReady(true);
       }
+    }
   };
 
   useEffect(() => {

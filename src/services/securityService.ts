@@ -22,10 +22,14 @@ export async function setPinWithRollback(pin: string, persistEnabledState: () =>
   try {
     await persistEnabledState();
   } catch (error) {
-    if (previousHash) {
-      await SecureStore.setItemAsync(PIN_HASH_KEY, previousHash);
-    } else {
-      await clearPin();
+    try {
+      if (previousHash) {
+        await SecureStore.setItemAsync(PIN_HASH_KEY, previousHash);
+      } else {
+        await clearPin();
+      }
+    } catch {
+      // Keep the original failure so callers see the real reason the update failed.
     }
     throw error;
   }

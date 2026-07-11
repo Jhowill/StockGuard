@@ -11,6 +11,8 @@ test('SQLite initialization failures can be retried safely', () => {
 
   assert.match(db, /dbPromise = initializeDatabase\(\)\.catch/);
   assert.match(db, /dbPromise = null/);
+  assert.match(state, /initializationRequestRef/);
+  assert.match(state, /requestId !== initializationRequestRef\.current/);
   assert.match(state, /initializationError/);
   assert.match(state, /retryInitialization/);
   assert.match(layout, /onActionPress=\{\(\) => void retryInitialization\(\)\}/);
@@ -116,6 +118,7 @@ test('PIN and biometric updates cannot leave the app locked without a credential
   assert.match(pinScreen, /setPinWithRollback/);
   assert.match(pinScreen, /saveSettings\(\{ appLockEnabled: false, biometricUnlockEnabled: false \}\);\s+await clearPin\(\)/);
   assert.match(securityService, /previousHash/);
+  assert.match(securityService, /Keep the original failure/);
   assert.match(biometricScreen, /await disableBiometricLock\(\);\s+throw saveError/);
 });
 
