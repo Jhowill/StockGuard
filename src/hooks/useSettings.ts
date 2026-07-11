@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
 import type { AppSettingsRecord } from '@/database/repositories/settingsRepository';
 import { useAppState } from '@/state/app-state';
@@ -19,12 +19,17 @@ export function useSettings() {
   const [settings, setSettings] = useState<AppSettingsRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(undefined);
     try {
       const result = await getSettings();
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setSettings(result);
       setUserName(result.userName ?? null);
       setThemeMode(result.theme);
@@ -39,14 +44,21 @@ export function useSettings() {
         unlockApp();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'SETTINGS_LOAD_FAILED');
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'SETTINGS_LOAD_FAILED');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [setCurrency, setHideFinancialValues, setLanguage, setOnboardingCompleted, setThemeMode, setUsageType, setAppLockEnabled, setBiometricUnlockEnabled, setUserName, unlockApp]);
 
   useEffect(() => {
     void refresh();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [refresh]);
 
   const saveSettings = useCallback(
