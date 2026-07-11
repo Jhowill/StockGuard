@@ -298,9 +298,9 @@ export default function NewProductScreen() {
         <AppInput
           inputSize="large"
           label={t('productNew.cost')}
+          helperText={`${t('productNew.perUnit')} - ${t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}`}
           prefix={getCurrencyPrefix(currency)}
           placeholder={t('productNew.moneyPlaceholder')}
-          helperText={t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}
           keyboardType="decimal-pad"
           mask="money"
           value={costPrice}
@@ -309,9 +309,9 @@ export default function NewProductScreen() {
         <AppInput
           inputSize="large"
           label={t('productNew.sale')}
+          helperText={`${t('productNew.perUnit')} - ${t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}`}
           prefix={getCurrencyPrefix(currency)}
           placeholder={t('productNew.moneyPlaceholder')}
-          helperText={t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}
           keyboardType="decimal-pad"
           mask="money"
           value={salePrice}

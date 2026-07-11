@@ -157,6 +157,8 @@ const translations = {
       noAlertsBody: 'Quando algo sair do esperado, ele aparece aqui.',
       toggleLight: 'Ativar tema claro',
       toggleDark: 'Ativar tema escuro',
+      showValues: 'Mostrar valores financeiros',
+      hideValues: 'Ocultar valores financeiros',
     },
     products: {
       title: 'Produtos',
@@ -337,6 +339,7 @@ const translations = {
       stockValues: 'Estoque e valores',
       cost: 'Custo',
       sale: 'Venda',
+      perUnit: 'Valor por unidade',
       moneyPlaceholder: '00,00',
       moneyExample: 'Ex.: {{example}}',
       advanced: 'Campos avancados',
@@ -1202,6 +1205,12 @@ Object.assign(translationsWithFallback.en.productNew, {
   description: 'Description',
   descriptionPlaceholder: 'Ex: Zinc-plated screw for general use',
   selectOption: 'Select an option',
+  perUnit: 'Value per unit',
+});
+
+Object.assign(translationsWithFallback.en.home, {
+  showValues: 'Show financial values',
+  hideValues: 'Hide financial values',
 });
 
 Object.assign(translationsWithFallback.en.home, {
@@ -1216,6 +1225,12 @@ Object.assign(translationsWithFallback.es.productNew, {
   description: 'Descripcion',
   descriptionPlaceholder: 'Ej.: Tornillo galvanizado para uso general',
   selectOption: 'Selecciona una opcion',
+  perUnit: 'Valor por unidad',
+});
+
+Object.assign(translationsWithFallback.es.home, {
+  showValues: 'Mostrar valores financieros',
+  hideValues: 'Ocultar valores financieros',
 });
 
 Object.assign(translationsWithFallback['pt-BR'].productNew, {

@@ -55,7 +55,7 @@ function getMovementTone(type: string) {
 
 export default function HomeScreen() {
   const { t, language } = useI18n();
-  const { currency, theme, userName, setThemeMode } = useAppState();
+  const { currency, theme, userName, hideFinancialValues, setThemeMode, setHideFinancialValues } = useAppState();
   const { palette, mode } = useAppTheme();
   const { summary, loading, error, refresh } = useDashboard();
   const displayName = userName?.trim();
@@ -68,6 +68,16 @@ export default function HomeScreen() {
       await updateSettings({ theme: nextTheme });
     } catch {
       setThemeMode(theme);
+    }
+  };
+
+  const toggleFinancialValues = async () => {
+    const nextHidden = !hideFinancialValues;
+    setHideFinancialValues(nextHidden);
+    try {
+      await updateSettings({ hideFinancialValues: nextHidden });
+    } catch {
+      setHideFinancialValues(hideFinancialValues);
     }
   };
 
@@ -89,13 +99,13 @@ export default function HomeScreen() {
         rightAction={
           <View style={styles.headerActions}>
             <Pressable
-              onPress={() => router.push('/(tabs)/settings')}
+              onPress={() => void toggleFinancialValues()}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel={t('settings.title')}
+              accessibilityLabel={hideFinancialValues ? t('home.showValues') : t('home.hideValues')}
               style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
             >
-              <Ionicons name="person-outline" size={20} color={palette.text} />
+              <Ionicons name={hideFinancialValues ? 'eye-off-outline' : 'eye-outline'} size={20} color={palette.text} />
             </Pressable>
             <Pressable
               onPress={() => void toggleTheme()}
@@ -115,7 +125,7 @@ export default function HomeScreen() {
           <View style={styles.heroCopy}>
             <Text style={[styles.heroLabel, { color: palette.textMuted }]}>{t('home.stockValue')}</Text>
             <Text style={[styles.heroValue, { color: palette.text }]}>
-              {loading ? '...' : formatMoney(summary.totalStockValueCents, currency, language)}
+              {loading ? '...' : hideFinancialValues ? '••••••' : formatMoney(summary.totalStockValueCents, currency, language)}
             </Text>
             <Text style={[styles.heroHint, { color: palette.textMuted }]}>{heroHint}</Text>
           </View>

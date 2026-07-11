@@ -178,3 +178,19 @@ test('tab data refreshes on focus and Home supports pull to refresh', () => {
   assert.match(read('src/hooks/useProducts.ts'), /useFocusEffect/);
   assert.match(read('src/hooks/useAlerts.ts'), /useFocusEffect/);
 });
+
+test('Home value privacy and per-unit pricing remain wired', () => {
+  const home = read('app/(tabs)/index.tsx');
+  const newProduct = read('app/products/new.tsx');
+  const editProduct = read('app/products/edit.tsx');
+  const i18n = read('src/i18n/index.ts');
+
+  assert.match(home, /toggleFinancialValues/);
+  assert.match(home, /updateSettings\(\{ hideFinancialValues: nextHidden \}\)/);
+  assert.match(home, /hideFinancialValues \? '••••••'/);
+  assert.match(newProduct, /productNew\.perUnit/);
+  assert.match(editProduct, /productNew\.perUnit/);
+  assert.match(i18n, /perUnit: 'Valor por unidade'/);
+  assert.match(i18n, /showValues: 'Show financial values'/);
+  assert.match(i18n, /showValues: 'Mostrar valores financieros'/);
+});
