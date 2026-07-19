@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { findActiveEntitlements } from '@/database/repositories/adEntitlementRepository';
+import { expireOldEntitlements, findActiveEntitlements } from '@/database/repositories/adEntitlementRepository';
 import type { PremiumFeature } from '@/types/ads';
 import { showRewardedAd, showRewardedInterstitial } from '@/services/adsService';
 import { grantFeatureUnlock, grantTemporaryAdFree } from '@/services/rewardedAccessService';
@@ -16,6 +16,7 @@ export function useAdsAccess() {
     setLoading(true);
     setError(undefined);
     try {
+      await expireOldEntitlements();
       const active = await findActiveEntitlements();
       if (requestId !== requestIdRef.current) {
         return;

@@ -12,7 +12,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { useAppState } from '@/state/app-state';
 import { useCategories } from '@/hooks/useCategories';
 import { useI18n } from '@/hooks/useI18n';
 import { useProducts } from '@/hooks/useProducts';
@@ -72,7 +71,6 @@ export default function MovementScreen() {
   const { productId } = useLocalSearchParams<{ productId?: string }>();
   const initialProductId = useMemo(() => (Array.isArray(productId) ? productId[0] : productId) ?? '', [productId]);
   const { t } = useI18n();
-  const { currency } = useAppState();
   const { products, loading } = useProducts();
   const { categories } = useCategories();
   const [selectedProductId, setSelectedProductId] = useState(initialProductId);
@@ -124,7 +122,7 @@ export default function MovementScreen() {
         reason: reason.trim() || 'other',
         quantity: quantityToMove,
         note: notes.trim() || undefined,
-        currency,
+        currency: selectedProduct.currency,
       });
       router.replace(`/products/${selectedProduct.id}`);
     } catch (nextError) {

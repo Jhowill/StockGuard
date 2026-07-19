@@ -283,3 +283,69 @@ test('audit metadata excludes product names and local backup paths', () => {
   assert.doesNotMatch(products, /metadataJson: JSON\.stringify\(\{ name:/);
   assert.doesNotMatch(backup, /metadataJson: JSON\.stringify\(\{ fileUri/);
 });
+
+test('backup encryption, images and restored security state are hardened', () => {
+  const backup = read('src/services/backupService.ts');
+  const backupScreen = read('app/backup.tsx');
+  const imageService = read('src/services/productImageService.ts');
+
+  assert.match(backup, /CryptoJS\.PBKDF2/);
+  assert.match(backup, /CryptoJS\.HmacSHA256/);
+  assert.match(backup, /encryptionVersion: 2/);
+  assert.match(backup, /LegacyEncryptedBackupEnvelope/);
+  assert.match(backup, /upgradeLegacyBackupPayload/);
+  assert.match(backup, /productImages/);
+  assert.match(backup, /appLockEnabled: false/);
+  assert.match(backup, /withExclusiveTransaction/);
+  assert.match(backup, /getDatabaseHealth/);
+  assert.match(backupScreen, /await hydrateFromSettings\(\)/);
+  assert.match(imageService, /FileSystem\.documentDirectory/);
+  assert.match(imageService, /FileSystem\.copyAsync/);
+});
+
+test('screen recording is allowed while app switcher privacy remains protected', () => {
+  const privacyMask = read('src/components/ui/PrivacyMask.tsx');
+
+  assert.doesNotMatch(privacyMask, /preventScreenCaptureAsync/);
+  assert.doesNotMatch(privacyMask, /allowScreenCaptureAsync/);
+  assert.match(privacyMask, /enableAppSwitcherProtectionAsync/);
+});
+
+test('usage rewards and destructive writes use exclusive atomic transactions', () => {
+  const database = read('src/database/db.ts');
+  const usage = read('src/database/repositories/featureUsageLimitRepository.ts');
+  const entitlement = read('src/database/repositories/adEntitlementRepository.ts');
+  const schema = read('src/database/schema.ts');
+
+  assert.match(database, /withExclusiveTransactionAsync/);
+  assert.match(usage, /used_count = feature_usage_limits\.used_count \+ excluded\.used_count/);
+  assert.match(entitlement, /remaining_uses = remaining_uses - 1/);
+  assert.match(schema, /idx_feature_usage_unique/);
+});
+
+test('product currency and supported units remain stable after edits and movements', () => {
+  const edit = read('app/products/edit.tsx');
+  const movement = read('app/products/movement.tsx');
+  const detail = read('app/products/[id].tsx');
+
+  assert.match(edit, /setProductCurrency\(product\.currency\)/);
+  assert.match(edit, /currency: productCurrency/);
+  assert.match(movement, /currency: selectedProduct\.currency/);
+  assert.match(detail, /product\.currency, language/);
+  assert.match(edit, /value: 'service_item'/);
+});
+
+test('managed product images are retained only after successful persistence', () => {
+  const imageService = read('src/services/productImageService.ts');
+  const newProduct = read('app/products/new.tsx');
+  const editProduct = read('app/products/edit.tsx');
+  const backup = read('src/services/backupService.ts');
+
+  assert.match(imageService, /deleteManagedProductImage/);
+  assert.match(imageService, /idempotent: true/);
+  assert.match(newProduct, /imageCommittedRef\.current = true/);
+  assert.match(newProduct, /deleteManagedProductImage\(stagedImageRef\.current\)/);
+  assert.match(editProduct, /deleteManagedProductImage\(originalImageRef\.current\)/);
+  assert.match(backup, /previousManagedImageUris/);
+  assert.match(backup, /restoredManagedImageUris/);
+});

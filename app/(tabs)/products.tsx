@@ -56,14 +56,14 @@ export default function ProductsScreen() {
   const { categories } = useCategories();
   const [activeFilter, setActiveFilter] = useState<ProductFilter>(() => normalizeFilter(filter));
   const categoryNames = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
-  const lowStockCount = useMemo(() => products.filter((product) => product.quantity <= product.minQuantity).length, [products]);
+  const lowStockCount = useMemo(() => products.filter((product) => product.quantity > 0 && product.quantity <= product.minQuantity).length, [products]);
   const zeroStockCount = useMemo(() => products.filter((product) => product.quantity === 0).length, [products]);
   const expirationWarningDays = settings?.expirationWarningDays ?? 7;
   const expiringCount = useMemo(() => products.filter((product) => isProductExpiring(product.expirationDate, expirationWarningDays)).length, [expirationWarningDays, products]);
   const filteredProducts = useMemo(() => {
     switch (activeFilter) {
       case 'low':
-        return products.filter((product) => product.quantity <= product.minQuantity);
+        return products.filter((product) => product.quantity > 0 && product.quantity <= product.minQuantity);
       case 'zero':
         return products.filter((product) => product.quantity === 0);
       case 'expiring':

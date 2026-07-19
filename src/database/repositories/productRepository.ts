@@ -424,7 +424,7 @@ export async function searchProducts(query: string) {
 export async function getLowStockProducts() {
   const db = await getDatabase();
   const rows = await db.getAllAsync<ProductRow>(
-    'SELECT * FROM products WHERE status = "active" AND quantity <= min_quantity ORDER BY quantity ASC',
+    'SELECT * FROM products WHERE status = "active" AND quantity > 0 AND quantity <= min_quantity ORDER BY quantity ASC',
   );
   return rows.map(mapProduct);
 }

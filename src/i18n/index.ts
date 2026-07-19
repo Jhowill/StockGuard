@@ -79,6 +79,7 @@ const translations = {
       sharingUnavailable: 'O compartilhamento nao esta disponivel neste aparelho.',
       backupFileNotFound: 'Nao foi possivel encontrar o arquivo de backup.',
       backupSafetyCopyFailed: 'A restauracao foi cancelada porque nao foi possivel criar a copia de seguranca atual.',
+      backupTooLarge: 'O backup ficou grande demais. Remova ou reduza algumas fotos de produtos e tente novamente.',
       exportFolderUnavailable: 'A pasta de exportacao nao esta disponivel.',
       exportFileNotFound: 'Nao foi possivel encontrar o arquivo de exportacao.',
       reportSummaryInvalid: 'Nao foi possivel montar o resumo do relatorio.',
@@ -327,6 +328,9 @@ const translations = {
       unitBox: 'Caixa',
       unitPack: 'Pacote',
       unitPair: 'Par',
+      unitMeter: 'Metro',
+      unitCentimeter: 'Centimetro',
+      unitService: 'Item de servico',
       unitHelper: 'Escolha como este item sera medido no estoque.',
       category: 'Categoria',
       categoryHelper: 'Opcional. Ajuda a separar produtos por grupo.',
@@ -1180,6 +1184,7 @@ Object.assign(translationsWithFallback.en.errors, {
   databaseInitializationTitle: 'Could not open your data',
   databaseInitializationBody: 'The local database did not start correctly. Your data was not changed. Try again.',
   invalidProductExpirationDate: 'Enter a real expiration date in YYYY-MM-DD format.',
+  backupTooLarge: 'The backup is too large. Remove or reduce some product photos and try again.',
 });
 
 Object.assign(translationsWithFallback.es.errors, {
@@ -1191,6 +1196,7 @@ Object.assign(translationsWithFallback.es.errors, {
   databaseInitializationTitle: 'No fue posible abrir tus datos',
   databaseInitializationBody: 'La base local no inicio correctamente. Tus datos no fueron modificados. Intentalo de nuevo.',
   invalidProductExpirationDate: 'Ingresa una fecha de vencimiento real en formato AAAA-MM-DD.',
+  backupTooLarge: 'El backup es demasiado grande. Quita o reduce algunas fotos de productos e intentalo de nuevo.',
 });
 
 Object.assign(translationsWithFallback.en.securityFlow, {
@@ -1206,6 +1212,9 @@ Object.assign(translationsWithFallback.en.productNew, {
   descriptionPlaceholder: 'Ex: Zinc-plated screw for general use',
   selectOption: 'Select an option',
   perUnit: 'Value per unit',
+  unitMeter: 'Meter',
+  unitCentimeter: 'Centimeter',
+  unitService: 'Service item',
 });
 
 Object.assign(translationsWithFallback.en.home, {
@@ -1226,6 +1235,9 @@ Object.assign(translationsWithFallback.es.productNew, {
   descriptionPlaceholder: 'Ej.: Tornillo galvanizado para uso general',
   selectOption: 'Selecciona una opcion',
   perUnit: 'Valor por unidad',
+  unitMeter: 'Metro',
+  unitCentimeter: 'Centimetro',
+  unitService: 'Item de servicio',
 });
 
 Object.assign(translationsWithFallback.es.home, {

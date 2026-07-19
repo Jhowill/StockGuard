@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
@@ -19,12 +19,13 @@ import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import { translateAppError } from '@/i18n/errorMessages';
-import { useAppState } from '@/state/app-state';
 import type { Category } from '@/types/category';
 import type { ProductUnit } from '@/types/product';
+import type { CurrencyCode } from '@/types/settings';
 import type { Supplier } from '@/types/supplier';
 import { formatDecimalInput, formatMoneyInputFromCents } from '@/utils/input-format';
 import { formatMoney } from '@/utils/format';
+import { deleteManagedProductImage, persistProductImage } from '@/services/productImageService';
 import { parseMoneyToCents, parseNonNegativeNumber } from '@/utils/validators';
 
 function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit; label: string }> {
@@ -34,9 +35,12 @@ function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit;
     { value: 'g', label: 'g' },
     { value: 'l', label: 'L' },
     { value: 'ml', label: 'ml' },
+    { value: 'm', label: t('productNew.unitMeter') },
+    { value: 'cm', label: t('productNew.unitCentimeter') },
     { value: 'box', label: t('productNew.unitBox') },
     { value: 'pack', label: t('productNew.unitPack') },
     { value: 'pair', label: t('productNew.unitPair') },
+    { value: 'service_item', label: t('productNew.unitService') },
   ];
 }
 
@@ -84,7 +88,6 @@ export default function ProductEditScreen() {
   const productId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
   const { t, language } = useI18n();
   const unitOptions = useMemo(() => getUnitOptions(t), [t]);
-  const { currency } = useAppState();
   const { palette } = useAppTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -103,6 +106,7 @@ export default function ProductEditScreen() {
   const [categoryId, setCategoryId] = useState('');
   const [supplierId, setSupplierId] = useState('');
   const [unit, setUnit] = useState<ProductUnit>('unit');
+  const [productCurrency, setProductCurrency] = useState<CurrencyCode>('BRL');
   const [minQuantity, setMinQuantity] = useState('0');
   const [costPrice, setCostPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
@@ -110,6 +114,9 @@ export default function ProductEditScreen() {
   const [batchCode, setBatchCode] = useState('');
   const [location, setLocation] = useState('');
   const [imageUri, setImageUri] = useState('');
+  const originalImageRef = useRef('');
+  const stagedImageRef = useRef('');
+  const imageCommittedRef = useRef(false);
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -143,12 +150,14 @@ export default function ProductEditScreen() {
         setCategoryId(product.categoryId ?? '');
         setSupplierId(product.supplierId ?? '');
         setUnit(product.unit);
+        setProductCurrency(product.currency);
         setMinQuantity(nextMinQuantity);
         setCostPrice(nextCostPrice);
         setSalePrice(nextSalePrice);
         setExpirationDate(product.expirationDate ?? '');
         setBatchCode(product.batchCode ?? '');
         setLocation(product.location ?? '');
+        originalImageRef.current = product.imageUri ?? '';
         setImageUri(product.imageUri ?? '');
         setNotes(product.notes ?? '');
         setInitialSignature(JSON.stringify({
@@ -159,6 +168,7 @@ export default function ProductEditScreen() {
           categoryId: product.categoryId ?? '',
           supplierId: product.supplierId ?? '',
           unit: product.unit,
+          productCurrency: product.currency,
           minQuantity: nextMinQuantity,
           costPrice: nextCostPrice,
           salePrice: nextSalePrice,
@@ -176,6 +186,12 @@ export default function ProductEditScreen() {
     })();
   }, [productId, t]);
 
+  useEffect(() => () => {
+    if (!imageCommittedRef.current) {
+      void deleteManagedProductImage(stagedImageRef.current);
+    }
+  }, []);
+
   const canSave = useMemo(() => name.trim().length > 0 && !saving, [name, saving]);
   const currentSignature = useMemo(() => JSON.stringify({
     name,
@@ -185,6 +201,7 @@ export default function ProductEditScreen() {
     categoryId,
     supplierId,
     unit,
+    productCurrency,
     minQuantity,
     costPrice,
     salePrice,
@@ -193,7 +210,7 @@ export default function ProductEditScreen() {
     location,
     imageUri,
     notes,
-  }), [name, description, sku, barcode, categoryId, supplierId, unit, minQuantity, costPrice, salePrice, expirationDate, batchCode, location, imageUri, notes]);
+  }), [name, description, sku, barcode, categoryId, supplierId, unit, productCurrency, minQuantity, costPrice, salePrice, expirationDate, batchCode, location, imageUri, notes]);
   const dirty = Boolean(initialSignature && currentSignature !== initialSignature);
 
   const handleBack = () => {
@@ -216,7 +233,13 @@ export default function ProductEditScreen() {
         quality: 0.8,
       });
       if (!result.canceled) {
-        setImageUri(result.assets[0]?.uri ?? '');
+        const selectedUri = result.assets[0]?.uri;
+        if (selectedUri) {
+          const persistedUri = await persistProductImage(selectedUri);
+          await deleteManagedProductImage(stagedImageRef.current);
+          stagedImageRef.current = persistedUri;
+          setImageUri(persistedUri);
+        }
       }
     } catch {
       setActionError(t('productNew.imageFailed'));
@@ -241,7 +264,7 @@ export default function ProductEditScreen() {
         supplierId: supplierId || undefined,
         unit,
         minQuantity: parseNonNegativeNumber(minQuantity),
-        currency,
+        currency: productCurrency,
         costPriceCents: parseMoneyToCents(costPrice),
         salePriceCents: parseMoneyToCents(salePrice),
         expirationDate: expirationDate.trim() || undefined,
@@ -255,6 +278,10 @@ export default function ProductEditScreen() {
         throw new Error('PRODUCT_UPDATE_FAILED');
       }
 
+      imageCommittedRef.current = true;
+      if (originalImageRef.current && originalImageRef.current !== imageUri) {
+        await deleteManagedProductImage(originalImageRef.current);
+      }
       router.replace(`/products/${productId}`);
     } catch (nextError) {
       setActionError(getProductErrorMessage(nextError, t('productDetail.saveFailed'), t));
@@ -396,8 +423,8 @@ export default function ProductEditScreen() {
         <AppInput
           inputSize="large"
           label={t('productNew.cost')}
-          helperText={`${t('productNew.perUnit')} - ${t('productNew.moneyExample', { example: formatMoney(1250, currency, language) })}`}
-          prefix={getCurrencyPrefixDisplay(currency)}
+          helperText={`${t('productNew.perUnit')} - ${t('productNew.moneyExample', { example: formatMoney(1250, productCurrency, language) })}`}
+          prefix={getCurrencyPrefixDisplay(productCurrency)}
           placeholder={t('productNew.moneyPlaceholder')}
           keyboardType="decimal-pad"
           mask="money"
@@ -407,8 +434,8 @@ export default function ProductEditScreen() {
         <AppInput
           inputSize="large"
           label={t('productNew.sale')}
-          helperText={`${t('productNew.perUnit')} - ${t('productNew.moneyExample', { example: formatMoney(1990, currency, language) })}`}
-          prefix={getCurrencyPrefixDisplay(currency)}
+          helperText={`${t('productNew.perUnit')} - ${t('productNew.moneyExample', { example: formatMoney(1990, productCurrency, language) })}`}
+          prefix={getCurrencyPrefixDisplay(productCurrency)}
           placeholder={t('productNew.moneyPlaceholder')}
           keyboardType="decimal-pad"
           mask="money"

@@ -1,6 +1,7 @@
 import { getDatabase } from '../db';
 import { createAuditLog } from './auditLogRepository';
 import type { AppLanguage, CurrencyCode, ThemeMode, UsageType } from '@/types/settings';
+import { assertTextLength, INPUT_LIMITS } from '@/utils/validators';
 
 export type AppSettingsRecord = {
   id: 'default';
@@ -165,6 +166,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
     expirationWarningDays: normalizePositiveInteger(input.expirationWarningDays, current.expirationWarningDays),
     updatedAt: new Date().toISOString(),
   };
+  assertTextLength(next.userName, INPUT_LIMITS.name, 'USER_NAME_TOO_LONG');
 
   const db = await getDatabase();
   await db.runAsync(

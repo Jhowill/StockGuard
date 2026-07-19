@@ -166,4 +166,24 @@ export async function withTransaction<T>(callback: (db: SQLite.SQLiteDatabase) =
   }
 }
 
+export async function withExclusiveTransaction<T>(callback: (db: SQLite.SQLiteDatabase) => Promise<T>) {
+  const previous = transactionQueue;
+  let release!: () => void;
+  transactionQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await previous.catch(() => undefined);
+  try {
+    const db = await getDatabase();
+    let result!: T;
+    await db.withExclusiveTransactionAsync(async (transaction) => {
+      result = await callback(transaction);
+    });
+    return result;
+  } finally {
+    release();
+  }
+}
+
 export { SCHEMA_VERSION };

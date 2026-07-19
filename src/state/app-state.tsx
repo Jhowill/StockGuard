@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
 import { resetDatabaseCache } from '@/database/db';
+import { inspectPinCredential } from '@/services/securityService';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type AppLanguage = 'system' | 'pt-BR' | 'en' | 'es';
@@ -41,6 +42,12 @@ type AppStateValue = {
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
+async function getSafeSettings() {
+  const settings = await getSettings();
+  if (!settings.appLockEnabled || await inspectPinCredential() !== 'missing') return settings;
+  return updateSettings({ appLockEnabled: false, biometricUnlockEnabled: false });
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -61,7 +68,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsReady(false);
     setInitializationError(undefined);
     try {
-      const settings = await getSettings();
+      const settings = await getSafeSettings();
       if (requestId !== initializationRequestRef.current) {
         return;
       }
@@ -160,7 +167,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsUnlocked(true);
       },
       hydrateFromSettings: async () => {
-        const settings = await getSettings();
+        const settings = await getSafeSettings();
         setUserName(settings.userName ?? null);
         setTheme(settings.theme);
         setLanguage(settings.language);

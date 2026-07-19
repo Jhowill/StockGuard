@@ -1,5 +1,5 @@
 import * as Crypto from 'expo-crypto';
-import { getDatabase } from '../db';
+import { getDatabase, withExclusiveTransaction } from '../db';
 import type { AdEntitlement, AdSource, AdEntitlementType, PremiumFeature } from '@/types/ads';
 import { dateKey, nowIso } from '@/utils/date';
 
@@ -89,6 +89,14 @@ export async function findActiveEntitlements() {
   return rows.map(mapEntitlement);
 }
 
+export async function listAllEntitlements() {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<AdEntitlementRow>(
+    'SELECT * FROM ad_entitlements ORDER BY created_at DESC',
+  );
+  return rows.map(mapEntitlement);
+}
+
 export async function expireOldEntitlements() {
   const db = await getDatabase();
   const now = nowIso();
@@ -102,32 +110,27 @@ export async function expireOldEntitlements() {
 }
 
 export async function consumeActiveEntitlementUse(featureKey: PremiumFeature) {
-  const db = await getDatabase();
-  const activeEntitlements = await findActiveEntitlements();
-  const entitlement = activeEntitlements.find((item) => item.featureKey === featureKey && (item.remainingUses ?? 0) > 0);
+  return withExclusiveTransaction(async (db) => {
+    const row = await db.getFirstAsync<AdEntitlementRow>(
+      `SELECT * FROM ad_entitlements
+       WHERE status = 'active' AND feature_key = ? AND remaining_uses > 0
+       ORDER BY created_at DESC LIMIT 1`,
+      featureKey,
+    );
+    if (!row) return null;
 
-  if (!entitlement) {
-    return null;
-  }
-
-  const nextRemainingUses = (entitlement.remainingUses ?? 0) - 1;
-  const nextStatus: AdEntitlement['status'] = nextRemainingUses > 0 ? 'active' : 'consumed';
-  const updatedAt = nowIso();
-
-  await db.runAsync(
-    `UPDATE ad_entitlements
-     SET remaining_uses = ?, status = ?, updated_at = ?
-     WHERE id = ?`,
-    nextRemainingUses > 0 ? nextRemainingUses : 0,
-    nextStatus,
-    updatedAt,
-    entitlement.id,
-  );
-
-  return {
-    ...entitlement,
-    remainingUses: nextRemainingUses > 0 ? nextRemainingUses : 0,
-    status: nextStatus,
-    updatedAt,
-  };
+    const updatedAt = nowIso();
+    const result = await db.runAsync(
+      `UPDATE ad_entitlements
+       SET remaining_uses = remaining_uses - 1,
+           status = CASE WHEN remaining_uses - 1 > 0 THEN 'active' ELSE 'consumed' END,
+           updated_at = ?
+       WHERE id = ? AND status = 'active' AND remaining_uses > 0`,
+      updatedAt,
+      row.id,
+    );
+    if (result.changes !== 1) return null;
+    const updated = await db.getFirstAsync<AdEntitlementRow>('SELECT * FROM ad_entitlements WHERE id = ?', row.id);
+    return updated ? mapEntitlement(updated) : null;
+  });
 }

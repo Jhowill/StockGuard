@@ -107,7 +107,7 @@ export async function exportReportCsv(summary: ReportSummary, copy: ReportExport
     [copy.tableProductLabel, copy.tableQuantityLabel],
     ...summary.topProductsByQuantity.map((product) => [product.productName, product.quantity]),
   ];
-  const csv = rows.map((row) => row.map(csvCell).join(',')).join('\n');
+  const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
   const fileName = `estoqueguard-relatorio-${nowIso().replace(/[:.]/g, '-')}.csv`;
   const fileUri = `${await ensureExportFolder()}${fileName}`;
   await FileSystem.writeAsStringAsync(fileUri, csv);
@@ -151,6 +151,8 @@ export async function exportReportPdf(summary: ReportSummary, copy: ReportExport
             color: #101418;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             background: #F7F8FA;
+            overflow-wrap: anywhere;
+            word-break: break-word;
           }
           .page {
             padding: 28px;
@@ -222,6 +224,7 @@ export async function exportReportPdf(summary: ReportSummary, copy: ReportExport
           }
           table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             overflow: hidden;
             border: 1px solid #DDE6D2;
@@ -232,6 +235,7 @@ export async function exportReportPdf(summary: ReportSummary, copy: ReportExport
             border-bottom: 1px solid #E7EEDC;
             text-align: left;
             font-size: 13px;
+            overflow-wrap: anywhere;
           }
           th {
             color: #101418;

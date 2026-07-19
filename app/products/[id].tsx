@@ -49,7 +49,7 @@ function getMovementReasonLabel(reason: string, t: (key: string) => string) {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, language } = useI18n();
-  const { currency, hideFinancialValues } = useAppState();
+  const { hideFinancialValues } = useAppState();
   const { palette } = useAppTheme();
   const { categories } = useCategories();
   const { suppliers } = useSuppliers();
@@ -132,19 +132,19 @@ export default function ProductDetailScreen() {
           <MetricCard
             compact
             label={t('productNew.cost')}
-            value={hideFinancialValues ? '••••••' : formatMoney(product.costPriceCents ?? 0, currency, language)}
+            value={hideFinancialValues ? '••••••' : formatMoney(product.costPriceCents ?? 0, product.currency, language)}
           />
           <MetricCard
             compact
             label={t('productNew.sale')}
-            value={hideFinancialValues ? '••••••' : formatMoney(product.salePriceCents ?? 0, currency, language)}
+            value={hideFinancialValues ? '••••••' : formatMoney(product.salePriceCents ?? 0, product.currency, language)}
           />
         </View>
         <View style={styles.metricsRow}>
           <MetricCard
             compact
             label={t('productDetail.value')}
-            value={hideFinancialValues ? '••••••' : formatMoney((product.quantity || 0) * (product.costPriceCents ?? 0), currency, language)}
+            value={hideFinancialValues ? '••••••' : formatMoney(Math.round((product.quantity || 0) * (product.costPriceCents ?? 0)), product.currency, language)}
           />
           <MetricCard compact label={t('productDetail.location')} value={product.location ?? t('common.noLocation')} />
         </View>

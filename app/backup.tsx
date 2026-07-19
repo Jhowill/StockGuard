@@ -18,6 +18,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useBackup } from '@/hooks/useBackup';
 import { useI18n } from '@/hooks/useI18n';
+import { useAppState } from '@/state/app-state';
 import { translateAppError } from '@/i18n/errorMessages';
 import { showRewardedInterstitial } from '@/services/adsService';
 import { consumeFeatureUse, grantFeatureUnlock } from '@/services/rewardedAccessService';
@@ -26,6 +27,7 @@ import { formatShortDateTime } from '@/utils/date-format';
 export default function BackupScreen() {
   const { t, language } = useI18n();
   const { palette } = useAppTheme();
+  const { hydrateFromSettings } = useAppState();
   const { backups, loading, error, createBackup, restoreBackup, shareBackup } = useBackup();
   const { canUseFeature } = useFeatureGate('encrypted_backup');
   const [fileUri, setFileUri] = useState('');
@@ -106,6 +108,7 @@ export default function BackupScreen() {
     setSuccess(undefined);
     try {
       await restoreBackup(fileUri.trim(), password || undefined);
+      await hydrateFromSettings();
       setSuccess(t('backup.restored'));
       setRestoreStep(0);
     } catch (nextError) {

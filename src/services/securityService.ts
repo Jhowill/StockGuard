@@ -60,6 +60,14 @@ export async function hasPin() {
   }
 }
 
+export async function inspectPinCredential(): Promise<'present' | 'missing' | 'unavailable'> {
+  try {
+    return await SecureStore.getItemAsync(PIN_HASH_KEY) ? 'present' : 'missing';
+  } catch {
+    return 'unavailable';
+  }
+}
+
 export async function enableBiometricLock() {
   await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, '1');
   return true;

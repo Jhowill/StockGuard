@@ -45,12 +45,12 @@ export function useDashboard() {
       ]);
       const productMap = new Map<string, ProductRecord>(products.map((product) => [product.id, product]));
 
-      const totalStockValueCents = products
+      const totalStockValueCents = Math.round(products
         .filter((product) => product.currency === currency)
         .reduce(
         (sum, product) => sum + (product.quantity * (product.costPriceCents ?? 0)),
         0,
-      );
+      ));
 
       if (requestId === requestIdRef.current) {
         setSummary({

@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
@@ -15,6 +15,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { listCategories } from '@/database/repositories/categoryRepository';
 import { listSuppliers } from '@/database/repositories/supplierRepository';
 import { createProductWithInitialStock } from '@/services/stockMovementService';
+import { deleteManagedProductImage, persistProductImage } from '@/services/productImageService';
 import { useAppState } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
@@ -32,9 +33,12 @@ function getUnitOptions(t: (key: string) => string): Array<{ value: ProductUnit;
     { value: 'g', label: 'g' },
     { value: 'l', label: 'L' },
     { value: 'ml', label: 'ml' },
+    { value: 'm', label: t('productNew.unitMeter') },
+    { value: 'cm', label: t('productNew.unitCentimeter') },
     { value: 'box', label: t('productNew.unitBox') },
     { value: 'pack', label: t('productNew.unitPack') },
     { value: 'pair', label: t('productNew.unitPair') },
+    { value: 'service_item', label: t('productNew.unitService') },
   ];
 }
 
@@ -91,6 +95,8 @@ export default function NewProductScreen() {
   const [batchCode, setBatchCode] = useState('');
   const [location, setLocation] = useState('');
   const [imageUri, setImageUri] = useState('');
+  const stagedImageRef = useRef('');
+  const imageCommittedRef = useRef(false);
   const [notes, setNotes] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
@@ -108,6 +114,12 @@ export default function NewProductScreen() {
   }, [t]);
 
   const dirty = Boolean(name || description || sku || barcode || categoryId || supplierId || quantity !== '0' || minQuantity !== '0' || costPrice || salePrice || expirationDate || batchCode || location || imageUri || notes);
+
+  useEffect(() => () => {
+    if (!imageCommittedRef.current) {
+      void deleteManagedProductImage(stagedImageRef.current);
+    }
+  }, []);
   const parsedQuantity = parseNonNegativeNumber(quantity);
   const parsedMinQuantity = parseNonNegativeNumber(minQuantity);
   const canSave = useMemo(() => name.trim().length > 0 && !loading, [loading, name]);
@@ -125,7 +137,13 @@ export default function NewProductScreen() {
         quality: 0.8,
       });
       if (!result.canceled) {
-        setImageUri(result.assets[0]?.uri ?? '');
+        const selectedUri = result.assets[0]?.uri;
+        if (selectedUri) {
+          const persistedUri = await persistProductImage(selectedUri);
+          await deleteManagedProductImage(stagedImageRef.current);
+          stagedImageRef.current = persistedUri;
+          setImageUri(persistedUri);
+        }
       }
     } catch {
       setError(t('productNew.imageFailed'));
@@ -169,6 +187,7 @@ export default function NewProductScreen() {
         notes: notes.trim() || undefined,
       });
 
+      imageCommittedRef.current = true;
       router.replace({ pathname: '/products/[id]', params: { id: product.id } });
     } catch (err) {
       setError(getProductCreateErrorMessage(err, t));

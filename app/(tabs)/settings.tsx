@@ -218,6 +218,7 @@ export default function SettingsScreen() {
           label={t('settings.homeName')}
           placeholder={t('settings.homeNamePlaceholder')}
           value={profileName}
+          maxLength={120}
           editable={!saving}
           onChangeText={setProfileName}
           onBlur={() => {
