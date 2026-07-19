@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 6;
 
 export const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS products (
@@ -76,6 +76,7 @@ export const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_stock_movements_type ON stock_movements(type);`,
   `CREATE TABLE IF NOT EXISTS app_settings (
     id TEXT PRIMARY KEY NOT NULL,
+    user_name TEXT,
     theme TEXT NOT NULL DEFAULT 'system',
     language TEXT NOT NULL DEFAULT 'system',
     currency TEXT NOT NULL DEFAULT 'BRL',
@@ -118,6 +119,7 @@ export const schemaStatements = [
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_feature_usage_unique ON feature_usage_limits(feature_key, date_key, period);`,
   `CREATE TABLE IF NOT EXISTS audit_logs (
     id TEXT PRIMARY KEY NOT NULL,
     action TEXT NOT NULL,

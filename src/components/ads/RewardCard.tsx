@@ -1,5 +1,6 @@
 import { AppCard } from '@/components/ui/AppCard';
 import { AppButton } from '@/components/ui/AppButton';
+import { useI18n } from '@/hooks/useI18n';
 
 type Props = {
   title: string;
@@ -9,11 +10,13 @@ type Props = {
   onPress: () => void;
 };
 
-export function RewardCard({ title, description, actionLabel = 'Assistir anuncio', busy = false, onPress }: Props) {
+export function RewardCard({ title, description, actionLabel, busy = false, onPress }: Props) {
+  const { t } = useI18n();
+
   return (
     <AppCard variant="hero" style={{ gap: 12 }}>
       <AppCard.Row icon="sparkles-outline" title={title} subtitle={description} />
-      <AppButton label={busy ? '...' : actionLabel} disabled={busy} onPress={onPress} />
+      <AppButton label={actionLabel ?? t('premium.watchAd')} loading={busy} onPress={onPress} />
     </AppCard>
   );
 }

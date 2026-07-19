@@ -1,15 +1,22 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { AppSelect } from '@/components/ui/AppSelect';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useSettings } from '@/hooks/useSettings';
 import type { AppLanguage, CurrencyCode, ThemeMode } from '@/state/app-state';
 
 export default function PreferencesScreen() {
   const { settings, saveSettings } = useSettings();
+  const { t } = useI18n();
+  const { palette } = useAppTheme();
   const [theme, setTheme] = useState<ThemeMode>(settings?.theme ?? 'system');
   const [language, setLanguage] = useState<AppLanguage>(settings?.language ?? 'system');
   const [currency, setCurrency] = useState<CurrencyCode>(settings?.currency ?? 'BRL');
@@ -18,50 +25,73 @@ export default function PreferencesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Preferencias iniciais" subtitle="Ajuste idioma, tema e moeda." />
+      <AppHeader title={t('onboardingPrefs.title')} subtitle={t('onboardingPrefs.subtitle')} variant="page" onBackPress={() => router.back()} />
 
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Tema</AppCard.Title>
-        <StatusBadge tone="info" label={theme} />
-        {(['system', 'light', 'dark'] as ThemeMode[]).map((mode) => (
-          <AppButton
-            key={mode}
-            label={mode === 'system' ? 'Sistema' : mode === 'light' ? 'Claro' : 'Escuro'}
-            variant={theme === mode ? 'primary' : 'ghost'}
-            onPress={() => setTheme(mode)}
-          />
-        ))}
+      <AppCard variant="hero" style={styles.heroCard}>
+        <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
+          <Ionicons name="color-palette-outline" size={24} color={palette.primary} />
+        </View>
+        <View style={styles.heroCopy}>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('onboardingPrefs.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('onboardingPrefs.heroBody')}</Text>
+        </View>
+        <View style={styles.heroBadges}>
+          <StatusBadge tone="info" label={t('onboardingPrefs.step')} />
+        </View>
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Idioma</AppCard.Title>
-        <StatusBadge tone="info" label={language} />
-        {(['system', 'pt-BR', 'en', 'es'] as AppLanguage[]).map((value) => (
-          <AppButton
-            key={value}
-            label={value === 'system' ? 'Sistema' : value === 'pt-BR' ? 'PT-BR' : value.toUpperCase()}
-            variant={language === value ? 'primary' : 'ghost'}
-            onPress={() => setLanguage(value)}
-          />
-        ))}
+        <AppCard.Title>{t('settings.theme')}</AppCard.Title>
+        <AppCard.Text>{t('onboardingPrefs.themeBody')}</AppCard.Text>
+        <AppSelect
+          label={t('settings.theme')}
+          value={theme}
+          options={[
+            { value: 'system', label: t('settings.themeSystem') },
+            { value: 'light', label: t('settings.themeLight') },
+            { value: 'dark', label: t('settings.themeDark') },
+          ]}
+          disabled={saving}
+          onChange={setTheme}
+        />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Moeda</AppCard.Title>
-        <StatusBadge tone="info" label={currency} />
-        {(['BRL', 'USD', 'EUR'] as CurrencyCode[]).map((value) => (
-          <AppButton
-            key={value}
-            label={value}
-            variant={currency === value ? 'primary' : 'ghost'}
-            onPress={() => setCurrency(value)}
-          />
-        ))}
+        <AppCard.Title>{t('settings.language')}</AppCard.Title>
+        <AppCard.Text>{t('onboardingPrefs.languageBody')}</AppCard.Text>
+        <AppSelect
+          label={t('settings.language')}
+          value={language}
+          options={[
+            { value: 'system', label: t('settings.languageSystem') },
+            { value: 'pt-BR', label: t('settings.languagePortuguese') },
+            { value: 'en', label: t('settings.languageEnglish') },
+            { value: 'es', label: t('settings.languageSpanish') },
+          ]}
+          disabled={saving}
+          onChange={setLanguage}
+        />
+      </AppCard>
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{t('settings.currency')}</AppCard.Title>
+        <AppCard.Text>{t('onboardingPrefs.currencyBody')}</AppCard.Text>
+        <AppSelect
+          label={t('settings.currency')}
+          value={currency}
+          options={[
+            { value: 'BRL', label: t('settings.currencyBrl') },
+            { value: 'USD', label: t('settings.currencyUsd') },
+            { value: 'EUR', label: t('settings.currencyEur') },
+          ]}
+          disabled={saving}
+          onChange={setCurrency}
+        />
       </AppCard>
 
       <AppButton
-        label={saving ? '...' : 'Proximo'}
-        disabled={saving}
+        label={t('onboardingPrefs.next')}
+        loading={saving}
         onPress={async () => {
           if (saving) return;
 
@@ -71,14 +101,44 @@ export default function PreferencesScreen() {
             await saveSettings({ theme, language, currency });
             router.push('/onboarding/security');
           } catch {
-            setError('Nao foi possivel salvar as preferencias.');
+            setError(t('onboardingPrefs.saveFailed'));
           } finally {
             setSaving(false);
           }
         }}
       />
       {error ? <AppCard><AppCard.Text>{error}</AppCard.Text></AppCard> : null}
-      <AppButton label="Voltar" variant="ghost" onPress={() => router.back()} />
+      <AppButton label={t('common.back')} variant="ghost" onPress={() => router.back()} />
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  heroCard: {
+    gap: 14,
+  },
+  heroIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  heroBody: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  heroBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+});

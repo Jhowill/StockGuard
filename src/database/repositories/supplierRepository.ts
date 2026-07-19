@@ -3,6 +3,7 @@ import { getDatabase } from '../db';
 import { createAuditLog } from './auditLogRepository';
 import type { Supplier } from '@/types/supplier';
 import { nowIso } from '@/utils/date';
+import { assertTextLength, INPUT_LIMITS } from '@/utils/validators';
 
 type SupplierRow = {
   id: string;
@@ -44,6 +45,31 @@ function assertValidEmail(email: string | undefined) {
   }
 }
 
+function validateSupplierText(supplier: Supplier) {
+  assertTextLength(supplier.name, INPUT_LIMITS.name, 'SUPPLIER_NAME_TOO_LONG');
+  assertTextLength(supplier.phone, INPUT_LIMITS.shortText, 'SUPPLIER_PHONE_TOO_LONG');
+  assertTextLength(supplier.email, INPUT_LIMITS.shortText, 'SUPPLIER_EMAIL_TOO_LONG');
+  assertTextLength(supplier.document, INPUT_LIMITS.shortText, 'SUPPLIER_DOCUMENT_TOO_LONG');
+  assertTextLength(supplier.address, INPUT_LIMITS.description, 'SUPPLIER_ADDRESS_TOO_LONG');
+  assertTextLength(supplier.notes, INPUT_LIMITS.notes, 'SUPPLIER_NOTES_TOO_LONG');
+}
+
+async function assertUniqueSupplierName(name: string, ignoreSupplierId?: string) {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM suppliers
+     WHERE status = "active" AND lower(name) = lower(?)
+       AND (? IS NULL OR id != ?)
+     LIMIT 1`,
+    name.trim(),
+    ignoreSupplierId ?? null,
+    ignoreSupplierId ?? null,
+  );
+  if (row) {
+    throw new Error('SUPPLIER_ALREADY_EXISTS');
+  }
+}
+
 export async function listSuppliers(includeArchived = false) {
   const db = await getDatabase();
   const rows = await db.getAllAsync<SupplierRow>(
@@ -73,6 +99,8 @@ export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 
     updatedAt: now,
   };
   assertValidEmail(supplier.email);
+  validateSupplierText(supplier);
+  await assertUniqueSupplierName(supplier.name);
 
   await db.runAsync(
     `INSERT INTO suppliers (id, name, phone, email, document, address, notes, status, created_at, updated_at)
@@ -93,7 +121,6 @@ export async function createSupplier(input: Omit<Supplier, 'id' | 'createdAt' | 
     action: 'supplier_created',
     entityType: 'supplier',
     entityId: supplier.id,
-    metadataJson: JSON.stringify({ name: supplier.name }),
   });
 
   return supplier;
@@ -117,6 +144,8 @@ export async function updateSupplier(id: string, input: Partial<Omit<Supplier, '
     throw new Error('SUPPLIER_NAME_REQUIRED');
   }
   assertValidEmail(next.email);
+  validateSupplierText(next);
+  await assertUniqueSupplierName(next.name, id);
 
   await db.runAsync(
     `UPDATE suppliers SET name = ?, phone = ?, email = ?, document = ?, address = ?, notes = ?, status = ?, updated_at = ? WHERE id = ?`,
@@ -135,7 +164,7 @@ export async function updateSupplier(id: string, input: Partial<Omit<Supplier, '
     action: 'supplier_updated',
     entityType: 'supplier',
     entityId: id,
-    metadataJson: JSON.stringify({ name: next.name, status: next.status }),
+    metadataJson: JSON.stringify({ status: next.status }),
   });
 
   return next;

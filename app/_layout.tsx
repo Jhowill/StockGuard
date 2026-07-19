@@ -4,10 +4,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { PrivacyMask } from '@/components/ui/PrivacyMask';
+import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { AppProvider } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppState } from '@/state/app-state';
+import { useI18n } from '@/hooks/useI18n';
 
 function AppStatusBar() {
   const { mode } = useAppTheme();
@@ -17,12 +20,26 @@ function AppStatusBar() {
 
 function AppShell() {
   const pathname = usePathname();
-  const { isReady, hasCompletedOnboarding, appLockEnabled, isUnlocked } = useAppState();
+  const { t } = useI18n();
+  const { isReady, initializationError, retryInitialization, hasCompletedOnboarding, appLockEnabled, isUnlocked } = useAppState();
 
   if (!isReady) {
     return (
       <ScreenContainer padded>
-        <LoadingState title="Inicializando app" description="Preparando dados locais e seguranca." />
+        <LoadingState title={t('splash.initializing')} description={t('splash.preparing')} />
+      </ScreenContainer>
+    );
+  }
+
+  if (initializationError) {
+    return (
+      <ScreenContainer padded>
+        <ErrorState
+          title={t('errors.databaseInitializationTitle')}
+          description={t('errors.databaseInitializationBody')}
+          actionLabel={t('common.retry')}
+          onActionPress={() => void retryInitialization()}
+        />
       </ScreenContainer>
     );
   }
@@ -60,9 +77,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
-          <AppStatusBar />
-          <AppShell />
-          <PrivacyMask />
+          <AppErrorBoundary>
+            <AppStatusBar />
+            <AppShell />
+            <PrivacyMask />
+          </AppErrorBoundary>
         </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

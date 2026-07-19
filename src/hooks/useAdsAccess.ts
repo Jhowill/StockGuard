@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { findActiveEntitlements } from '@/database/repositories/adEntitlementRepository';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { expireOldEntitlements, findActiveEntitlements } from '@/database/repositories/adEntitlementRepository';
 import type { PremiumFeature } from '@/types/ads';
 import { showRewardedAd, showRewardedInterstitial } from '@/services/adsService';
 import { grantFeatureUnlock, grantTemporaryAdFree } from '@/services/rewardedAccessService';
@@ -9,26 +9,39 @@ export function useAdsAccess() {
   const [adFreeExpiresAt, setAdFreeExpiresAt] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(undefined);
     try {
+      await expireOldEntitlements();
       const active = await findActiveEntitlements();
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       const adFree = active.find((item) => item.type === 'temporary_ad_free' && item.expiresAt);
       setIsTemporaryAdFree(Boolean(adFree));
       setAdFreeExpiresAt(adFree?.expiresAt);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'ADS_ACCESS_LOAD_FAILED');
-      setIsTemporaryAdFree(false);
-      setAdFreeExpiresAt(undefined);
+      if (requestId === requestIdRef.current) {
+        setError(nextError instanceof Error ? nextError.message : 'ADS_ACCESS_LOAD_FAILED');
+        setIsTemporaryAdFree(false);
+        setAdFreeExpiresAt(undefined);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void refresh();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [refresh]);
 
   const canRequestAdFreeReward = !isTemporaryAdFree;

@@ -66,6 +66,11 @@ function CardBase({ children, onPress, variant = 'default', style }: Props) {
         {
           backgroundColor: variant === 'hero' ? palette.surfaceMuted : palette.surface,
           borderColor: palette.border,
+          shadowColor: palette.shadow,
+          shadowOpacity: variant === 'hero' ? 0.12 : 0.08,
+          shadowRadius: variant === 'hero' ? 16 : 10,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: variant === 'hero' ? 3 : 1,
         },
         pressed && onPress ? styles.pressed : null,
         style,

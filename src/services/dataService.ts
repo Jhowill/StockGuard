@@ -1,10 +1,9 @@
-import { getDatabase, withTransaction } from '@/database/db';
-import { createAuditLog } from '@/database/repositories/auditLogRepository';
-import { nowIso } from '@/utils/date';
+import * as FileSystem from 'expo-file-system/legacy';
+import { getDatabase, withExclusiveTransaction } from '@/database/db';
 import { clearSecuritySecrets } from '@/services/securityService';
 
 export async function deleteAllUserData() {
-  await withTransaction(async (db) => {
+  await withExclusiveTransaction(async (db) => {
     await db.execAsync('DELETE FROM stock_movements;');
     await db.execAsync('DELETE FROM products;');
     await db.execAsync('DELETE FROM categories;');
@@ -16,14 +15,19 @@ export async function deleteAllUserData() {
     await db.execAsync('DELETE FROM app_settings;');
   });
 
-  await clearSecuritySecrets();
+  const folder = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
+  if (folder) {
+    try {
+      const entries = await FileSystem.readDirectoryAsync(folder);
+      await Promise.all(entries
+        .filter((name) => name === 'product-images' || name.startsWith('estoqueguard-backup-') || name.startsWith('estoqueguard-relatorio-'))
+        .map((name) => FileSystem.deleteAsync(`${folder}${name}`, { idempotent: true })));
+    } catch {
+      // Database deletion remains authoritative if filesystem cleanup is unavailable.
+    }
+  }
 
-  await createAuditLog({
-    action: 'all_data_deleted',
-    entityType: 'app',
-    entityId: 'default',
-    metadataJson: JSON.stringify({ source: 'settings' }),
-  });
+  await clearSecuritySecrets();
 }
 
 export async function countProductsByCategory(categoryId: string) {

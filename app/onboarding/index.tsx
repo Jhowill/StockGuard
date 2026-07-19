@@ -20,12 +20,8 @@ export default function OnboardingScreen() {
         <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
           <Ionicons name="shield-checkmark-outline" size={30} color={palette.primary} />
         </View>
-        <Text style={[styles.heroTitle, { color: palette.text }]}>
-          Controle de estoque offline, pronto para uso no celular.
-        </Text>
-        <Text style={[styles.heroBody, { color: palette.textMuted }]}>
-          Cadastre produtos, acompanhe movimentações, veja alertas e mantenha seus dados locais.
-        </Text>
+        <Text style={[styles.heroTitle, { color: palette.text }]}>{t('onboarding.heroTitle')}</Text>
+        <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('onboarding.heroBody')}</Text>
       </AppCard>
 
       <AppCard style={styles.featureGrid}>

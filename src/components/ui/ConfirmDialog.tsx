@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppButton } from './AppButton';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 
 type Props = {
   visible: boolean;
@@ -17,12 +18,13 @@ export function ConfirmDialog({
   visible,
   title,
   message,
-  confirmLabel = 'Confirmar',
-  cancelLabel = 'Cancelar',
+  confirmLabel,
+  cancelLabel,
   danger = false,
   onConfirm,
   onCancel,
 }: Props) {
+  const { t } = useI18n();
   const { palette } = useAppTheme();
 
   return (
@@ -32,8 +34,8 @@ export function ConfirmDialog({
           <Text style={[styles.title, { color: danger ? palette.danger : palette.text }]}>{title}</Text>
           <Text style={[styles.message, { color: palette.textMuted }]}>{message}</Text>
           <View style={styles.actions}>
-            <AppButton label={cancelLabel} variant="ghost" style={styles.action} onPress={onCancel} />
-            <AppButton label={confirmLabel} variant={danger ? 'secondary' : 'primary'} style={styles.action} onPress={onConfirm} />
+            <AppButton label={cancelLabel ?? t('common.cancel')} variant="ghost" style={styles.action} onPress={onCancel} />
+            <AppButton label={confirmLabel ?? t('common.continue')} variant={danger ? 'danger' : 'primary'} style={styles.action} onPress={onConfirm} />
           </View>
         </Pressable>
       </Pressable>

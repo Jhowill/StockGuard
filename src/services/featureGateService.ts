@@ -18,16 +18,6 @@ export async function getFeatureAccessState(featureKey: PremiumFeature): Promise
   const activeEntitlements = await findActiveEntitlements();
   const entitlement = activeEntitlements.find((item) => item.featureKey === featureKey);
 
-  if (entitlement?.expiresAt) {
-    return {
-      featureKey,
-      allowed: true,
-      source: 'rewarded_ad',
-      expiresAt: entitlement.expiresAt,
-      remainingUses: entitlement.remainingUses,
-    };
-  }
-
   const usage = await getUsageLimit(featureKey);
   const featureConfig = featureDurations[featureKey];
   const freeLimit = featureConfig.freeLimit ?? 0;
@@ -41,13 +31,23 @@ export async function getFeatureAccessState(featureKey: PremiumFeature): Promise
     };
   }
 
-  if (entitlement) {
+  if (entitlement?.expiresAt) {
     return {
       featureKey,
       allowed: true,
       source: 'rewarded_ad',
       expiresAt: entitlement.expiresAt,
       remainingUses: entitlement.remainingUses,
+    };
+  }
+
+  const remainingUses = entitlement?.remainingUses ?? 0;
+  if (remainingUses > 0) {
+    return {
+      featureKey,
+      allowed: true,
+      source: 'rewarded_ad',
+      remainingUses,
     };
   }
 

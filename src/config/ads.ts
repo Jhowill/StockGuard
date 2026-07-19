@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 
 type AdsConfig = {
   enabled: boolean;
+  testMode: boolean;
   androidAppId?: string;
   iosAppId?: string;
   androidRewardedId?: string;
@@ -21,6 +22,7 @@ export function getAdsConfig(): AdsConfig {
 
   return {
     enabled,
+    testMode: readExtra('EXPO_PUBLIC_ADS_TEST_MODE') === 'true',
     androidAppId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_APP_ID'),
     iosAppId: readExtra('EXPO_PUBLIC_ADMOB_IOS_APP_ID'),
     androidRewardedId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID'),
@@ -28,6 +30,16 @@ export function getAdsConfig(): AdsConfig {
     androidRewardedInterstitialId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID'),
     iosRewardedInterstitialId: readExtra('EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID'),
   };
+}
+
+export function getRewardedUnitId(platform: 'android' | 'ios') {
+  const config = getAdsConfig();
+  return platform === 'android' ? config.androidRewardedId : config.iosRewardedId;
+}
+
+export function getRewardedInterstitialUnitId(platform: 'android' | 'ios') {
+  const config = getAdsConfig();
+  return platform === 'android' ? config.androidRewardedInterstitialId : config.iosRewardedInterstitialId;
 }
 
 export function hasRewardedAdsConfig() {

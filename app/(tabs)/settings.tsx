@@ -1,27 +1,86 @@
-import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Application from 'expo-application';
-import { useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import { getAdsConfig } from '@/config/ads';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { AppInput } from '@/components/ui/AppInput';
+import { AppSelect } from '@/components/ui/AppSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useSettings } from '@/hooks/useSettings';
-import { useAppState } from '@/state/app-state';
-import { getAdsConfig } from '@/config/ads';
+import { useAppState, type AppLanguage, type CurrencyCode, type ThemeMode } from '@/state/app-state';
 import { deleteAllUserData } from '@/services/dataService';
+import { clearSecuritySecrets } from '@/services/securityService';
+import { showPrivacyOptions } from '@/services/adsService';
+
+const PRIVACY_POLICY_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/PRIVACY_POLICY.md';
+const TERMS_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/TERMS_OF_USE.md';
+
+function getThemeLabel(theme: ThemeMode, t: (key: string) => string) {
+  switch (theme) {
+    case 'light':
+      return t('settings.themeLight');
+    case 'dark':
+      return t('settings.themeDark');
+    default:
+      return t('settings.themeSystem');
+  }
+}
+
+function getLanguageLabel(language: AppLanguage, t: (key: string) => string) {
+  switch (language) {
+    case 'pt-BR':
+      return t('settings.languagePortuguese');
+    case 'en':
+      return t('settings.languageEnglish');
+    case 'es':
+      return t('settings.languageSpanish');
+    default:
+      return t('settings.languageSystem');
+  }
+}
+
+function getCurrencyLabel(currency: CurrencyCode, t: (key: string) => string) {
+  switch (currency) {
+    case 'USD':
+      return t('settings.currencyUsd');
+    case 'EUR':
+      return t('settings.currencyEur');
+    default:
+      return t('settings.currencyBrl');
+  }
+}
 
 export default function SettingsScreen() {
+  const { t } = useI18n();
   const { settings, loading, error, saveSettings } = useSettings();
   const { appLockEnabled, biometricUnlockEnabled, hideFinancialValues } = useAppState();
+  const { palette } = useAppTheme();
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
+  const [profileName, setProfileName] = useState('');
   const adsConfig = getAdsConfig();
+
+  const currentTheme = (settings?.theme ?? 'system') as ThemeMode;
+  const currentLanguage = (settings?.language ?? 'system') as AppLanguage;
+  const currentCurrency = (settings?.currency ?? 'BRL') as CurrencyCode;
+  const currentUserName = settings?.userName ?? '';
+
+  useEffect(() => {
+    setProfileName(currentUserName);
+  }, [currentUserName]);
 
   const safeSave = async (input: Parameters<typeof saveSettings>[0]) => {
     if (saving) {
@@ -33,7 +92,7 @@ export default function SettingsScreen() {
     try {
       await saveSettings(input);
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a configuracao.');
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -50,6 +109,7 @@ export default function SettingsScreen() {
     try {
       await deleteAllUserData();
       await saveSettings({
+        userName: null,
         theme: 'system',
         language: 'system',
         currency: 'BRL',
@@ -67,7 +127,58 @@ export default function SettingsScreen() {
         lastBackupAt: null,
       });
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel apagar os dados.');
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.deleteFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openExternalUrl = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        throw new Error('EXTERNAL_LINK_UNAVAILABLE');
+      }
+      await Linking.openURL(url);
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.linkFailed'));
+    }
+  };
+
+  const resetPreferences = async () => {
+    if (saving) {
+      return;
+    }
+
+    setSaving(true);
+    setActionError(undefined);
+    try {
+      await saveSettings({
+        onboardingCompleted: false,
+        userName: null,
+        theme: 'system',
+        language: 'system',
+        currency: 'BRL',
+        usageType: 'other',
+        appLockEnabled: false,
+        biometricUnlockEnabled: false,
+        hideFinancialValues: false,
+      });
+      await clearSecuritySecrets();
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const manageAdPrivacy = async () => {
+    setSaving(true);
+    setActionError(undefined);
+    try {
+      await showPrivacyOptions();
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : t('settings.adsPrivacyFailed'));
     } finally {
       setSaving(false);
     }
@@ -75,105 +186,159 @@ export default function SettingsScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Configuracoes" subtitle="Tema, idioma, seguranca, backup e dados." />
+      <AppHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
+
+      <AppCard variant="hero" style={styles.heroCard}>
+        <View style={[styles.heroIcon, { backgroundColor: palette.surfaceMuted }]}>
+          <Ionicons name="settings-outline" size={24} color={palette.primary} />
+        </View>
+        <View style={styles.heroCopy}>
+          <Text style={[styles.heroTitle, { color: palette.text }]}>{t('settings.heroTitle')}</Text>
+          <Text style={[styles.heroBody, { color: palette.textMuted }]}>{t('settings.heroBody')}</Text>
+        </View>
+        <View style={styles.heroBadges}>
+          <StatusBadge tone="info" label={getThemeLabel(currentTheme, t)} />
+          <StatusBadge tone="info" label={getLanguageLabel(currentLanguage, t)} />
+          <StatusBadge tone="success" label={getCurrencyLabel(currentCurrency, t)} />
+        </View>
+      </AppCard>
 
       {loading ? (
-        <LoadingState title="Configuracoes" description="Carregando preferencias." />
+        <LoadingState title={t('settings.title')} description={t('common.loading')} />
       ) : error ? (
-        <ErrorState title="Configuracoes" description={error} />
+        <ErrorState title={t('settings.title')} description={translateAppError(error, t)} />
       ) : null}
 
-      {actionError ? <ErrorState title="Configuracoes" description={actionError} /> : null}
+      {actionError ? <ErrorState title={t('settings.title')} description={translateAppError(actionError, t)} /> : null}
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Aparencia</AppCard.Title>
-        <StatusBadge tone="info" label={settings?.theme ?? '...'} />
-        <AppButton label="Sistema" disabled={saving} variant={settings?.theme === 'system' ? 'primary' : 'ghost'} onPress={() => void safeSave({ theme: 'system' })} />
-        <AppButton label="Claro" disabled={saving} variant={settings?.theme === 'light' ? 'primary' : 'ghost'} onPress={() => void safeSave({ theme: 'light' })} />
-        <AppButton label="Escuro" disabled={saving} variant={settings?.theme === 'dark' ? 'primary' : 'ghost'} onPress={() => void safeSave({ theme: 'dark' })} />
-      </AppCard>
-
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Idioma</AppCard.Title>
-        <StatusBadge tone="info" label={settings?.language ?? '...'} />
-        <AppButton label="PT-BR" disabled={saving} variant={settings?.language === 'pt-BR' ? 'primary' : 'ghost'} onPress={() => void safeSave({ language: 'pt-BR' })} />
-        <AppButton label="EN" disabled={saving} variant={settings?.language === 'en' ? 'primary' : 'ghost'} onPress={() => void safeSave({ language: 'en' })} />
-        <AppButton label="ES" disabled={saving} variant={settings?.language === 'es' ? 'primary' : 'ghost'} onPress={() => void safeSave({ language: 'es' })} />
-      </AppCard>
-
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Moeda</AppCard.Title>
-        <StatusBadge tone="success" label={settings?.currency ?? 'BRL'} />
-        <AppButton label="BRL" disabled={saving} variant={settings?.currency === 'BRL' ? 'primary' : 'ghost'} onPress={() => void safeSave({ currency: 'BRL' })} />
-        <AppButton label="USD" disabled={saving} variant={settings?.currency === 'USD' ? 'primary' : 'ghost'} onPress={() => void safeSave({ currency: 'USD' })} />
-        <AppButton label="EUR" disabled={saving} variant={settings?.currency === 'EUR' ? 'primary' : 'ghost'} onPress={() => void safeSave({ currency: 'EUR' })} />
-      </AppCard>
-
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Seguranca</AppCard.Title>
-        <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? 'PIN ativo' : 'PIN desativado'} />
-        <AppButton label={appLockEnabled ? 'Gerenciar PIN' : 'Ativar PIN'} onPress={() => router.push('/security/pin')} />
-        <AppButton label={biometricUnlockEnabled ? 'Gerenciar biometria' : 'Ativar biometria'} variant="secondary" onPress={() => router.push('/security/biometric')} />
-        <AppButton label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'} disabled={saving} variant="ghost" onPress={() => void safeSave({ hideFinancialValues: !hideFinancialValues })} />
-      </AppCard>
-
-      <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Dados</AppCard.Title>
-        <AppButton label="Backup" variant="secondary" onPress={() => router.push('/backup')} />
-        <AppButton label="Premium e recompensas" variant="ghost" onPress={() => router.push('/premium')} />
-        <AppButton
-          label="Redefinir preferencias"
-          variant="ghost"
-          onPress={() =>
-            void safeSave({
-              onboardingCompleted: false,
-              theme: 'system',
-              language: 'system',
-              currency: 'BRL',
-              usageType: 'other',
-              appLockEnabled: false,
-              biometricUnlockEnabled: false,
-              hideFinancialValues: false,
-            })
-          }
+        <AppCard.Title>{t('settings.profile')}</AppCard.Title>
+        <AppCard.Text>{t('settings.profileBody')}</AppCard.Text>
+        <AppInput
+          label={t('settings.homeName')}
+          placeholder={t('settings.homeNamePlaceholder')}
+          value={profileName}
+          maxLength={120}
+          editable={!saving}
+          onChangeText={setProfileName}
+          onBlur={() => {
+            const nextName = profileName.trim();
+            if (nextName !== currentUserName) {
+              void safeSave({ userName: nextName || null });
+            }
+          }}
         />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Ads</AppCard.Title>
-        <AppCard.Text>
-          Pronto para receber IDs via app.config/app.json extra: EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
-          EXPO_PUBLIC_ADMOB_IOS_APP_ID e unidades rewarded.
-        </AppCard.Text>
-        <StatusBadge tone={adsConfig.enabled ? 'success' : 'info'} label={adsConfig.enabled ? 'Ads configurado' : 'Ads aguardando IDs'} />
+        <AppCard.Title>{t('settings.appearance')}</AppCard.Title>
+        <AppCard.Text>{t('settings.appearanceBody')}</AppCard.Text>
+        <AppSelect
+          label={t('settings.theme')}
+          value={currentTheme}
+          options={[
+            { value: 'system', label: t('settings.themeSystem') },
+            { value: 'light', label: t('settings.themeLight') },
+            { value: 'dark', label: t('settings.themeDark') },
+          ]}
+          disabled={saving}
+          onChange={(value) => void safeSave({ theme: value })}
+        />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Sobre</AppCard.Title>
-        <AppCard.Text>Versao {Application.nativeApplicationVersion ?? '0.1.0'} ({Application.nativeBuildVersion ?? 'dev'})</AppCard.Text>
-        <AppCard.Text>Politica de privacidade e termos de uso devem ser publicados antes da loja. Nenhum dado e enviado para servidor nesta V1 offline.</AppCard.Text>
+        <AppCard.Title>{t('settings.language')}</AppCard.Title>
+        <AppCard.Text>{t('settings.languageBody')}</AppCard.Text>
+        <AppSelect
+          label={t('settings.language')}
+          value={currentLanguage}
+          options={[
+            { value: 'system', label: t('settings.languageSystem') },
+            { value: 'pt-BR', label: t('settings.languagePortuguese') },
+            { value: 'en', label: t('settings.languageEnglish') },
+            { value: 'es', label: t('settings.languageSpanish') },
+          ]}
+          disabled={saving}
+          onChange={(value) => void safeSave({ language: value })}
+        />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>Zona de perigo</AppCard.Title>
-        <AppCard.Text>Apaga produtos, movimentacoes, categorias, fornecedores, backups registrados e recompensas locais.</AppCard.Text>
-        <AppButton label="Apagar todos os dados" variant="secondary" disabled={saving} onPress={() => setDeleteStep(1)} />
+        <AppCard.Title>{t('settings.currency')}</AppCard.Title>
+        <AppCard.Text>{t('settings.currencyBody')}</AppCard.Text>
+        <AppSelect
+          label={t('settings.currency')}
+          value={currentCurrency}
+          options={[
+            { value: 'BRL', label: t('settings.currencyBrl') },
+            { value: 'USD', label: t('settings.currencyUsd') },
+            { value: 'EUR', label: t('settings.currencyEur') },
+          ]}
+          disabled={saving}
+          onChange={(value) => void safeSave({ currency: value })}
+        />
+      </AppCard>
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{t('settings.security')}</AppCard.Title>
+        <AppCard.Text>{t('settings.securityBody')}</AppCard.Text>
+        <StatusBadge tone={appLockEnabled ? 'success' : 'info'} label={appLockEnabled ? t('settings.pinActive') : t('settings.pinInactive')} />
+        <AppButton label={appLockEnabled ? t('settings.managePin') : t('settings.enablePin')} onPress={() => router.push('/security/pin')} />
+        <AppButton label={biometricUnlockEnabled ? t('settings.manageBiometric') : t('settings.enableBiometric')} variant="secondary" onPress={() => router.push('/security/biometric')} />
+        <AppButton label={hideFinancialValues ? t('settings.showValues') : t('settings.hideValues')} disabled={saving} variant="ghost" onPress={() => void safeSave({ hideFinancialValues: !hideFinancialValues })} />
+      </AppCard>
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{t('settings.data')}</AppCard.Title>
+        <AppCard.Text>{t('settings.dataBody')}</AppCard.Text>
+        <AppButton label={t('settings.manageCategories')} variant="secondary" onPress={() => router.push('/categories')} />
+        <AppButton label={t('settings.manageSuppliers')} variant="secondary" onPress={() => router.push('/suppliers')} />
+        <AppButton label={t('settings.backup')} variant="secondary" onPress={() => router.push('/backup')} />
+        <AppButton label={t('settings.premium')} variant="ghost" onPress={() => router.push('/premium')} />
+        <AppButton
+          label={t('settings.resetPreferences')}
+          variant="ghost"
+          disabled={saving}
+          onPress={() => void resetPreferences()}
+        />
+      </AppCard>
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{t('settings.ads')}</AppCard.Title>
+        <AppCard.Text>{t('settings.adsBody')}</AppCard.Text>
+        <StatusBadge tone={adsConfig.enabled ? 'success' : 'info'} label={adsConfig.enabled ? t('settings.adsConfigured') : t('settings.adsWaiting')} />
+        <AppButton label={t('settings.manageAdPrivacy')} variant="secondary" disabled={saving || !adsConfig.enabled} onPress={() => void manageAdPrivacy()} />
+      </AppCard>
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{t('settings.about')}</AppCard.Title>
+        <AppCard.Text>{t('settings.version', { version: Application.nativeApplicationVersion ?? '1.0.0', build: Application.nativeBuildVersion ?? 'dev' })}</AppCard.Text>
+        <AppCard.Text>{t('settings.privacyNote')}</AppCard.Text>
+        <AppButton label={t('settings.privacyPolicy')} variant="ghost" onPress={() => void openExternalUrl(PRIVACY_POLICY_URL)} />
+        <AppButton label={t('settings.termsOfUse')} variant="ghost" onPress={() => void openExternalUrl(TERMS_URL)} />
+      </AppCard>
+
+      <AppCard style={{ gap: 12 }}>
+        <AppCard.Title>{t('settings.dangerZone')}</AppCard.Title>
+        <AppCard.Text>{t('settings.dangerBody')}</AppCard.Text>
+        <AppCard.Text>{t('settings.dangerDetails')}</AppCard.Text>
+        <AppButton label={t('settings.deleteAll')} variant="danger" disabled={saving} onPress={() => setDeleteStep(1)} />
       </AppCard>
 
       <ConfirmDialog
         visible={deleteStep === 1}
-        title="Apagar todos os dados?"
-        message="Esta acao remove dados operacionais deste aparelho. Faca um backup antes se quiser preservar o estoque."
-        confirmLabel="Continuar"
+        title={t('settings.deleteTitle')}
+        message={t('settings.deleteBody')}
+        confirmLabel={t('common.continue')}
         danger
         onCancel={() => setDeleteStep(0)}
         onConfirm={() => setDeleteStep(2)}
       />
       <ConfirmDialog
         visible={deleteStep === 2}
-        title="Confirmacao final"
-        message="Confirme novamente. Depois de apagar, a recuperacao so sera possivel com um backup valido."
-        confirmLabel="Apagar agora"
+        title={t('settings.finalConfirm')}
+        message={t('settings.finalDeleteBody')}
+        confirmLabel={t('settings.deleteNow')}
         danger
         onCancel={() => setDeleteStep(0)}
         onConfirm={() => void handleDeleteAll()}
@@ -181,3 +346,33 @@ export default function SettingsScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  heroCard: {
+    gap: 14,
+  },
+  heroIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  heroBody: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  heroBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+});

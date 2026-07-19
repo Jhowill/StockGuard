@@ -15,6 +15,26 @@ export async function setPin(pin: string) {
   return hashed;
 }
 
+export async function setPinWithRollback(pin: string, persistEnabledState: () => Promise<unknown>) {
+  const previousHash = await SecureStore.getItemAsync(PIN_HASH_KEY);
+  await setPin(pin);
+
+  try {
+    await persistEnabledState();
+  } catch (error) {
+    try {
+      if (previousHash) {
+        await SecureStore.setItemAsync(PIN_HASH_KEY, previousHash);
+      } else {
+        await clearPin();
+      }
+    } catch {
+      // Keep the original failure so callers see the real reason the update failed.
+    }
+    throw error;
+  }
+}
+
 export async function verifyPin(pin: string) {
   try {
     const stored = await SecureStore.getItemAsync(PIN_HASH_KEY);
@@ -37,6 +57,14 @@ export async function hasPin() {
     return Boolean(await SecureStore.getItemAsync(PIN_HASH_KEY));
   } catch {
     return false;
+  }
+}
+
+export async function inspectPinCredential(): Promise<'present' | 'missing' | 'unavailable'> {
+  try {
+    return await SecureStore.getItemAsync(PIN_HASH_KEY) ? 'present' : 'missing';
+  } catch {
+    return 'unavailable';
   }
 }
 
@@ -75,9 +103,14 @@ export async function canUseBiometricUnlock() {
   }
 }
 
-export async function authenticateWithBiometric() {
+type BiometricPromptOptions = {
+  promptMessage?: string;
+  fallbackLabel?: string;
+};
+
+export async function authenticateWithBiometric(options?: BiometricPromptOptions) {
   return LocalAuthentication.authenticateAsync({
-    promptMessage: 'Desbloquear EstoqueGuard',
-    fallbackLabel: 'Usar PIN',
+    promptMessage: options?.promptMessage ?? 'Unlock StockGuard',
+    fallbackLabel: options?.fallbackLabel ?? 'Use PIN',
   });
 }
