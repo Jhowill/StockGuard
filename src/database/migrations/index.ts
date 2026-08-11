@@ -4,6 +4,7 @@ import { migration003UsageType } from './003_usage_type';
 import { migration004BackupFileUri } from './004_backup_file_uri';
 import { migration005UserName } from './005_user_name';
 import { migration006FeatureUsageIntegrity } from './006_feature_usage_integrity';
+import { migration007AdDisplayFrequency } from './007_ad_display_frequency';
 
 export const migrations = [
   migration001InitialSchema,
@@ -12,4 +13,5 @@ export const migrations = [
   migration004BackupFileUri,
   migration005UserName,
   migration006FeatureUsageIntegrity,
+  migration007AdDisplayFrequency,
 ] as const;

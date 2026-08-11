@@ -9,6 +9,16 @@ type AdsConfig = {
   iosRewardedId?: string;
   androidRewardedInterstitialId?: string;
   iosRewardedInterstitialId?: string;
+  androidBannerHomeId?: string;
+  iosBannerHomeId?: string;
+  androidBannerAlertsId?: string;
+  iosBannerAlertsId?: string;
+  androidNativeProductsId?: string;
+  iosNativeProductsId?: string;
+  androidNativeReportsId?: string;
+  iosNativeReportsId?: string;
+  androidInterstitialTransitionId?: string;
+  iosInterstitialTransitionId?: string;
 };
 
 function readExtra(key: string) {
@@ -29,7 +39,31 @@ export function getAdsConfig(): AdsConfig {
     iosRewardedId: readExtra('EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID'),
     androidRewardedInterstitialId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID'),
     iosRewardedInterstitialId: readExtra('EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID'),
+    androidBannerHomeId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_BANNER_HOME_ID'),
+    iosBannerHomeId: readExtra('EXPO_PUBLIC_ADMOB_IOS_BANNER_HOME_ID'),
+    androidBannerAlertsId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_BANNER_ALERTS_ID'),
+    iosBannerAlertsId: readExtra('EXPO_PUBLIC_ADMOB_IOS_BANNER_ALERTS_ID'),
+    androidNativeProductsId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_PRODUCTS_ID'),
+    iosNativeProductsId: readExtra('EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID'),
+    androidNativeReportsId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID'),
+    iosNativeReportsId: readExtra('EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID'),
+    androidInterstitialTransitionId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID'),
+    iosInterstitialTransitionId: readExtra('EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID'),
   };
+}
+
+export type StandardAdPlacement = 'banner_home' | 'banner_alerts' | 'native_products' | 'native_reports' | 'interstitial_transition';
+
+export function getStandardAdUnitId(placement: StandardAdPlacement, platform: 'android' | 'ios') {
+  const config = getAdsConfig();
+  const ids = {
+    banner_home: platform === 'android' ? config.androidBannerHomeId : config.iosBannerHomeId,
+    banner_alerts: platform === 'android' ? config.androidBannerAlertsId : config.iosBannerAlertsId,
+    native_products: platform === 'android' ? config.androidNativeProductsId : config.iosNativeProductsId,
+    native_reports: platform === 'android' ? config.androidNativeReportsId : config.iosNativeReportsId,
+    interstitial_transition: platform === 'android' ? config.androidInterstitialTransitionId : config.iosInterstitialTransitionId,
+  };
+  return ids[placement];
 }
 
 export function getRewardedUnitId(platform: 'android' | 'ios') {

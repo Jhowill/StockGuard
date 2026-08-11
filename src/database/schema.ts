@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS products (
@@ -120,6 +120,13 @@ export const schemaStatements = [
     updated_at TEXT NOT NULL
   );`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_feature_usage_unique ON feature_usage_limits(feature_key, date_key, period);`,
+  `CREATE TABLE IF NOT EXISTS ad_display_events (
+    id TEXT PRIMARY KEY NOT NULL,
+    placement TEXT NOT NULL,
+    displayed_at TEXT NOT NULL,
+    date_key TEXT NOT NULL
+  );`,
+  `CREATE INDEX IF NOT EXISTS idx_ad_display_events_placement_time ON ad_display_events(placement, displayed_at DESC);`,
   `CREATE TABLE IF NOT EXISTS audit_logs (
     id TEXT PRIMARY KEY NOT NULL,
     action TEXT NOT NULL,

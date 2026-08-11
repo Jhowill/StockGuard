@@ -1,5 +1,5 @@
 import { useLocalSearchParams, router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
@@ -21,6 +21,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { translateAppError } from '@/i18n/errorMessages';
 import { formatMoney } from '@/utils/format';
 import { formatShortDateTime } from '@/utils/date-format';
+import { preloadStandardInterstitial, showStandardInterstitialAtTransition } from '@/services/adsService';
 
 function getStatusLabel(status: string, t: (key: string) => string) {
   switch (status) {
@@ -61,6 +62,15 @@ export default function ProductDetailScreen() {
   const categoryNames = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
   const supplierNames = useMemo(() => new Map(suppliers.map((supplier) => [supplier.id, supplier.name])), [suppliers]);
 
+  useEffect(() => {
+    void preloadStandardInterstitial().catch(() => undefined);
+  }, []);
+
+  const handleBack = async () => {
+    await showStandardInterstitialAtTransition();
+    router.back();
+  };
+
   if (loading) {
     return (
       <ScreenContainer padded>
@@ -89,7 +99,7 @@ export default function ProductDetailScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title={t('productDetail.title')} subtitle={product.name} variant="page" onBackPress={() => router.back()} />
+      <AppHeader title={t('productDetail.title')} subtitle={product.name} variant="page" onBackPress={() => void handleBack()} />
 
       <AppCard variant="hero" style={styles.heroCard}>
         {product.imageUri ? (

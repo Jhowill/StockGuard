@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppCard } from '@/components/ui/AppCard';
+import { StandardBannerAd } from '@/components/ads/StandardBannerAd';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -9,6 +11,7 @@ import { MetricCard } from '@/components/ui/MetricCard';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useI18n } from '@/hooks/useI18n';
 import { translateAppError } from '@/i18n/errorMessages';
@@ -58,9 +61,41 @@ export default function HomeScreen() {
   const { currency, theme, userName, hideFinancialValues, setThemeMode, setHideFinancialValues } = useAppState();
   const { palette, mode } = useAppTheme();
   const { summary, loading, error, refresh } = useDashboard();
+  const {
+    loading: adsLoading,
+    error: adsError,
+    isTemporaryAdFree,
+    adFreeExpiresAt,
+    dailyAdFreeUses,
+    dailyAdFreeLimit,
+    canRequestAdFreeReward,
+    grantTemporaryAdFree,
+    refresh: refreshAds,
+  } = useAdsAccess();
+  const [adFreeBusy, setAdFreeBusy] = useState(false);
+  const [adFreeActionError, setAdFreeActionError] = useState<string | undefined>();
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const displayName = userName?.trim();
   const greeting = displayName ? t('home.greeting', { name: displayName }) : t('home.greetingFallback');
   const nextTheme = mode === 'dark' ? 'light' : 'dark';
+  const remainingAdFreeSeconds = adFreeExpiresAt
+    ? Math.max(0, Math.ceil((new Date(adFreeExpiresAt).getTime() - currentTime) / 1000))
+    : 0;
+
+  useEffect(() => {
+    if (!isTemporaryAdFree || !adFreeExpiresAt) {
+      return;
+    }
+
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isTemporaryAdFree, adFreeExpiresAt]);
+
+  useEffect(() => {
+    if (isTemporaryAdFree && remainingAdFreeSeconds === 0) {
+      void refreshAds();
+    }
+  }, [isTemporaryAdFree, remainingAdFreeSeconds, refreshAds]);
 
   const toggleTheme = async () => {
     setThemeMode(nextTheme);
@@ -78,6 +113,26 @@ export default function HomeScreen() {
       await updateSettings({ hideFinancialValues: nextHidden });
     } catch {
       setHideFinancialValues(hideFinancialValues);
+    }
+  };
+
+  const handleTemporaryAdFree = async () => {
+    if (adFreeBusy || !canRequestAdFreeReward) {
+      return;
+    }
+
+    setAdFreeBusy(true);
+    setAdFreeActionError(undefined);
+    try {
+      const result = await grantTemporaryAdFree();
+      if (result.status !== 'success') {
+        setAdFreeActionError(result.status === 'failed' ? result.reason : 'ADS_CANCELLED');
+      }
+      await refreshAds();
+    } catch (nextError) {
+      setAdFreeActionError(nextError instanceof Error ? nextError.message : 'ADS_UNAVAILABLE');
+    } finally {
+      setAdFreeBusy(false);
     }
   };
 
@@ -139,6 +194,38 @@ export default function HomeScreen() {
           <StatusBadge tone="success" label={`${loading ? '-' : summary.activeProductsCount} ${t('home.products')}`} />
           <StatusBadge tone="warning" label={`${loading ? '-' : summary.lowStockCount} ${t('home.lowStock')}`} />
         </View>
+      </AppCard>
+
+      <AppCard style={styles.adFreeCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionCopy}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('ads.adFreeTitle')}</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>
+              {isTemporaryAdFree
+                ? t('ads.adFreeActiveBody', { minutes: Math.ceil(remainingAdFreeSeconds / 60) })
+                : t('ads.adFreeBody')}
+            </Text>
+          </View>
+          <Ionicons name="timer-outline" size={22} color={palette.premium} />
+        </View>
+        <View style={styles.heroBadges}>
+          <StatusBadge
+            tone={isTemporaryAdFree ? 'success' : dailyAdFreeUses >= dailyAdFreeLimit ? 'warning' : 'info'}
+            label={isTemporaryAdFree
+              ? t('ads.adFreeActive', { minutes: Math.ceil(remainingAdFreeSeconds / 60) })
+              : t('ads.adFreeAvailable', { remaining: Math.max(0, dailyAdFreeLimit - dailyAdFreeUses), limit: dailyAdFreeLimit })}
+          />
+        </View>
+        <AppButton
+          label={isTemporaryAdFree ? t('ads.adFreeActiveButton') : t('ads.adFreeWatch')}
+          variant="secondary"
+          loading={adFreeBusy || adsLoading}
+          disabled={!canRequestAdFreeReward}
+          onPress={() => void handleTemporaryAdFree()}
+        />
+        {adFreeActionError || adsError ? (
+          <Text style={[styles.adFreeError, { color: palette.danger }]}>{translateAppError(adFreeActionError ?? adsError, t)}</Text>
+        ) : null}
       </AppCard>
 
       <View style={styles.metricRow}>
@@ -206,6 +293,8 @@ export default function HomeScreen() {
         )}
         <AppButton label={t('home.viewAlerts')} variant="secondary" onPress={() => router.push('/(tabs)/alerts')} />
       </AppCard>
+
+      <StandardBannerAd placement="banner_home" />
     </ScreenContainer>
   );
 }
@@ -213,6 +302,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   heroCard: {
     gap: 18,
+  },
+  adFreeCard: {
+    gap: 14,
+  },
+  adFreeError: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   headerActions: {
     flexDirection: 'row',

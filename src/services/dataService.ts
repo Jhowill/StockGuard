@@ -9,6 +9,7 @@ export async function deleteAllUserData() {
     await db.execAsync('DELETE FROM categories;');
     await db.execAsync('DELETE FROM suppliers;');
     await db.execAsync('DELETE FROM ad_entitlements;');
+    await db.execAsync('DELETE FROM ad_display_events;');
     await db.execAsync('DELETE FROM feature_usage_limits;');
     await db.execAsync('DELETE FROM audit_logs;');
     await db.execAsync('DELETE FROM backup_records;');

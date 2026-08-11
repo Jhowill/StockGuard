@@ -104,13 +104,13 @@ export async function canUseBiometricUnlock() {
 }
 
 type BiometricPromptOptions = {
-  promptMessage?: string;
-  fallbackLabel?: string;
+  promptMessage: string;
+  fallbackLabel: string;
 };
 
-export async function authenticateWithBiometric(options?: BiometricPromptOptions) {
+export async function authenticateWithBiometric(options: BiometricPromptOptions) {
   return LocalAuthentication.authenticateAsync({
-    promptMessage: options?.promptMessage ?? 'Unlock StockGuard',
-    fallbackLabel: options?.fallbackLabel ?? 'Use PIN',
+    promptMessage: options.promptMessage,
+    fallbackLabel: options.fallbackLabel,
   });
 }

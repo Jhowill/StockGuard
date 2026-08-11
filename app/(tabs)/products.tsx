@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
+import { StandardNativeAd } from '@/components/ads/StandardNativeAd';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -138,20 +139,23 @@ export default function ProductsScreen() {
       ) : filteredProducts.length === 0 ? (
         <EmptyState title={t('products.noFilterTitle')} description={t('products.noFilterBody')} icon="filter-outline" />
       ) : (
-        filteredProducts.map((product) => (
-          <AppCard key={product.id} onPress={() => router.push(`/products/${product.id}`)}>
-            <AppCard.Row
-              icon="cube-outline"
-              title={product.name}
-              subtitle={categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
-              trailing={
-                <StatusBadge
-                  tone={product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success'}
-                  label={`${product.quantity}`}
-                />
-              }
-            />
-          </AppCard>
+        filteredProducts.map((product, index) => (
+          <View key={product.id} style={styles.listItem}>
+            <AppCard onPress={() => router.push(`/products/${product.id}`)}>
+              <AppCard.Row
+                icon="cube-outline"
+                title={product.name}
+                subtitle={categoryNames.get(product.categoryId ?? '') ?? product.location ?? product.unit}
+                trailing={
+                  <StatusBadge
+                    tone={product.quantity === 0 ? 'danger' : product.quantity <= product.minQuantity ? 'warning' : 'success'}
+                    label={`${product.quantity}`}
+                  />
+                }
+              />
+            </AppCard>
+            {index >= 4 && (index - 4) % 10 === 0 ? <StandardNativeAd placement="native_products" /> : null}
+          </View>
         ))
       )}
     </ScreenContainer>
@@ -196,5 +200,8 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flexGrow: 1,
+  },
+  listItem: {
+    gap: 12,
   },
 });

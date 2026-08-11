@@ -1,8 +1,8 @@
-# Politica de Privacidade do StockGuard
+# Politica de Privacidade do EstoqueGuard Offline
 
-Ultima atualizacao: 10 de julho de 2026.
+Ultima atualizacao: 6 de agosto de 2026.
 
-O StockGuard e um aplicativo de controle de estoque com funcionamento principal offline. Produtos, movimentacoes, categorias, fornecedores, configuracoes, PIN e historico permanecem no dispositivo do usuario.
+O EstoqueGuard Offline, publicado por Jhowill, e um aplicativo de controle de estoque com funcionamento principal offline. Produtos, movimentacoes, categorias, fornecedores, configuracoes, PIN e historico permanecem no dispositivo do usuario.
 
 ## Dados tratados
 
@@ -12,9 +12,13 @@ O usuario pode criar, compartilhar e restaurar arquivos de backup. O destino do 
 
 ## Anuncios
 
-Recursos secundarios podem exibir anuncios fornecidos pelo Google AdMob. O SDK pode tratar identificadores do dispositivo, dados de interacao, diagnostico e informacoes necessarias para entrega, medicao, seguranca e personalizacao de anuncios, conforme as escolhas de consentimento do usuario e as regras da plataforma.
+Recursos secundarios podem exibir anuncios fornecidos pelo Google AdMob. O aplicativo pode apresentar banners, anuncios nativos e intersticiais em pontos de leitura e transicao, alem de anuncios recompensados para recursos opcionais.
 
-As opcoes de privacidade de anuncios podem ser revistas dentro de Configuracoes. No iOS, o aplicativo respeita a permissao de rastreamento do sistema.
+O Google Mobile Ads SDK pode coletar e compartilhar com o Google o endereco IP, usado para estimar localizacao aproximada; interacoes com o aplicativo e com anuncios, como inicializacoes, toques e visualizacoes; diagnosticos de desempenho; e identificadores do dispositivo ou de publicidade. Esses dados podem ser usados para publicidade, analise, medicao e prevencao de fraude. A transmissao e protegida por TLS. O tratamento efetivo depende das escolhas de consentimento do usuario, das configuracoes do aparelho e das regras da plataforma.
+
+O usuario pode assistir voluntariamente a um anuncio recompensado para pausar anuncios comuns por cinco minutos, ate tres vezes por dia. Essa pausa nao impede anuncios que o proprio usuario escolher assistir para desbloquear recursos opcionais.
+
+Antes de solicitar anuncios, o aplicativo atualiza o consentimento pelo Google User Messaging Platform e verifica se anuncios podem ser requisitados. As opcoes de privacidade podem ser revistas dentro de Configuracoes. No iOS, o aplicativo respeita a permissao de rastreamento do sistema. Configuracoes tambem oferece um canal para denunciar anuncios inadequados ou incompativeis com a faixa etaria.
 
 ## Permissoes
 
@@ -22,11 +26,15 @@ O acesso a fotos ocorre somente quando o usuario escolhe uma imagem para um prod
 
 ## Retencao e exclusao
 
-Os dados locais permanecem no dispositivo ate que o usuario os exclua, desinstale o aplicativo ou restaure outro backup. A opcao Excluir todos os dados remove os registros locais e os segredos de seguranca mantidos pelo aplicativo.
+Os dados locais permanecem no dispositivo ate que o usuario os exclua, desinstale o aplicativo ou restaure outro backup. A opcao Excluir todos os dados remove os registros locais, o historico local de exibicao de anuncios e os segredos de seguranca mantidos pelo aplicativo.
 
-## Contato
+Recompensas temporarias, limites de uso e historico de exibicao de anuncios nao sao exportados nem restaurados em backups. A retencao de dados processados pelo Google segue as politicas e controles do Google, indicados abaixo.
 
-Duvidas e solicitacoes podem ser enviadas pelo repositorio oficial: https://github.com/Jhowill/StockGuard/issues
+## Seguranca, escolhas e contato
+
+Os dados que permanecem no aparelho sao protegidos pelos controles de seguranca do sistema operacional. As preferencias de anuncios podem ser revistas em Configuracoes > Gerenciar privacidade dos anuncios. Anuncios inadequados podem ser informados em Configuracoes > Denunciar anuncio inadequado. Para excluir os dados locais, use Configuracoes > Excluir todos os dados ou desinstale o aplicativo.
+
+Duvidas e solicitacoes podem ser enviadas pelo canal de privacidade do desenvolvedor: https://github.com/Jhowill/StockGuard/issues
 
 ## Terceiros
 

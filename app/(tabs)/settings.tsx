@@ -24,8 +24,9 @@ import { deleteAllUserData } from '@/services/dataService';
 import { clearSecuritySecrets } from '@/services/securityService';
 import { showPrivacyOptions } from '@/services/adsService';
 
-const PRIVACY_POLICY_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/PRIVACY_POLICY.md';
-const TERMS_URL = 'https://github.com/Jhowill/StockGuard/blob/agent/ad-policy-flows/docs/TERMS_OF_USE.md';
+const PRIVACY_POLICY_URL = 'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/PRIVACY_POLICY.md';
+const TERMS_URL = 'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/TERMS_OF_USE.md';
+const AD_REPORT_BASE_URL = 'https://github.com/Jhowill/StockGuard/issues/new';
 
 function getThemeLabel(theme: ThemeMode, t: (key: string) => string) {
   switch (theme) {
@@ -308,6 +309,11 @@ export default function SettingsScreen() {
         <AppCard.Text>{t('settings.adsBody')}</AppCard.Text>
         <StatusBadge tone={adsConfig.enabled ? 'success' : 'info'} label={adsConfig.enabled ? t('settings.adsConfigured') : t('settings.adsWaiting')} />
         <AppButton label={t('settings.manageAdPrivacy')} variant="secondary" disabled={saving || !adsConfig.enabled} onPress={() => void manageAdPrivacy()} />
+        <AppButton
+          label={t('settings.reportAd')}
+          variant="ghost"
+          onPress={() => void openExternalUrl(`${AD_REPORT_BASE_URL}?title=${encodeURIComponent(t('settings.reportAdIssueTitle'))}`)}
+        />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>

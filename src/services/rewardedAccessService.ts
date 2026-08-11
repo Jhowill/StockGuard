@@ -1,18 +1,19 @@
 import { featureDurations } from '@/constants/features';
-import { createEntitlement, expireOldEntitlements } from '@/database/repositories/adEntitlementRepository';
+import { claimTemporaryAdFreeReward, createEntitlement, expireOldEntitlements, getTemporaryAdFreeRewardState } from '@/database/repositories/adEntitlementRepository';
 import { consumeActiveEntitlementUse } from '@/database/repositories/adEntitlementRepository';
 import { incrementUsageLimit } from '@/database/repositories/featureUsageLimitRepository';
 import type { PremiumFeature } from '@/types/ads';
 import { nowIso } from '@/utils/date';
 import { dateKey } from '@/utils/date';
 
-export async function grantTemporaryAdFree(durationMinutes = 60) {
-  await expireOldEntitlements();
-  return createEntitlement({
-    type: 'temporary_ad_free',
-    source: 'rewarded_ad',
-    expiresAt: new Date(Date.now() + durationMinutes * 60 * 1000).toISOString(),
-  });
+export const TEMPORARY_AD_FREE_DURATION_MINUTES = 5;
+
+export async function getTemporaryAdFreeState() {
+  return getTemporaryAdFreeRewardState();
+}
+
+export async function grantTemporaryAdFree() {
+  return claimTemporaryAdFreeReward(TEMPORARY_AD_FREE_DURATION_MINUTES);
 }
 
 export async function grantFeatureUnlock(featureKey: PremiumFeature) {

@@ -10,7 +10,6 @@ import { listMovements } from '@/database/repositories/stockMovementRepository';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
 import { createBackupRecord } from '@/database/repositories/backupRecordRepository';
 import { createAuditLog } from '@/database/repositories/auditLogRepository';
-import { listAllEntitlements } from '@/database/repositories/adEntitlementRepository';
 import { deleteManagedProductImage, isManagedProductImage } from '@/services/productImageService';
 import { SCHEMA_VERSION } from '@/database/schema';
 import { nowIso } from '@/utils/date';
@@ -151,15 +150,14 @@ async function buildProductImages(products: ProductRecord[]) {
 
 export async function buildBackupPayload(): Promise<BackupPayload> {
   const snapshot = await withTransaction(async () => {
-    const [products, categories, suppliers, stockMovements, appSettings, adEntitlements] = await Promise.all([
+    const [products, categories, suppliers, stockMovements, appSettings] = await Promise.all([
       listProducts(true),
       listCategories(true),
       listSuppliers(true),
       listMovements(0),
       getSettings(),
-      listAllEntitlements(),
     ]);
-    return { products, categories, suppliers, stockMovements, appSettings, adEntitlements };
+    return { products, categories, suppliers, stockMovements, appSettings };
   });
   const productImages = await buildProductImages(snapshot.products);
 
@@ -173,7 +171,8 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
     suppliers: snapshot.suppliers,
     stockMovements: snapshot.stockMovements,
     appSettings: snapshot.appSettings,
-    adEntitlements: snapshot.adEntitlements,
+    // Ad rewards are temporary device state and must not be portable between backups.
+    adEntitlements: [],
     productImages,
   };
 }
@@ -183,7 +182,7 @@ function assertBackupPayload(payload: Partial<BackupPayload>) {
     throw new Error('INVALID_BACKUP_FILE');
   }
 
-  if (payload.schemaVersion !== SCHEMA_VERSION && payload.schemaVersion !== 5 && payload.schemaVersion !== 4) {
+  if (![4, 5, 6, SCHEMA_VERSION].includes(payload.schemaVersion ?? -1)) {
     throw new Error('INCOMPATIBLE_BACKUP_SCHEMA');
   }
 
@@ -656,26 +655,6 @@ function normalizeRestoredSettings(settings: AppSettingsRecord, fallback: AppSet
   };
 }
 
-function normalizeRestoreEntitlements(entitlements: AdEntitlement[]) {
-  return entitlements
-    .filter((entitlement) => isNonEmptyString(entitlement.id))
-    .map((entitlement) => ({
-      ...entitlement,
-      id: entitlement.id.trim(),
-      type: pickAllowed(entitlement.type, entitlementTypes, 'usage_feature_unlock'),
-      source: pickAllowed(entitlement.source, entitlementSources, 'rewarded_interstitial'),
-      featureKey: entitlement.featureKey ? pickAllowed(entitlement.featureKey, premiumFeatures, 'csv_export') : undefined,
-      startedAt: normalizeIsoString(entitlement.startedAt),
-      expiresAt: isNonEmptyString(entitlement.expiresAt) ? entitlement.expiresAt.trim() : undefined,
-      remainingUses: normalizeOptionalNonNegativeNumber(entitlement.remainingUses),
-      dailyUseDate: isNonEmptyString(entitlement.dailyUseDate) ? entitlement.dailyUseDate.trim() : nowIso().slice(0, 10),
-      dailyUseCount: Math.trunc(normalizeNonNegativeNumber(entitlement.dailyUseCount)),
-      status: pickAllowed(entitlement.status, entitlementStatuses, 'active'),
-      createdAt: normalizeIsoString(entitlement.createdAt),
-      updatedAt: normalizeIsoString(entitlement.updatedAt),
-    }));
-}
-
 async function restoreProductImageUris(products: ProductRecord[], images: BackupProductImage[]) {
   const imageMap = new Map(images.map((image) => [image.productId, image]));
   const folder = `${backupFolder()}product-images/`;
@@ -816,7 +795,6 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
   const products = await restoreProductImageUris(normalizedProducts, parsed.productImages ?? []);
   const productIds = new Set(products.map((product) => product.id));
   const stockMovements = Array.isArray(parsed.stockMovements) ? normalizeRestoreMovements(parsed.stockMovements, productIds) : [];
-  const adEntitlements = Array.isArray(parsed.adEntitlements) ? normalizeRestoreEntitlements(parsed.adEntitlements) : [];
 
   try {
     await withExclusiveTransaction(async (db) => {
@@ -918,27 +896,6 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
       );
     }
 
-    for (const entitlement of adEntitlements) {
-      await db.runAsync(
-        `INSERT INTO ad_entitlements (
-          id, type, source, feature_key, started_at, expires_at, remaining_uses,
-          daily_use_date, daily_use_count, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        entitlement.id,
-        entitlement.type,
-        entitlement.source,
-        entitlement.featureKey ?? null,
-        entitlement.startedAt,
-        entitlement.expiresAt ?? null,
-        entitlement.remainingUses ?? null,
-        entitlement.dailyUseDate,
-        entitlement.dailyUseCount,
-        entitlement.status,
-        entitlement.createdAt,
-        entitlement.updatedAt,
-      );
-    }
-
       await db.runAsync(
         `INSERT INTO app_settings (
         id, user_name, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
@@ -976,7 +933,7 @@ export async function restoreBackupFile(fileUri: string, password?: string) {
   }
 
   const health = await getDatabaseHealth();
-  if (health.foreignKeyViolations > 0 || health.schemaVersion <= 0) {
+  if (health.foreignKeyViolations > 0 || health.schemaVersion !== SCHEMA_VERSION) {
     throw new Error('DATABASE_INTEGRITY_CHECK_FAILED');
   }
 

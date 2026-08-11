@@ -23,11 +23,21 @@ for (const key of [
   'EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID',
   'EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID',
   'EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID',
+  'EXPO_PUBLIC_ADMOB_ANDROID_BANNER_HOME_ID',
+  'EXPO_PUBLIC_ADMOB_IOS_BANNER_HOME_ID',
+  'EXPO_PUBLIC_ADMOB_ANDROID_BANNER_ALERTS_ID',
+  'EXPO_PUBLIC_ADMOB_IOS_BANNER_ALERTS_ID',
+  'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_PRODUCTS_ID',
+  'EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID',
+  'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID',
+  'EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID',
+  'EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID',
+  'EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID',
 ]) {
   requireValue(app.extra?.[key], `${key} is required`);
 }
 
-for (const file of ['README.md', '.env.example', 'eas.json', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md']) {
+for (const file of ['eas.json', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md', 'docs/08_STORE_LISTING.md']) {
   if (!fs.existsSync(file)) failures.push(`${file} is required`);
 }
 
@@ -64,6 +74,14 @@ for (const file of ['app/_layout.tsx', 'src/database/db.ts', 'src/services/backu
 
 if (app.extra?.EXPO_PUBLIC_ADS_TEST_MODE === 'true') {
   failures.push('Production config must not enable AdMob test mode');
+}
+
+const settingsSource = fs.readFileSync('app/(tabs)/settings.tsx', 'utf8');
+for (const url of [
+  'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/PRIVACY_POLICY.md',
+  'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/TERMS_OF_USE.md',
+]) {
+  if (!settingsSource.includes(url)) failures.push(`Missing stable in-app legal URL: ${url}`);
 }
 
 if (failures.length) {

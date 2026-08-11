@@ -13,6 +13,7 @@ import { PremiumLock } from '@/components/ui/PremiumLock';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { AdPolicyNotice } from '@/components/ads/AdPolicyNotice';
+import { StandardNativeAd } from '@/components/ads/StandardNativeAd';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useReports } from '@/hooks/useReports';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
@@ -167,6 +168,8 @@ export default function ReportsScreen() {
               <MetricCard compact label={t('reports.products')} value={String(summary.movedProductsCount)} />
             </View>
           </View>
+
+          <StandardNativeAd placement="native_reports" />
 
           <AppCard style={{ gap: 12 }}>
             <AppCard.Title>{t('reports.topProducts')}</AppCard.Title>

@@ -13,9 +13,20 @@ Checklist operacional para publicar o EstoqueGuard Offline na Google Play e App 
 - Confirmar que cadastro, edicao e movimentacao de estoque nao exigem anuncio.
 - Confirmar que PDF, CSV, backup criptografado e outros extras usam rewarded opt-in.
 - Confirmar que consentimento AdMob/UMP e ATT no iOS estao configurados.
-- Confirmar que `.env.example` nao contem IDs reais sensiveis.
+- Confirmar em dispositivo real que nenhum banner, nativo ou intersticial e solicitado antes do consentimento UMP.
+- Confirmar que Configuracoes > Denunciar anuncio inadequado abre o canal de suporte.
+- Confirmar que a politica e os termos foram publicados na branch `main`; os links do app usam `raw.githubusercontent.com`.
+- Revisar `docs/08_STORE_LISTING.md` e preencher os campos de contato que pertencem a conta da loja.
 
 ## Builds
+
+Para gerar um QR de instalacao direta, use o build Android interno:
+
+```bash
+npm run build:android
+```
+
+Esse perfil gera um APK interno no EAS e expõe o QR/link de download no fluxo de build.
 
 ```bash
 npx eas-cli build --platform android --profile production
@@ -41,6 +52,7 @@ npx eas-cli build --platform android --profile preview
 ## App Store
 
 - Preencher App Privacy considerando AdMob, diagnostico e identificadores.
+- Informar nas notas de revisao onde denunciar anuncios inadequados.
 - Confirmar ATT e mensagem de rastreamento.
 - Confirmar `ITSAppUsesNonExemptEncryption=false`.
 - Informar politica de privacidade publica.
@@ -62,5 +74,5 @@ npx eas-cli build --platform android --profile preview
 
 - Criar mensagens UMP no painel do Google AdMob.
 - Configurar credenciais Android/iOS no EAS.
-- Publicar URL definitiva da politica de privacidade e termos.
+- Fazer merge/publicar a branch na `main` para ativar as URLs definitivas da politica e dos termos.
 - Preencher formularios de privacidade nas lojas.

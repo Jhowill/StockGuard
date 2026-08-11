@@ -323,6 +323,17 @@ test('usage rewards and destructive writes use exclusive atomic transactions', (
   assert.match(schema, /idx_feature_usage_unique/);
 });
 
+test('backup compatibility and ad reward state cannot be bypassed by restore', () => {
+  const backup = read('src/services/backupService.ts');
+  const deletion = read('src/services/dataService.ts');
+
+  assert.match(backup, /\[4, 5, 6, SCHEMA_VERSION\]/);
+  assert.match(backup, /health\.schemaVersion !== SCHEMA_VERSION/);
+  assert.match(backup, /adEntitlements: \[\]/);
+  assert.doesNotMatch(backup, /for \(const entitlement of adEntitlements\)/);
+  assert.match(deletion, /DELETE FROM ad_display_events/);
+});
+
 test('product currency and supported units remain stable after edits and movements', () => {
   const edit = read('app/products/edit.tsx');
   const movement = read('app/products/movement.tsx');

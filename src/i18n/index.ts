@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLocales } from 'expo-localization';
 import { useAppState } from '@/state/app-state';
 
 type Locale = 'pt-BR' | 'en' | 'es';
@@ -42,6 +43,7 @@ const translations = {
       privacyMaskBody: 'A tela foi ocultada para proteger seus dados sensiveis.',
       advancedFeature: 'Recurso avancado',
       unlockWithAd: 'Liberar com anuncio',
+      advertisement: 'Anúncio',
     },
     errors: {
       genericTitle: 'Algo saiu do esperado',
@@ -129,6 +131,14 @@ const translations = {
       premiumTitle: 'Recompensas e premium',
       premiumBody: 'A base do app continua livre; anuncios liberam extras por tempo ou uso limitado.',
       cancelled: 'Anuncio cancelado.',
+      adFreeTitle: 'Pausa nas propagandas',
+      adFreeBody: 'Assista voluntariamente a um anuncio e fique 5 minutos sem propagandas comuns. Anuncios para desbloquear funcoes continuam disponiveis.',
+      adFreeActiveBody: 'Propagandas comuns pausadas por mais {{minutes}} min. Anuncios para desbloquear funcoes continuam disponiveis.',
+      adFreeWatch: 'Assistir e pausar propagandas',
+      adFreeActiveButton: 'Pausa em andamento',
+      adFreeActive: '{{minutes}} min sem propagandas',
+      adFreeAvailable: '{{remaining}} de {{limit}} pausas disponiveis hoje',
+      adFreeLimitReached: 'As 3 pausas de propagandas de hoje ja foram usadas.',
     },
     home: {
       greeting: 'Ola, {{name}}!',
@@ -293,6 +303,8 @@ const translations = {
       privacyPolicy: 'Politica de privacidade',
       termsOfUse: 'Termos de uso',
       manageAdPrivacy: 'Gerenciar privacidade dos anuncios',
+      reportAd: 'Denunciar anuncio inadequado',
+      reportAdIssueTitle: 'Relato de anúncio inadequado',
       adsPrivacyFailed: 'Nao foi possivel abrir as opcoes de privacidade dos anuncios.',
       linkFailed: 'Nao foi possivel abrir este link.',
       dangerZone: 'Zona de perigo',
@@ -739,6 +751,21 @@ const translations = {
 
 type TranslationTree = typeof translations['pt-BR'];
 
+function mergeTranslationTree(base: TranslationTree, overrides: Record<string, any>): TranslationTree {
+  const merged = Object.fromEntries(
+    Object.entries(base).map(([section, values]) => [section, { ...values }]),
+  ) as Record<string, any>;
+
+  for (const [section, values] of Object.entries(overrides)) {
+    merged[section] = {
+      ...(merged[section] ?? {}),
+      ...(values as Record<string, unknown>),
+    };
+  }
+
+  return merged as TranslationTree;
+}
+
 const enSupplemental: Record<string, any> = {
   ads: {
     requiredTitle: 'Stock saves without ads',
@@ -751,6 +778,14 @@ const enSupplemental: Record<string, any> = {
     premiumTitle: 'Rewards and premium',
     premiumBody: 'The core app stays free; ads unlock extras for a limited time or use.',
     cancelled: 'Ad cancelled.',
+    adFreeTitle: 'Ad pause',
+    adFreeBody: 'Voluntarily watch an ad and pause standard ads for 5 minutes. Feature-unlock ads remain available.',
+    adFreeActiveBody: 'Standard ads are paused for {{minutes}} more min. Feature-unlock ads remain available.',
+    adFreeWatch: 'Watch and pause ads',
+    adFreeActiveButton: 'Pause in progress',
+    adFreeActive: '{{minutes}} min ad-free',
+    adFreeAvailable: '{{remaining}} of {{limit}} pauses available today',
+    adFreeLimitReached: 'All 3 ad pauses for today have already been used.',
   },
   home: {
     stockValue: 'Stock value',
@@ -760,8 +795,8 @@ const enSupplemental: Record<string, any> = {
     alertsBody: 'Items that need attention',
     criticalItems: 'Critical items',
     expiringSoon: 'Expiring soon',
-    expiringSoonBody: 'Items that need rotation soon',
-    lowStockBody: 'Items below the minimum stock',
+    expiringSoonBody: '{{count}} items expiring soon',
+    lowStockBody: '{{count}} items at the minimum stock level',
     noAlertsBody: 'Everything is clear for now',
     noRecentMovements: 'No recent movements',
     noRecentMovementsBody: 'Register stock changes to see them here',
@@ -770,7 +805,7 @@ const enSupplemental: Record<string, any> = {
     toggleDark: 'Dark mode',
     toggleLight: 'Light mode',
     zeroStock: 'Out of stock',
-    zeroStockBody: 'Items with no units available',
+    zeroStockBody: '{{count}} items with no units available',
   },
   products: {
     subtitle: 'List and search',
@@ -865,6 +900,7 @@ const enSupplemental: Record<string, any> = {
     adsBody: 'Ready to receive IDs via app.config/app.json extra.',
     adsConfigured: 'Ads configured',
     adsWaiting: 'Waiting for ad IDs',
+    reportAd: 'Report an inappropriate ad',
     about: 'About',
     version: 'Version {{version}} ({{build}})',
     privacyNote: 'Your inventory data stays on the device. AdMob may process technical data according to your privacy choices.',
@@ -942,6 +978,14 @@ const esSupplemental: Record<string, any> = {
     premiumTitle: 'Recompensas y premium',
     premiumBody: 'La base del app sigue libre; los anuncios desbloquean extras por tiempo o uso limitado.',
     cancelled: 'Anuncio cancelado.',
+    adFreeTitle: 'Pausa de anuncios',
+    adFreeBody: 'Mira voluntariamente un anuncio y pausa los anuncios comunes por 5 minutos. Los anuncios para desbloquear funciones siguen disponibles.',
+    adFreeActiveBody: 'Los anuncios comunes estan pausados por {{minutes}} min mas. Los anuncios para desbloquear funciones siguen disponibles.',
+    adFreeWatch: 'Ver y pausar anuncios',
+    adFreeActiveButton: 'Pausa en curso',
+    adFreeActive: '{{minutes}} min sin anuncios',
+    adFreeAvailable: '{{remaining}} de {{limit}} pausas disponibles hoy',
+    adFreeLimitReached: 'Las 3 pausas de anuncios de hoy ya fueron usadas.',
   },
   home: {
     stockValue: 'Valor de stock',
@@ -951,8 +995,8 @@ const esSupplemental: Record<string, any> = {
     alertsBody: 'Items que necesitan atencion',
     criticalItems: 'Items criticos',
     expiringSoon: 'Vencen pronto',
-    expiringSoonBody: 'Items que necesitan rotacion pronto',
-    lowStockBody: 'Items por debajo del minimo',
+    expiringSoonBody: '{{count}} items proximos al vencimiento',
+    lowStockBody: '{{count}} items en el limite minimo',
     noAlertsBody: 'Todo esta en orden por ahora',
     noRecentMovements: 'Sin movimientos recientes',
     noRecentMovementsBody: 'Registra cambios de stock para verlos aqui',
@@ -961,7 +1005,7 @@ const esSupplemental: Record<string, any> = {
     toggleDark: 'Modo oscuro',
     toggleLight: 'Modo claro',
     zeroStock: 'Sin stock',
-    zeroStockBody: 'Items sin unidades disponibles',
+    zeroStockBody: '{{count}} items sin unidades disponibles',
   },
   products: {
     subtitle: 'Lista y busqueda',
@@ -1056,6 +1100,7 @@ const esSupplemental: Record<string, any> = {
     adsBody: 'Listo para recibir IDs via app.config/app.json extra.',
     adsConfigured: 'Anuncios configurados',
     adsWaiting: 'Esperando IDs de anuncios',
+    reportAd: 'Denunciar un anuncio inapropiado',
     about: 'Acerca de',
     version: 'Version {{version}} ({{build}})',
     privacyNote: 'Tus datos de inventario permanecen en el dispositivo. AdMob puede tratar datos tecnicos segun tus opciones de privacidad.',
@@ -1123,9 +1168,9 @@ const esSupplemental: Record<string, any> = {
 
 const translationsWithFallback: Record<Locale, TranslationTree> = {
   'pt-BR': translations['pt-BR'],
-  en: {
+  en: mergeTranslationTree({
     ...translations['pt-BR'],
-    common: { ...translations['pt-BR'].common, save: 'Save', retry: 'Try again', back: 'Back', add: 'Add', edit: 'Edit', create: 'Create', cancel: 'Cancel', archive: 'Archive', share: 'Share', search: 'Search', close: 'Close', continue: 'Continue', loading: 'Loading...', none: 'None', noLocation: 'No location', noCategory: 'No category', noSupplier: 'No supplier', noSku: 'No SKU', active: 'Active', archived: 'Archived', export: 'Export', advancedFeature: 'Advanced feature', unlockWithAd: 'Unlock with ad' },
+    common: { ...translations['pt-BR'].common, save: 'Save', retry: 'Try again', back: 'Back', add: 'Add', edit: 'Edit', create: 'Create', cancel: 'Cancel', archive: 'Archive', share: 'Share', search: 'Search', close: 'Close', continue: 'Continue', loading: 'Loading...', none: 'None', noLocation: 'No location', noCategory: 'No category', noSupplier: 'No supplier', noSku: 'No SKU', active: 'Active', archived: 'Archived', export: 'Export', advancedFeature: 'Advanced feature', unlockWithAd: 'Unlock with ad', advertisement: 'Advertisement' },
     errors: { ...translations['pt-BR'].errors, genericTitle: 'Something went wrong', genericBody: 'Please try again in a moment.', alertsLoadFailed: 'Could not load alerts.', adsAccessLoadFailed: 'Could not load ad state.', backupLoadFailed: 'Could not load backups.', dashboardLoadFailed: 'Could not load the home summary.', categoriesLoadFailed: 'Could not load categories.', suppliersLoadFailed: 'Could not load suppliers.', productsLoadFailed: 'Could not load products.', reportsLoadFailed: 'Could not load reports.', settingsLoadFailed: 'Could not load settings.', featureGateLoadFailed: 'Could not load rewards.', productDetailLoadFailed: 'Could not load product details.', adsNotConfigured: 'Ads are not configured yet.', backupFolderUnavailable: 'The backup folder is unavailable.', invalidBackupFile: 'The selected file does not look like a valid backup.', incompatibleBackupSchema: 'This backup came from a different app version.', invalidBackupSchema: 'The backup structure is invalid.', invalidBackupCategory: 'A backup category is invalid.', invalidBackupSupplier: 'A backup supplier is invalid.', invalidBackupProduct: 'A backup product is invalid.', invalidBackupMovement: 'A backup movement is invalid.', backupPasswordTooShort: 'The backup password must be at least 6 characters.', backupPasswordRequired: 'The backup password is required.', backupPasswordInvalid: 'The backup password is incorrect.', sharingUnavailable: 'Sharing is unavailable on this device.', backupFileNotFound: 'Could not find the backup file.', backupSafetyCopyFailed: 'Restore was cancelled because the current safety backup could not be created.', exportFolderUnavailable: 'The export folder is unavailable.', exportFileNotFound: 'Could not find the export file.', reportSummaryInvalid: 'Could not build the report summary.', invalidQuantity: 'Enter a valid quantity.', insufficientStock: 'Insufficient stock for this exit.', invalidSupplierEmail: 'The supplier email is not valid.', productNameRequired: 'Enter the product name.', invalidProductQuantity: 'The product quantity must be valid.', invalidProductMinQuantity: 'The minimum product stock must be valid.', invalidProductCostPrice: 'The product cost must be valid.', invalidProductSalePrice: 'The product sale price must be valid.', invalidUnitCost: 'The movement cost must be valid.', invalidUnitSalePrice: 'The movement sale price must be valid.', categoryNameRequired: 'Enter the category name.', supplierNameRequired: 'Enter the supplier name.', categoryAlreadyExists: 'A category with this name already exists.', supplierAlreadyExists: 'A supplier with this name already exists.', productLoadFailed: 'Could not load the product.', productSaveFailed: 'Could not save the product.', categoryHasProducts: 'This category has linked products. Move the products before archiving.', supplierHasProducts: 'This supplier has linked products. Remove the link before archiving.' },
     tabs: { home: 'Home', products: 'Products', alerts: 'Alerts', reports: 'Reports', settings: 'Settings' },
     splash: { title: 'StockGuard Offline', subtitle: 'Manage your inventory without relying on the internet.', loading: 'Loading...', initializing: 'Initializing app', preparing: 'Preparing local data and security.' },
@@ -1134,7 +1179,7 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     products: { ...translations['pt-BR'].products, title: 'Products', subtitle: 'List and search', filters: 'Quick filters', all: 'All', low: 'Low stock', zero: 'Zero stock', expiring: 'Expiring', emptyTitle: 'No products yet', emptyBody: 'Add the first item to start.' },
     alerts: { ...translations['pt-BR'].alerts, title: 'Alerts', subtitle: 'Items that need attention.', emptyTitle: 'All clear', emptyBody: 'No alerts right now.', zero: 'Out of stock', low: 'Low stock', expiring: 'Expiration' },
     reports: { ...translations['pt-BR'].reports, title: 'Reports', subtitle: 'Entry and exit summary', period: 'Period', today: 'Today', week: '7 days', month: '30 days', custom: 'Custom', entries: 'Entries', exits: 'Exits', profit: 'Estimated profit', products: 'Products', exportCsv: 'Export CSV', generatePdf: 'Generate PDF', exportBrand: 'StockGuard Offline', exportTitle: 'Stock report', exportGeneratedAt: 'Generated at', exportPeriod: 'Period', exportCurrency: 'Currency', exportEntries: 'Entries', exportExits: 'Exits', exportProfit: 'Estimated profit', exportProductsMoved: 'Moved products', exportTopProducts: 'Top products', exportTableProduct: 'Product', exportTableQuantity: 'Quantity', exportEmpty: 'No data for this period.', exportFooter: 'Report generated locally. No data was sent to external servers.' },
-    settings: { ...translations['pt-BR'].settings, title: 'Settings', profile: 'Profile', appearance: 'Appearance', theme: 'Theme', language: 'Language', currency: 'Currency', security: 'Security', data: 'Data', manageCategories: 'Manage categories', manageSuppliers: 'Manage suppliers', about: 'About', dangerZone: 'Danger zone', deleteAll: 'Delete all data', privacyPolicy: 'Privacy policy', termsOfUse: 'Terms of use', manageAdPrivacy: 'Manage ad privacy', adsPrivacyFailed: 'Could not open ad privacy options.', linkFailed: 'Could not open this link.', saveFailed: 'Could not save the setting.', deleteFailed: 'Could not delete the data.' },
+    settings: { ...translations['pt-BR'].settings, title: 'Settings', profile: 'Profile', appearance: 'Appearance', theme: 'Theme', language: 'Language', currency: 'Currency', security: 'Security', data: 'Data', manageCategories: 'Manage categories', manageSuppliers: 'Manage suppliers', about: 'About', dangerZone: 'Danger zone', deleteAll: 'Delete all data', privacyPolicy: 'Privacy policy', termsOfUse: 'Terms of use', manageAdPrivacy: 'Manage ad privacy', reportAd: 'Report an inappropriate ad', adsPrivacyFailed: 'Could not open ad privacy options.', linkFailed: 'Could not open this link.', saveFailed: 'Could not save the setting.', deleteFailed: 'Could not delete the data.' },
     productNew: { ...translations['pt-BR'].productNew, title: 'New product', name: 'Product name', namePlaceholder: 'Ex: Bolt 3/16', organization: 'Organization', category: 'Category', supplier: 'Supplier', stockValues: 'Stock and values', cost: 'Cost', sale: 'Sale', skuPlaceholder: 'Ex: PAR316', barcodePlaceholder: 'Ex: 789...', moneyPlaceholder: '00.00', moneyExample: 'Example: {{example}}', expirationPlaceholder: 'YYYY-MM-DD', locationPlaceholder: 'Drawer A1', unit: 'Unit', unitEach: 'Unit', unitBox: 'Box', unitPack: 'Pack', unitPair: 'Pair', nameRequired: 'Enter the product name.', imageDenied: 'Image permission denied.', imageFailed: 'Could not select the image.', createFailed: 'Could not create the product.', loadRelationsFailed: 'Could not load categories and suppliers.', barcodeExists: 'A product with this barcode already exists.', skuExists: 'A product with this SKU already exists.', categoryMissing: 'The selected category is no longer available.', supplierMissing: 'The selected supplier is no longer available.', discardBody: 'There is data filled in for this product. If you go back now, it will be lost. Initial balance, when entered, saves together with the product.' },
     productDetail: { ...translations['pt-BR'].productDetail, title: 'Product details', product: 'Product', noImage: 'No image', noImageBody: 'Add a photo to highlight the product.', addImage: 'Add image', quantity: 'Quantity', minQuantity: 'Minimum', value: 'Value', location: 'Location', details: 'Details', supplier: 'Supplier', expiration: 'Expiration', batch: 'Batch', noExpiration: 'No expiration', noBatch: 'No batch', move: 'Move', edit: 'Edit', archiveFailed: 'Could not archive the product.', missing: 'Product not informed.', notFound: 'Product not found.', loadFailed: 'Could not load the product.', saveFailed: 'Could not save the product.', noNotes: 'No notes registered.', categoryLine: 'Category: {{value}}', supplierLine: 'Supplier: {{value}}', skuLine: 'SKU: {{value}}', locationLine: 'Location: {{value}}', expirationLine: 'Expiration: {{value}}', batchLine: 'Batch: {{value}}' },
     movement: { ...translations['pt-BR'].movement, title: 'New movement', subtitle: 'Entry, exit or adjustment', mainInTitle: 'Stock added', mainInBody: 'Purchase, restock or received balance.', mainOutTitle: 'Stock removed', mainOutBody: 'Sale, internal use or withdrawal.', supportTitle: 'Other situations', returnTitle: 'Return', returnBody: 'Item came back to stock.', lossTitle: 'Loss or damage', lossBody: 'Write-off due to damage, expiry or loss.', adjustUpTitle: 'Adjust upward', adjustUpBody: 'Manual adjustment to increase balance.', adjustDownTitle: 'Adjust downward', adjustDownBody: 'Manual adjustment to reduce balance.', productStep: '1. Product', productStepBody: 'Confirm which item will move.', chooseProduct: 'Choose product', changeProduct: 'Change product', whatHappened: '2. What happened?', whatHappenedBody: 'Choose by the real stock impact.', quantityDetails: '3. Quantity and details', quantity: 'Quantity', reason: 'Reason', reasonPlaceholder: 'Purchase, sale, loss, adjustment...', reasonInitialSetup: 'Initial product balance', reasonRestore: 'Restored from backup', reasonOther: 'Other reason', notes: 'Note', notesPlaceholder: 'Type a note', preview: '4. Stock preview', current: 'Current', change: 'Change', newBalance: 'New balance', selectedType: 'Selected type: {{type}}', impactText: '{{product}} will {{action}} {{quantity}} {{unit}}.', actionReceive: 'receive', actionReturn: 'receive back', actionLoss: 'reduce', actionUp: 'adjust up by', actionDown: 'adjust down by', actionOut: 'remove', entry: 'Entry', exit: 'Exit', loss: 'Loss', return: 'Return', adjustmentPositive: 'Adjustment +', adjustmentNegative: 'Adjustment -', initialBalance: 'Initial balance', insufficient: 'Insufficient stock for this exit.', invalid: 'Select a product and enter a valid quantity.', adRequired: 'Core stock saves without ads.', saveFailed: 'Could not save the movement.', save: 'Save movement', confirmTitle: 'Confirm movement?', confirmBody: 'Review the type, quantity and stock impact before saving. This action updates inventory immediately.' },
@@ -1146,11 +1191,10 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     securityFlow: { ...translations['pt-BR'].securityFlow, unlockTitle: 'Unlock', unlockSubtitle: 'Protect your inventory with PIN or biometrics.', unlockHeroTitle: 'Protected access to your inventory', unlockHeroBody: 'Use PIN or biometrics to unlock the app quickly and securely.', appLocked: 'App locked', biometricReady: 'Biometrics ready', biometricUnavailable: 'Biometrics unavailable', unlockBody: 'Enter the PIN or use biometrics if configured.', pinHelper: 'Numbers only.', unlockPin: 'Unlock with PIN', unlockBiometric: 'Unlock with biometrics', unlockFailed: 'Could not unlock', pinRequired: 'Enter the PIN to continue.', pinWrong: 'Incorrect PIN.', pinValidateFailed: 'Could not validate the PIN now.', biometricAuthFailed: 'Could not authenticate with biometrics.', pinTitle: 'PIN', pinPlaceholder: '0000', pinExample: 'Ex: 1234', usePin: 'Use PIN', unlockBiometricPrompt: 'Unlock StockGuard', biometricPrompt: 'Validate biometrics', pinSubtitle: 'Configure the main app lock.', pinHeroTitle: 'Create a quick, direct access password', pinHeroBody: 'The PIN protects the app with a simple layer that is easy to remember.', enabled: 'Enabled', disabled: 'Disabled', pinBody: 'Use a numeric PIN with at least 4 digits.', newPin: 'New PIN', confirmPin: 'Confirm PIN', confirmPinHelper: 'Type the same PIN again.', savePin: 'Save PIN', removePin: 'Remove PIN', pinShort: 'The PIN must have at least 4 digits.', pinMismatch: 'The PINs do not match.', pinSaveFailed: 'Could not save the PIN.', pinRemoveFailed: 'Could not remove the PIN.', biometricTitle: 'Biometrics', biometricSubtitle: 'Use device biometrics to unlock.', biometricHeroTitle: 'Faster daily unlock', biometricHeroBody: 'Enable biometrics to open the app without typing the PIN every time.', biometricEnabled: 'Enabled', biometricDisabled: 'Disabled', available: 'Available on this device', unavailable: 'Unavailable', biometricBody: 'When enabled, biometrics makes unlock easier without typing the PIN.', enableBiometric: 'Enable biometrics', disableBiometric: 'Disable biometrics', biometricNotAvailable: 'Biometrics are not available on this device.', biometricValidateFailed: 'Could not validate biometrics.', biometricEnableFailed: 'Could not enable biometrics.', biometricDisableFailed: 'Could not disable biometrics.' },
     onboardingPrefs: { ...translations['pt-BR'].onboardingPrefs, title: 'Initial preferences', subtitle: 'Adjust language, theme and currency.', heroTitle: 'Make the app yours from the start', heroBody: 'These choices tune the interface and values shown in the next screens.', step: 'Step 2 of 4', themeBody: 'Choose the look that feels most comfortable for work.', languageBody: 'Use the language that makes shortcuts and messages clearer.', currencyBody: 'It will be used in products, reports and backups.', next: 'Next', saveFailed: 'Could not save preferences.' },
     onboarding: { ...translations['pt-BR'].onboarding, title: 'Welcome to StockGuard', subtitle: 'See how the app works before you start.', heroTitle: 'Offline inventory control, ready for mobile use.', heroBody: 'Register products, track movements, review alerts and keep your data local.', offline: 'Works offline', secure: 'Protected data', complete: 'Complete flow', start: 'Get started', skip: 'Skip intro', usageTitle: 'How do you use the app?', usageSubtitle: 'This helps build the initial experience.', usageHeroTitle: 'Choose the routine that fits you best', usageHeroBody: 'This choice helps set up the initial flow without changing any feature.', usageBody: 'Choose the routine closest to your real use.', step1: 'Step 1 of 4', step3: 'Step 3 of 4', step4: 'Step 4 of 4', selected: 'Selected', choose: 'Choose', optional: 'Optional', finish: 'Finish', doneTitle: 'Ready!', doneSubtitle: 'Your initial setup is configured.', doneHeroTitle: 'Your initial environment is ready.', doneHeroBody: 'You can now register products, move stock and check offline alerts.', enterApp: 'Enter app', doneFailed: 'Could not complete initial setup.', usageSaveFailed: 'Could not save this step.', securityTitle: 'Optional security', securitySubtitle: 'PIN, biometrics and hidden values.', securityHeroTitle: 'Protect access from the first moment', securityHeroBody: 'Enable PIN, biometrics and hidden values without changing the app flow.', securitySaveFailed: 'Could not save security.', financialValues: 'Financial values', hidden: 'Hidden', visible: 'Visible', store: 'Store', storeBody: 'Sales and product restocking.', workshop: 'Workshop', workshopBody: 'Parts, tools and usage.', personal: 'Personal', personalBody: 'Items and home organization.', service: 'Service', serviceBody: 'Materials used in service.', other: 'Other', otherBody: 'General and custom use.' },
-    ...enSupplemental,
-  },
-  es: {
+  }, enSupplemental),
+  es: mergeTranslationTree({
     ...translations['pt-BR'],
-    common: { ...translations['pt-BR'].common, save: 'Guardar', retry: 'Intentar de nuevo', back: 'Volver', add: 'Agregar', edit: 'Editar', create: 'Crear', cancel: 'Cancelar', archive: 'Archivar', share: 'Compartir', search: 'Buscar', close: 'Cerrar', continue: 'Continuar', loading: 'Cargando...', none: 'Ninguno', noLocation: 'Sin ubicacion', noCategory: 'Sin categoria', noSupplier: 'Sin proveedor', noSku: 'Sin SKU', active: 'Activo', archived: 'Archivado', export: 'Exportar', advancedFeature: 'Recurso avanzado', unlockWithAd: 'Liberar con anuncio' },
+    common: { ...translations['pt-BR'].common, save: 'Guardar', retry: 'Intentar de nuevo', back: 'Volver', add: 'Agregar', edit: 'Editar', create: 'Crear', cancel: 'Cancelar', archive: 'Archivar', share: 'Compartir', search: 'Buscar', close: 'Cerrar', continue: 'Continuar', loading: 'Cargando...', none: 'Ninguno', noLocation: 'Sin ubicacion', noCategory: 'Sin categoria', noSupplier: 'Sin proveedor', noSku: 'Sin SKU', active: 'Activo', archived: 'Archivado', export: 'Exportar', advancedFeature: 'Recurso avanzado', unlockWithAd: 'Liberar con anuncio', advertisement: 'Anuncio' },
     errors: { ...translations['pt-BR'].errors, genericTitle: 'Algo salio mal', genericBody: 'Intentalo de nuevo en unos instantes.', alertsLoadFailed: 'No fue posible cargar las alertas.', adsAccessLoadFailed: 'No fue posible cargar el estado de anuncios.', backupLoadFailed: 'No fue posible cargar los backups.', dashboardLoadFailed: 'No fue posible cargar el resumen de inicio.', categoriesLoadFailed: 'No fue posible cargar las categorias.', suppliersLoadFailed: 'No fue posible cargar los proveedores.', productsLoadFailed: 'No fue posible cargar los productos.', reportsLoadFailed: 'No fue posible cargar los informes.', settingsLoadFailed: 'No fue posible cargar la configuracion.', featureGateLoadFailed: 'No fue posible cargar las recompensas.', productDetailLoadFailed: 'No fue posible cargar los detalles del producto.', adsNotConfigured: 'Los anuncios aun no estan configurados.', backupFolderUnavailable: 'La carpeta de backup no esta disponible.', invalidBackupFile: 'El archivo seleccionado no parece ser un backup valido.', incompatibleBackupSchema: 'Este backup viene de una version diferente del app.', invalidBackupSchema: 'La estructura del backup es invalida.', invalidBackupCategory: 'Una categoria del backup no es valida.', invalidBackupSupplier: 'Un proveedor del backup no es valido.', invalidBackupProduct: 'Un producto del backup no es valido.', invalidBackupMovement: 'Un movimiento del backup no es valido.', backupPasswordTooShort: 'La contraseña del backup debe tener al menos 6 caracteres.', backupPasswordRequired: 'La contraseña del backup es obligatoria.', backupPasswordInvalid: 'La contraseña del backup es incorrecta.', sharingUnavailable: 'Compartir no esta disponible en este dispositivo.', backupFileNotFound: 'No fue posible encontrar el archivo de backup.', backupSafetyCopyFailed: 'La restauracion fue cancelada porque no se pudo crear la copia de seguridad actual.', exportFolderUnavailable: 'La carpeta de exportacion no esta disponible.', exportFileNotFound: 'No fue posible encontrar el archivo de exportacion.', reportSummaryInvalid: 'No fue posible construir el resumen del informe.', invalidQuantity: 'Ingresa una cantidad valida.', insufficientStock: 'Stock insuficiente para esta salida.', invalidSupplierEmail: 'El e-mail del proveedor no es valido.', productNameRequired: 'Ingresa el nombre del producto.', invalidProductQuantity: 'La cantidad del producto debe ser valida.', invalidProductMinQuantity: 'El stock minimo del producto debe ser valida.', invalidProductCostPrice: 'El costo del producto debe ser valido.', invalidProductSalePrice: 'El precio de venta del producto debe ser valido.', invalidUnitCost: 'El costo de la movimentacion debe ser valido.', invalidUnitSalePrice: 'El precio de venta de la movimentacion debe ser valido.', categoryNameRequired: 'Ingresa el nombre de la categoria.', supplierNameRequired: 'Ingresa el nombre del proveedor.', categoryAlreadyExists: 'Ya existe una categoria con ese nombre.', supplierAlreadyExists: 'Ya existe un proveedor con ese nombre.', productLoadFailed: 'No fue posible cargar el producto.', productSaveFailed: 'No fue posible guardar el producto.', categoryHasProducts: 'Esta categoria tiene productos vinculados. Muevelos antes de archivar.', supplierHasProducts: 'Este proveedor tiene productos vinculados. Quita el vinculo antes de archivarlo.' },
     tabs: { home: 'Inicio', products: 'Productos', alerts: 'Alertas', reports: 'Informes', settings: 'Ajustes' },
     splash: { title: 'StockGuard Offline', subtitle: 'Gestiona tu inventario sin depender de internet.', loading: 'Cargando...', initializing: 'Inicializando app', preparing: 'Preparando datos locales y seguridad.' },
@@ -1159,7 +1203,7 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     products: { ...translations['pt-BR'].products, title: 'Productos', subtitle: 'Lista y busqueda', filters: 'Filtros rapidos', all: 'Todos', low: 'Stock bajo', zero: 'Sin stock', expiring: 'Por vencer', emptyTitle: 'Sin productos', emptyBody: 'Agrega el primer item para empezar.' },
     alerts: { ...translations['pt-BR'].alerts, title: 'Alertas', subtitle: 'Items que necesitan atencion.', emptyTitle: 'Todo en orden', emptyBody: 'No hay alertas ahora.', zero: 'Sin stock', low: 'Stock bajo', expiring: 'Vencimiento' },
     reports: { ...translations['pt-BR'].reports, title: 'Informes', subtitle: 'Resumen de entradas y salidas', period: 'Periodo', today: 'Hoy', week: '7 dias', month: '30 dias', custom: 'Personalizado', entries: 'Entradas', exits: 'Salidas', profit: 'Ganancia estimada', products: 'Productos', exportCsv: 'Exportar CSV', generatePdf: 'Generar PDF', exportBrand: 'StockGuard Offline', exportTitle: 'Informe de stock', exportGeneratedAt: 'Generado en', exportPeriod: 'Periodo', exportCurrency: 'Moneda', exportEntries: 'Entradas', exportExits: 'Salidas', exportProfit: 'Ganancia estimada', exportProductsMoved: 'Productos movidos', exportTopProducts: 'Productos principales', exportTableProduct: 'Producto', exportTableQuantity: 'Cantidad', exportEmpty: 'No hay datos para este periodo.', exportFooter: 'El informe se genero localmente. No se envio ningun dato a servidores externos.' },
-    settings: { ...translations['pt-BR'].settings, title: 'Ajustes', profile: 'Perfil', appearance: 'Apariencia', theme: 'Tema', language: 'Idioma', currency: 'Moneda', security: 'Seguridad', data: 'Datos', manageCategories: 'Gestionar categorias', manageSuppliers: 'Gestionar proveedores', about: 'Acerca de', dangerZone: 'Zona de peligro', deleteAll: 'Borrar todos los datos', privacyPolicy: 'Politica de privacidad', termsOfUse: 'Terminos de uso', manageAdPrivacy: 'Gestionar privacidad de anuncios', adsPrivacyFailed: 'No fue posible abrir las opciones de privacidad de anuncios.', linkFailed: 'No fue posible abrir este enlace.', saveFailed: 'No fue posible guardar la configuracion.', deleteFailed: 'No fue posible borrar los datos.' },
+    settings: { ...translations['pt-BR'].settings, title: 'Ajustes', profile: 'Perfil', appearance: 'Apariencia', theme: 'Tema', language: 'Idioma', currency: 'Moneda', security: 'Seguridad', data: 'Datos', manageCategories: 'Gestionar categorias', manageSuppliers: 'Gestionar proveedores', about: 'Acerca de', dangerZone: 'Zona de peligro', deleteAll: 'Borrar todos los datos', privacyPolicy: 'Politica de privacidad', termsOfUse: 'Terminos de uso', manageAdPrivacy: 'Gestionar privacidad de anuncios', reportAd: 'Denunciar un anuncio inapropiado', adsPrivacyFailed: 'No fue posible abrir las opciones de privacidad de anuncios.', linkFailed: 'No fue posible abrir este enlace.', saveFailed: 'No fue posible guardar la configuracion.', deleteFailed: 'No fue posible borrar los datos.' },
     productNew: { ...translations['pt-BR'].productNew, title: 'Nuevo producto', name: 'Nombre del producto', namePlaceholder: 'Ej.: Tornillo 3/16', organization: 'Organizacion', category: 'Categoria', supplier: 'Proveedor', stockValues: 'Stock y valores', cost: 'Costo', sale: 'Venta', skuPlaceholder: 'Ej.: PAR316', barcodePlaceholder: 'Ej.: 789...', moneyPlaceholder: '00,00', moneyExample: 'Ej.: {{example}}', expirationPlaceholder: 'AAAA-MM-DD', locationPlaceholder: 'Cajon A1', unit: 'Unidad', unitEach: 'Unidad', unitBox: 'Caja', unitPack: 'Paquete', unitPair: 'Par', nameRequired: 'Ingresa el nombre del producto.', imageDenied: 'Permiso de imagenes denegado.', imageFailed: 'No fue posible seleccionar la imagen.', createFailed: 'No fue posible crear el producto.', loadRelationsFailed: 'No fue posible cargar categorias y proveedores.', barcodeExists: 'Ya existe un producto con este codigo de barras.', skuExists: 'Ya existe un producto con este SKU.', categoryMissing: 'La categoria seleccionada ya no esta disponible.', supplierMissing: 'El proveedor seleccionado ya no esta disponible.', discardBody: 'Hay datos completados en este producto. Si vuelves ahora, se perderan. El saldo inicial, cuando se informa, se guarda junto con el producto.' },
     productDetail: { ...translations['pt-BR'].productDetail, title: 'Detalles del producto', product: 'Producto', noImage: 'Sin imagen', noImageBody: 'Agrega una foto para destacar el producto.', addImage: 'Agregar imagen', quantity: 'Cantidad', minQuantity: 'Minimo', value: 'Valor', location: 'Ubicacion', details: 'Detalles', supplier: 'Proveedor', expiration: 'Vencimiento', batch: 'Lote', noExpiration: 'Sin vencimiento', noBatch: 'Sin lote', move: 'Mover', edit: 'Editar', archiveFailed: 'No fue posible archivar el producto.', missing: 'Producto no informado.', notFound: 'Producto no encontrado.', loadFailed: 'No fue posible cargar el producto.', saveFailed: 'No fue posible guardar el producto.', noNotes: 'Sin observaciones registradas.', categoryLine: 'Categoria: {{value}}', supplierLine: 'Proveedor: {{value}}', skuLine: 'SKU: {{value}}', locationLine: 'Ubicacion: {{value}}', expirationLine: 'Vencimiento: {{value}}', batchLine: 'Lote: {{value}}' },
     movement: { ...translations['pt-BR'].movement, title: 'Nueva movimentacion', subtitle: 'Entrada, salida o ajuste', mainInTitle: 'Stock agregado', mainInBody: 'Compra, reposicion o saldo recibido.', mainOutTitle: 'Stock retirado', mainOutBody: 'Venta, uso interno o retiro.', supportTitle: 'Otras situaciones', returnTitle: 'Devolucion', returnBody: 'El item volvio al stock.', lossTitle: 'Perdida o dano', lossBody: 'Baja por dano, vencimiento o extravio.', adjustUpTitle: 'Corregir hacia arriba', adjustUpBody: 'Ajuste manual para aumentar saldo.', adjustDownTitle: 'Corregir hacia abajo', adjustDownBody: 'Ajuste manual para reducir saldo.', productStep: '1. Producto', productStepBody: 'Confirma que item sera movimentado.', chooseProduct: 'Elegir producto', changeProduct: 'Cambiar producto', whatHappened: '2. Que paso?', whatHappenedBody: 'Elige por el impacto real en el stock.', quantityDetails: '3. Cantidad y detalle', quantity: 'Cantidad', reason: 'Motivo', reasonPlaceholder: 'Compra, venta, perdida, ajuste...', reasonInitialSetup: 'Saldo inicial del producto', reasonRestore: 'Restaurado desde backup', reasonOther: 'Otro motivo', notes: 'Nota', notesPlaceholder: 'Escribe una nota', preview: '4. Vista previa del stock', current: 'Actual', change: 'Cambio', newBalance: 'Nuevo saldo', selectedType: 'Tipo seleccionado: {{type}}', impactText: '{{product}} va a {{action}} {{quantity}} {{unit}}.', actionReceive: 'recibir', actionReturn: 'recibir de vuelta', actionLoss: 'rebajar', actionUp: 'ajustar hacia arriba en', actionDown: 'ajustar hacia abajo en', actionOut: 'quitar', entry: 'Entrada', exit: 'Salida', loss: 'Perdida', return: 'Devolucion', adjustmentPositive: 'Ajuste +', adjustmentNegative: 'Ajuste -', initialBalance: 'Saldo inicial', insufficient: 'Stock insuficiente para esta salida.', invalid: 'Selecciona un producto e ingresa una cantidad valida.', adRequired: 'El stock basico se guarda sin anuncios.', saveFailed: 'No fue posible guardar la movimentacion.', save: 'Guardar movimentacion', confirmTitle: 'Confirmar movimentacion?', confirmBody: 'Revisa el tipo, la cantidad y el impacto en el stock antes de guardar. Esta accion actualiza el inventario de inmediato.' },
@@ -1171,8 +1215,7 @@ const translationsWithFallback: Record<Locale, TranslationTree> = {
     securityFlow: { ...translations['pt-BR'].securityFlow, unlockTitle: 'Desbloquear', unlockSubtitle: 'Protege tu stock con PIN o biometria.', unlockHeroTitle: 'Acceso protegido a tu stock', unlockHeroBody: 'Usa PIN o biometria para liberar el app rapido y seguro.', appLocked: 'App bloqueada', biometricReady: 'Biometria lista', biometricUnavailable: 'Biometria no disponible', unlockBody: 'Ingresa el PIN o usa biometria, si esta configurada.', pinHelper: 'Solo numeros.', unlockPin: 'Desbloquear con PIN', unlockBiometric: 'Desbloquear con biometria', unlockFailed: 'No fue posible desbloquear', pinRequired: 'Ingresa el PIN para continuar.', pinWrong: 'PIN incorrecto.', pinValidateFailed: 'No fue posible validar el PIN ahora.', biometricAuthFailed: 'No fue posible autenticar con biometria.', pinTitle: 'PIN', pinPlaceholder: '0000', pinExample: 'Ej.: 1234', usePin: 'Usar PIN', unlockBiometricPrompt: 'Desbloquear StockGuard', biometricPrompt: 'Validar biometria', pinSubtitle: 'Configura el bloqueo principal del app.', pinHeroTitle: 'Crea una clave rapida y directa para el acceso', pinHeroBody: 'El PIN protege el app con una capa simple y facil de recordar.', enabled: 'Activado', disabled: 'Desactivado', pinBody: 'Usa un PIN numerico con al menos 4 digitos.', newPin: 'Nuevo PIN', confirmPin: 'Confirmar PIN', confirmPinHelper: 'Escribe el mismo PIN nuevamente.', savePin: 'Guardar PIN', removePin: 'Quitar PIN', pinShort: 'El PIN debe tener al menos 4 digitos.', pinMismatch: 'Los PIN no coinciden.', pinSaveFailed: 'No fue posible guardar el PIN.', pinRemoveFailed: 'No fue posible quitar el PIN.', biometricTitle: 'Biometria', biometricSubtitle: 'Usa la biometria del dispositivo para desbloquear.', biometricHeroTitle: 'Desbloqueo mas rapido en el dia a dia', biometricHeroBody: 'Activa la biometria para abrir el app sin escribir el PIN siempre.', biometricEnabled: 'Activada', biometricDisabled: 'Desactivada', available: 'Disponible en este dispositivo', unavailable: 'No disponible', biometricBody: 'Cuando esta activada, la biometria facilita desbloquear sin escribir el PIN.', enableBiometric: 'Activar biometria', disableBiometric: 'Desactivar biometria', biometricNotAvailable: 'Biometria no disponible en este dispositivo.', biometricValidateFailed: 'No fue posible validar la biometria.', biometricEnableFailed: 'No fue posible activar la biometria.', biometricDisableFailed: 'No fue posible desactivar la biometria.' },
     onboardingPrefs: { ...translations['pt-BR'].onboardingPrefs, title: 'Preferencias iniciales', subtitle: 'Ajusta idioma, tema y moneda.', heroTitle: 'Deja el app a tu manera desde el inicio', heroBody: 'Estas elecciones ajustan la interfaz y los valores exibidos en las proximas pantallas.', step: 'Paso 2 de 4', themeBody: 'Elige el visual mas comodo para trabajar.', languageBody: 'Usa el idioma que deja atajos y mensajes mas claros.', currencyBody: 'Se usara en productos, informes y backups.', next: 'Siguiente', saveFailed: 'No fue posible guardar las preferencias.' },
     onboarding: { ...translations['pt-BR'].onboarding, title: 'Bienvenido a StockGuard', subtitle: 'Mira como funciona el app antes de empezar.', heroTitle: 'Control de inventario sin conexion, listo para usar en el celular.', heroBody: 'Registra productos, sigue movimientos, revisa alertas y mantén tus datos locales.', offline: 'Funciona sin conexion', secure: 'Datos protegidos', complete: 'Flujo completo', start: 'Comenzar', skip: 'Saltar introduccion', usageTitle: 'Como usas el app?', usageSubtitle: 'Esto ayuda a montar la experiencia inicial.', usageHeroTitle: 'Elige la rutina que mas combina contigo', usageHeroBody: 'Esta eleccion ayuda a montar el flujo inicial sin cambiar ninguna funcion.', usageBody: 'Elige la rutina mas cercana a tu uso real.', step1: 'Paso 1 de 4', step3: 'Paso 3 de 4', step4: 'Paso 4 de 4', selected: 'Seleccionado', choose: 'Elegir', optional: 'Opcional', finish: 'Finalizar', doneTitle: 'Listo!', doneSubtitle: 'Tu ambiente inicial esta configurado.', doneHeroTitle: 'Tu ambiente inicial esta listo.', doneHeroBody: 'Ya puedes registrar productos, mover stock y consultar alertas offline.', enterApp: 'Entrar al app', doneFailed: 'No fue posible concluir la configuracion inicial.', usageSaveFailed: 'No fue posible guardar este paso.', securityTitle: 'Seguridad opcional', securitySubtitle: 'PIN, biometria y ocultar valores.', securityHeroTitle: 'Protege el acceso desde el primer momento', securityHeroBody: 'Activa PIN, biometria y ocultacion de valores sin cambiar el flujo del app.', securitySaveFailed: 'No fue posible guardar la seguridad.', financialValues: 'Valores financieros', hidden: 'Ocultos', visible: 'Visibles', store: 'Tienda', storeBody: 'Ventas y reposicion de productos.', workshop: 'Taller', workshopBody: 'Piezas, herramientas y consumo.', personal: 'Personal', personalBody: 'Items y organizacion domestica.', service: 'Servicio', serviceBody: 'Materiales usados en atencion.', other: 'Otro', otherBody: 'Uso general y personalizado.' },
-    ...esSupplemental,
-  },
+  }, esSupplemental),
 };
 
 Object.assign(translationsWithFallback.en.errors, {
@@ -1265,6 +1308,104 @@ Object.assign(translationsWithFallback.es.movement, {
   confirmBody: 'Revisa el tipo, la cantidad y el impacto en el stock antes de guardar.',
 });
 
+Object.assign(translationsWithFallback.en.common, {
+  privacyMaskTitle: 'Protected content',
+  privacyMaskBody: 'The screen was hidden to protect your sensitive data.',
+});
+Object.assign(translationsWithFallback.en.settings, {
+  reportAdIssueTitle: 'Inappropriate ad report',
+});
+Object.assign(translationsWithFallback.en.errors, {
+  categoryExists: 'A category with this name already exists.',
+});
+Object.assign(translationsWithFallback.en.home, {
+  lowItems: 'Low-stock items',
+});
+Object.assign(translationsWithFallback.en.reports, {
+  topProducts: 'Top products',
+});
+Object.assign(translationsWithFallback.en.productNew, {
+  subtitle: 'Registration basics',
+  identification: 'Identification',
+  addPhoto: 'Add photo',
+  addPhotoBody: 'Tap to choose an image from the gallery.',
+  skuPlaceholder: 'E.g. PAR316',
+  barcode: 'Barcode',
+  barcodePlaceholder: 'E.g. 789...',
+  unitHelper: 'Choose how this item is measured in stock.',
+  categoryHelper: 'Optional. Helps group related products.',
+  supplierHelper: 'Optional. You can link a supplier later.',
+  quantity: 'Initial quantity',
+  minQuantity: 'Minimum stock',
+  decimalHelper: 'Accepts up to 3 decimal places.',
+  minHelper: 'Used for restocking alerts.',
+  advanced: 'Advanced fields',
+  advancedBody: 'Expiration, batch, location and notes.',
+  showAdvanced: 'Show advanced fields',
+  hideAdvanced: 'Hide advanced fields',
+  expiration: 'Expiration',
+  batch: 'Batch',
+  location: 'Location',
+  notes: 'Notes',
+  notesPlaceholder: 'Optional notes',
+  discardTitle: 'Discard changes?',
+  discard: 'Discard',
+});
+Object.assign(translationsWithFallback.en.productDetail, {
+  archiveTitle: 'Archive product?',
+  archiveBody: 'The product will leave the main lists, but its history and audit trail will remain available.',
+});
+
+Object.assign(translationsWithFallback.es.common, {
+  privacyMaskTitle: 'Contenido protegido',
+  privacyMaskBody: 'La pantalla se ocultó para proteger tus datos sensibles.',
+});
+Object.assign(translationsWithFallback.es.errors, {
+  categoryExists: 'Ya existe una categoría con ese nombre.',
+});
+Object.assign(translationsWithFallback.es.home, {
+  lowItems: 'Artículos con stock bajo',
+});
+Object.assign(translationsWithFallback.es.reports, {
+  topProducts: 'Productos principales',
+});
+Object.assign(translationsWithFallback.es.settings, {
+  languagePortuguese: 'Portugués (Brasil)',
+  languageEnglish: 'Inglés',
+  languageSpanish: 'Español',
+  reportAdIssueTitle: 'Denuncia de anuncio inapropiado',
+});
+Object.assign(translationsWithFallback.es.productNew, {
+  subtitle: 'Datos básicos del registro',
+  identification: 'Identificación',
+  addPhoto: 'Agregar foto',
+  addPhotoBody: 'Toca para elegir una imagen de la galería.',
+  barcode: 'Código de barras',
+  unitHelper: 'Elige cómo se medirá este artículo en el inventario.',
+  categoryHelper: 'Opcional. Ayuda a separar los productos por grupo.',
+  supplierHelper: 'Opcional. Puedes vincular un proveedor después.',
+  quantity: 'Cantidad inicial',
+  minQuantity: 'Stock mínimo',
+  decimalHelper: 'Acepta hasta 3 decimales.',
+  minHelper: 'Se usa para las alertas de reposición.',
+  advanced: 'Campos avanzados',
+  advancedBody: 'Vencimiento, lote, ubicación y observaciones.',
+  showAdvanced: 'Mostrar campos avanzados',
+  hideAdvanced: 'Ocultar campos avanzados',
+  expiration: 'Vencimiento',
+  location: 'Ubicación',
+  notes: 'Observaciones',
+  notesPlaceholder: 'Notas opcionales',
+  discardTitle: '¿Descartar cambios?',
+});
+Object.assign(translationsWithFallback.es.productDetail, {
+  archiveTitle: '¿Archivar producto?',
+  archiveBody: 'El producto saldrá de las listas principales, pero su historial y auditoría seguirán disponibles.',
+});
+Object.assign(translationsWithFallback.es.movement, {
+  adjustUpBody: 'Ajuste manual para aumentar el saldo.',
+});
+
 function getValue(tree: TranslationTree, path: string) {
   if (typeof path !== 'string' || !path.trim()) {
     return undefined;
@@ -1298,8 +1439,11 @@ function interpolate(value: string, params?: Params) {
 
 export function useI18n() {
   const { language, setLanguage, currency } = useAppState();
+  const deviceLocales = useLocales();
+  const deviceLanguage = deviceLocales[0]?.languageCode;
 
-  const currentLanguage: Locale = language === 'system' ? 'pt-BR' : isLocale(language) ? language : 'pt-BR';
+  const systemLanguage: Locale = deviceLanguage === 'en' ? 'en' : deviceLanguage === 'es' ? 'es' : 'pt-BR';
+  const currentLanguage: Locale = language === 'system' ? systemLanguage : isLocale(language) ? language : 'pt-BR';
 
   return useMemo(
     () => ({

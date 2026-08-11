@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "StockGuard Offline",
+    "NSFaceIDUsageDescription": "Use Face ID to protect access to your inventory.",
+    "NSPhotoLibraryUsageDescription": "Allow photo access to add an image to a product.",
+    "NSUserTrackingUsageDescription": "Your permission helps measure ads and keep secondary features free."
+  },
+  "android": {
+    "app_name": "StockGuard Offline"
+  }
+}

@@ -39,4 +39,18 @@ test('production ads are configured without enabling test mode', () => {
   assert.match(adsPlugin[1].iosAppId, /^ca-app-pub-/);
   assert.match(app.extra.EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID, /^ca-app-pub-/);
   assert.match(app.extra.EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID, /^ca-app-pub-/);
+  for (const key of [
+    'EXPO_PUBLIC_ADMOB_ANDROID_BANNER_HOME_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_BANNER_HOME_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_BANNER_ALERTS_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_BANNER_ALERTS_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_PRODUCTS_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID',
+  ]) {
+    assert.match(app.extra[key], /^ca-app-pub-/);
+  }
 });

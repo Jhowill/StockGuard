@@ -48,7 +48,7 @@ function getCurrencyPrefix(currency: string) {
   }
 
   if (currency === 'EUR') {
-    return '€';
+    return '\u20AC';
   }
 
   return 'R$';

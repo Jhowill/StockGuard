@@ -1,13 +1,20 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import type { InterstitialAd } from 'react-native-google-mobile-ads';
 import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import {
   getAdsConfig,
   getRewardedInterstitialUnitId,
   getRewardedUnitId,
+  getStandardAdUnitId,
   hasRewardedAdsConfig,
   hasRewardedInterstitialConfig,
 } from '@/config/ads';
+import { getTemporaryAdFreeState } from '@/services/rewardedAccessService';
+import {
+  claimInterstitialDisplay,
+  releaseInterstitialDisplayClaim,
+} from '@/database/repositories/adDisplayRepository';
 
 export type RewardedAdResult =
   | { status: 'success'; rewardType: 'temporary_ad_free' | 'feature_unlock' }
@@ -20,6 +27,8 @@ declare const require: (moduleName: string) => unknown;
 
 const LOAD_TIMEOUT_MS = 20_000;
 let initializationPromise: Promise<MobileAdsModule> | null = null;
+let standardInterstitial: InterstitialAd | null = null;
+let standardInterstitialLoaded = false;
 
 function loadNativeModule() {
   // Expo Go does not include the AdMob native module. A development or store build is required.
@@ -37,10 +46,8 @@ async function initializeAds() {
 
   initializationPromise = (async () => {
     const ads = loadNativeModule();
-    const consentInfo = await ads.AdsConsent.requestInfoUpdate();
-    const finalConsent = consentInfo.canRequestAds
-      ? consentInfo
-      : await ads.AdsConsent.loadAndShowConsentFormIfRequired();
+    await ads.AdsConsent.requestInfoUpdate();
+    const finalConsent = await ads.AdsConsent.loadAndShowConsentFormIfRequired();
 
     if (!finalConsent.canRequestAds) {
       throw new Error('ADS_CONSENT_REQUIRED');
@@ -140,6 +147,83 @@ export async function showRewardedInterstitial(_featureKey: string): Promise<Rew
     return { status: 'failed', reason: 'ADS_NOT_CONFIGURED' };
   }
   return showAd('rewardedInterstitial', 'feature_unlock');
+}
+
+export async function canShowStandardAds() {
+  if (!getAdsConfig().enabled) {
+    return false;
+  }
+
+  // Feature-unlock rewarded ads intentionally bypass this check.
+  const adFree = await getTemporaryAdFreeState();
+  return !adFree.active;
+}
+
+export async function prepareAdsForDisplay() {
+  if (
+    (Platform.OS !== 'android' && Platform.OS !== 'ios')
+    || !getAdsConfig().enabled
+    || !(await canShowStandardAds())
+  ) {
+    return false;
+  }
+
+  try {
+    await initializeAds();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function preloadStandardInterstitial() {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios' || standardInterstitial || !(await canShowStandardAds())) {
+    return;
+  }
+
+  const ads = await initializeAds();
+  const config = getAdsConfig();
+  const unitId = config.testMode ? ads.TestIds.INTERSTITIAL : getStandardAdUnitId('interstitial_transition', Platform.OS);
+  if (!unitId) {
+    return;
+  }
+
+  const advert = ads.InterstitialAd.createForAdRequest(unitId, { requestNonPersonalizedAdsOnly: false });
+  standardInterstitial = advert;
+  advert.addAdEventListener(ads.AdEventType.LOADED, () => {
+    standardInterstitialLoaded = true;
+  });
+  advert.addAdEventListener(ads.AdEventType.CLOSED, () => {
+    standardInterstitial = null;
+    standardInterstitialLoaded = false;
+    void preloadStandardInterstitial().catch(() => undefined);
+  });
+  advert.addAdEventListener(ads.AdEventType.ERROR, () => {
+    standardInterstitial = null;
+    standardInterstitialLoaded = false;
+  });
+  advert.load();
+}
+
+export async function showStandardInterstitialAtTransition() {
+  if (!standardInterstitial || !standardInterstitialLoaded || !(await canShowStandardAds())) {
+    return false;
+  }
+  const claim = await claimInterstitialDisplay();
+  if (!claim.allowed) {
+    return false;
+  }
+
+  try {
+    await standardInterstitial.show();
+    return true;
+  } catch {
+    await releaseInterstitialDisplayClaim(claim.eventId).catch(() => undefined);
+    standardInterstitial = null;
+    standardInterstitialLoaded = false;
+    void preloadStandardInterstitial().catch(() => undefined);
+    return false;
+  }
 }
 
 export async function showPrivacyOptions() {

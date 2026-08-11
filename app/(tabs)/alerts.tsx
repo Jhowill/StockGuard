@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppCard } from '@/components/ui/AppCard';
+import { StandardBannerAd } from '@/components/ads/StandardBannerAd';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { LoadingState } from '@/components/ui/LoadingState';
@@ -67,6 +68,8 @@ export default function AlertsScreen() {
           </AppCard>
         ))
       )}
+
+      <StandardBannerAd placement="banner_alerts" />
     </ScreenContainer>
   );
 }

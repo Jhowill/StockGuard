@@ -1,8 +1,8 @@
-# Termos de Uso do StockGuard
+# Termos de Uso do EstoqueGuard Offline
 
-Ultima atualizacao: 10 de julho de 2026.
+Ultima atualizacao: 5 de agosto de 2026.
 
-Ao utilizar o StockGuard, o usuario concorda em fornecer e revisar corretamente os dados registrados no estoque. O aplicativo e uma ferramenta de organizacao e nao substitui controles contabeis, fiscais, regulatorios ou profissionais.
+Ao utilizar o EstoqueGuard Offline, o usuario concorda em fornecer e revisar corretamente os dados registrados no estoque. O aplicativo e uma ferramenta de organizacao e nao substitui controles contabeis, fiscais, regulatorios ou profissionais.
 
 O usuario e responsavel por manter backups adequados e guardar as senhas usadas em backups criptografados. Senhas perdidas nao podem ser recuperadas pelo desenvolvedor.
 
