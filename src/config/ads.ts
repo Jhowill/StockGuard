@@ -17,8 +17,6 @@ type AdsConfig = {
   iosNativeProductsId?: string;
   androidNativeReportsId?: string;
   iosNativeReportsId?: string;
-  androidInterstitialTransitionId?: string;
-  iosInterstitialTransitionId?: string;
 };
 
 function readExtra(key: string) {
@@ -47,12 +45,10 @@ export function getAdsConfig(): AdsConfig {
     iosNativeProductsId: readExtra('EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID'),
     androidNativeReportsId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID'),
     iosNativeReportsId: readExtra('EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID'),
-    androidInterstitialTransitionId: readExtra('EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID'),
-    iosInterstitialTransitionId: readExtra('EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID'),
   };
 }
 
-export type StandardAdPlacement = 'banner_home' | 'banner_alerts' | 'native_products' | 'native_reports' | 'interstitial_transition';
+export type StandardAdPlacement = 'banner_home' | 'banner_alerts' | 'native_products' | 'native_reports';
 
 export function getStandardAdUnitId(placement: StandardAdPlacement, platform: 'android' | 'ios') {
   const config = getAdsConfig();
@@ -61,7 +57,6 @@ export function getStandardAdUnitId(placement: StandardAdPlacement, platform: 'a
     banner_alerts: platform === 'android' ? config.androidBannerAlertsId : config.iosBannerAlertsId,
     native_products: platform === 'android' ? config.androidNativeProductsId : config.iosNativeProductsId,
     native_reports: platform === 'android' ? config.androidNativeReportsId : config.iosNativeReportsId,
-    interstitial_transition: platform === 'android' ? config.androidInterstitialTransitionId : config.iosInterstitialTransitionId,
   };
   return ids[placement];
 }
@@ -76,12 +71,16 @@ export function getRewardedInterstitialUnitId(platform: 'android' | 'ios') {
   return platform === 'android' ? config.androidRewardedInterstitialId : config.iosRewardedInterstitialId;
 }
 
-export function hasRewardedAdsConfig() {
+export function hasRewardedAdsConfig(platform?: 'android' | 'ios') {
   const config = getAdsConfig();
-  return Boolean(config.enabled && (config.androidRewardedId || config.iosRewardedId));
+  if (!config.enabled) return false;
+  if (platform) return Boolean(getRewardedUnitId(platform));
+  return Boolean(config.androidRewardedId && config.iosRewardedId);
 }
 
-export function hasRewardedInterstitialConfig() {
+export function hasRewardedInterstitialConfig(platform?: 'android' | 'ios') {
   const config = getAdsConfig();
-  return Boolean(config.enabled && (config.androidRewardedInterstitialId || config.iosRewardedInterstitialId));
+  if (!config.enabled) return false;
+  if (platform) return Boolean(getRewardedInterstitialUnitId(platform));
+  return Boolean(config.androidRewardedInterstitialId && config.iosRewardedInterstitialId);
 }

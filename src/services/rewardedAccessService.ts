@@ -7,13 +7,25 @@ import { nowIso } from '@/utils/date';
 import { dateKey } from '@/utils/date';
 
 export const TEMPORARY_AD_FREE_DURATION_MINUTES = 5;
+const adAccessListeners = new Set<() => void>();
+
+export function subscribeAdAccess(listener: () => void) {
+  adAccessListeners.add(listener);
+  return () => adAccessListeners.delete(listener);
+}
+
+function notifyAdAccessChanged() {
+  adAccessListeners.forEach((listener) => listener());
+}
 
 export async function getTemporaryAdFreeState() {
   return getTemporaryAdFreeRewardState();
 }
 
 export async function grantTemporaryAdFree() {
-  return claimTemporaryAdFreeReward(TEMPORARY_AD_FREE_DURATION_MINUTES);
+  const result = await claimTemporaryAdFreeReward(TEMPORARY_AD_FREE_DURATION_MINUTES);
+  if (result.granted) notifyAdAccessChanged();
+  return result;
 }
 
 export async function grantFeatureUnlock(featureKey: PremiumFeature) {

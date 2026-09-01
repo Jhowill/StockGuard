@@ -34,7 +34,8 @@ test('legal documents and release checklist remain wired into the app', () => {
   const checklist = read('docs/07_RELEASE_CHECKLIST.md');
 
   assert.match(settings, /PRIVACY_POLICY_URL/);
-  assert.match(settings, /TERMS_URL/);
+  assert.match(settings, /SUPPORT_URL/);
+  assert.match(settings, /sites\.google\.com\/view\/jwm-devcreator\/privacidade\/estoqueguard/);
   assert.match(settings, /showPrivacyOptions/);
   assert.match(checklist, /Google Play/);
   assert.match(checklist, /App Store/);

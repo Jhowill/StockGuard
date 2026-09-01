@@ -12,7 +12,7 @@ O usuario pode criar, compartilhar e restaurar arquivos de backup. O destino do 
 
 ## Anuncios
 
-Recursos secundarios podem exibir anuncios fornecidos pelo Google AdMob. O aplicativo pode apresentar banners, anuncios nativos e intersticiais em pontos de leitura e transicao, alem de anuncios recompensados para recursos opcionais.
+Recursos secundarios podem exibir anuncios fornecidos pelo Google AdMob. O aplicativo pode apresentar banners e anuncios nativos em pontos de leitura, alem de anuncios recompensados para recursos opcionais.
 
 O Google Mobile Ads SDK pode coletar e compartilhar com o Google o endereco IP, usado para estimar localizacao aproximada; interacoes com o aplicativo e com anuncios, como inicializacoes, toques e visualizacoes; diagnosticos de desempenho; e identificadores do dispositivo ou de publicidade. Esses dados podem ser usados para publicidade, analise, medicao e prevencao de fraude. A transmissao e protegida por TLS. O tratamento efetivo depende das escolhas de consentimento do usuario, das configuracoes do aparelho e das regras da plataforma.
 
@@ -34,7 +34,7 @@ Recompensas temporarias, limites de uso e historico de exibicao de anuncios nao 
 
 Os dados que permanecem no aparelho sao protegidos pelos controles de seguranca do sistema operacional. As preferencias de anuncios podem ser revistas em Configuracoes > Gerenciar privacidade dos anuncios. Anuncios inadequados podem ser informados em Configuracoes > Denunciar anuncio inadequado. Para excluir os dados locais, use Configuracoes > Excluir todos os dados ou desinstale o aplicativo.
 
-Duvidas e solicitacoes podem ser enviadas pelo canal de privacidade do desenvolvedor: https://github.com/Jhowill/StockGuard/issues
+Duvidas e solicitacoes podem ser enviadas para jwmdevcreator@outlook.com ou pela pagina publica de contato do desenvolvedor: https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial
 
 ## Terceiros
 

@@ -74,6 +74,7 @@ export default function HomeScreen() {
   } = useAdsAccess();
   const [adFreeBusy, setAdFreeBusy] = useState(false);
   const [adFreeActionError, setAdFreeActionError] = useState<string | undefined>();
+  const [adFreeNotice, setAdFreeNotice] = useState<string | undefined>();
   const [currentTime, setCurrentTime] = useState(Date.now());
   const displayName = userName?.trim();
   const greeting = displayName ? t('home.greeting', { name: displayName }) : t('home.greetingFallback');
@@ -123,10 +124,13 @@ export default function HomeScreen() {
 
     setAdFreeBusy(true);
     setAdFreeActionError(undefined);
+    setAdFreeNotice(undefined);
     try {
       const result = await grantTemporaryAdFree();
       if (result.status !== 'success') {
         setAdFreeActionError(result.status === 'failed' ? result.reason : 'ADS_CANCELLED');
+      } else if (result.source === 'availability_fallback') {
+        setAdFreeNotice(t('ads.courtesyPause'));
       }
       await refreshAds();
     } catch (nextError) {
@@ -226,6 +230,20 @@ export default function HomeScreen() {
         {adFreeActionError || adsError ? (
           <Text style={[styles.adFreeError, { color: palette.danger }]}>{translateAppError(adFreeActionError ?? adsError, t)}</Text>
         ) : null}
+        {adFreeBusy ? <Text style={[styles.adFreeError, { color: palette.textMuted }]}>{t('ads.preparing')}</Text> : null}
+        {adFreeNotice ? <Text style={[styles.adFreeError, { color: palette.success }]}>{adFreeNotice}</Text> : null}
+      </AppCard>
+
+      <AppCard style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionCopy}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.appFeatures')}</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>{t('home.appFeaturesBody')}</Text>
+          </View>
+          <Ionicons name="sparkles-outline" size={20} color={palette.premium} />
+        </View>
+        <AppButton label={t('home.openBackup')} variant="secondary" onPress={() => router.push('/backup')} />
+        <AppButton label={t('home.openPremium')} variant="ghost" onPress={() => router.push('/premium')} />
       </AppCard>
 
       <View style={styles.metricRow}>

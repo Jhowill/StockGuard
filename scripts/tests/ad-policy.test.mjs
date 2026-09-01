@@ -53,9 +53,11 @@ test('temporary ad-free reward lasts five minutes and is limited to three daily 
   assert.match(home, /adFreeAvailable/);
   assert.match(ads, /canShowStandardAds/);
   assert.match(ads, /Feature-unlock rewarded ads intentionally bypass this check/);
+  assert.match(rewards, /notifyAdAccessChanged/);
+  assert.match(read('src/hooks/useAdsAccess.ts'), /subscribeAdAccess/);
 });
 
-test('standard ads are limited to non-critical screens and respect the ad-free pause', () => {
+test('standard ads are limited to non-critical screens and never interrupt navigation', () => {
   const home = read('app/(tabs)/index.tsx');
   const products = read('app/(tabs)/products.tsx');
   const alerts = read('app/(tabs)/alerts.tsx');
@@ -67,30 +69,42 @@ test('standard ads are limited to non-critical screens and respect the ad-free p
   assert.match(alerts, /StandardBannerAd placement="banner_alerts"/);
   assert.match(products, /StandardNativeAd placement="native_products"/);
   assert.match(reports, /StandardNativeAd placement="native_reports"/);
-  assert.match(detail, /showStandardInterstitialAtTransition/);
-  assert.match(ads, /claimInterstitialDisplay/);
+  assert.doesNotMatch(detail, /showStandardInterstitialAtTransition|preloadStandardInterstitial/);
+  assert.doesNotMatch(ads, /showStandardInterstitialAtTransition|claimInterstitialDisplay/);
   assert.match(ads, /canShowStandardAds/);
 });
 
-test('all standard ad formats wait for consent and failed interstitials release their quota', () => {
+test('all ad formats wait for consent and apply a safe content rating', () => {
   const ads = read('src/services/adsService.ts');
   const banner = read('src/components/ads/StandardBannerAd.tsx');
   const native = read('src/components/ads/StandardNativeAd.tsx');
-  const display = read('src/database/repositories/adDisplayRepository.ts');
 
   assert.match(ads, /prepareAdsForDisplay/);
   assert.match(ads, /requestInfoUpdate\(\);\s+const finalConsent = await ads\.AdsConsent\.loadAndShowConsentFormIfRequired\(\)/);
+  assert.match(ads, /maxAdContentRating: ads\.MaxAdContentRating\.PG/);
+  assert.match(ads, /tagForChildDirectedTreatment: false/);
   assert.match(banner, /prepareAdsForDisplay\(\)/);
   assert.match(native, /prepareAdsForDisplay\(\)/);
   assert.match(native, /NativeAssetType\.ICON/);
-  assert.match(ads, /releaseInterstitialDisplayClaim\(claim\.eventId\)/);
-  assert.match(display, /return \{ allowed: true as const, eventId \}/);
+});
+
+test('rewarded ads preload, prevent concurrent presentation and fail over safely', () => {
+  const ads = read('src/services/adsService.ts');
+  const access = read('src/hooks/useAdsAccess.ts');
+
+  assert.match(access, /preloadRewardedAds\(\)/);
+  assert.match(ads, /rewardedFlowActive/);
+  assert.match(ads, /ADS_ALREADY_IN_PROGRESS/);
+  assert.match(ads, /fallbackKind: RewardedKind = kind === 'rewarded' \? 'rewardedInterstitial' : 'rewarded'/);
+  assert.match(ads, /hasRewardedInterstitialConfig\(platform\)/);
+  assert.match(ads, /source: 'availability_fallback'/);
+  assert.match(ads, /earned \? \{ status: 'success', rewardType, source: 'ad' \} : \{ status: 'cancelled' \}/);
 });
 
 test('the app provides an inappropriate-ad reporting path required for iOS review', () => {
   const settings = read('app/(tabs)/settings.tsx');
 
-  assert.match(settings, /AD_REPORT_BASE_URL/);
+  assert.match(settings, /AD_REPORT_URL = SUPPORT_URL/);
   assert.match(settings, /settings\.reportAd/);
-  assert.match(settings, /encodeURIComponent\(t\('settings\.reportAdIssueTitle'\)\)/);
+  assert.match(settings, /openExternalUrl\(AD_REPORT_URL\)/);
 });

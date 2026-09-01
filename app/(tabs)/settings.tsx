@@ -24,9 +24,9 @@ import { deleteAllUserData } from '@/services/dataService';
 import { clearSecuritySecrets } from '@/services/securityService';
 import { showPrivacyOptions } from '@/services/adsService';
 
-const PRIVACY_POLICY_URL = 'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/PRIVACY_POLICY.md';
-const TERMS_URL = 'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/TERMS_OF_USE.md';
-const AD_REPORT_BASE_URL = 'https://github.com/Jhowill/StockGuard/issues/new';
+const PRIVACY_POLICY_URL = 'https://sites.google.com/view/jwm-devcreator/privacidade/estoqueguard';
+const SUPPORT_URL = 'https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial';
+const AD_REPORT_URL = SUPPORT_URL;
 
 function getThemeLabel(theme: ThemeMode, t: (key: string) => string) {
   switch (theme) {
@@ -312,7 +312,7 @@ export default function SettingsScreen() {
         <AppButton
           label={t('settings.reportAd')}
           variant="ghost"
-          onPress={() => void openExternalUrl(`${AD_REPORT_BASE_URL}?title=${encodeURIComponent(t('settings.reportAdIssueTitle'))}`)}
+          onPress={() => void openExternalUrl(AD_REPORT_URL)}
         />
       </AppCard>
 
@@ -321,7 +321,7 @@ export default function SettingsScreen() {
         <AppCard.Text>{t('settings.version', { version: Application.nativeApplicationVersion ?? '1.0.0', build: Application.nativeBuildVersion ?? 'dev' })}</AppCard.Text>
         <AppCard.Text>{t('settings.privacyNote')}</AppCard.Text>
         <AppButton label={t('settings.privacyPolicy')} variant="ghost" onPress={() => void openExternalUrl(PRIVACY_POLICY_URL)} />
-        <AppButton label={t('settings.termsOfUse')} variant="ghost" onPress={() => void openExternalUrl(TERMS_URL)} />
+        <AppButton label={t('settings.contactSupport')} variant="ghost" onPress={() => void openExternalUrl(SUPPORT_URL)} />
       </AppCard>
 
       <AppCard style={{ gap: 12 }}>

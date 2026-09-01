@@ -1,6 +1,6 @@
 # 08 - Conteudo para Google Play e App Store
 
-Ultima revisao: 6 de agosto de 2026.
+Ultima revisao: 1 de setembro de 2026.
 
 Este documento reune o texto e as respostas de cadastro para EstoqueGuard Offline 1.0.0. Revise os dados de conta antes do envio, especialmente e-mail de suporte, nome do desenvolvedor e classificacao indicativa.
 
@@ -14,10 +14,12 @@ Este documento reune o texto e as respostas de cadastro para EstoqueGuard Offlin
 | Categoria secundaria (App Store) | Produtividade |
 | Plataforma | Android e iOS |
 | Idioma inicial | Portugues (Brasil) |
-| Modelo de monetizacao | Banners, anuncios nativos, intersticiais de transicao e anuncios recompensados opcionais; sem compras no app |
-| Politica de privacidade | https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/PRIVACY_POLICY.md |
-| Termos de uso | https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/TERMS_OF_USE.md |
-| Suporte | https://github.com/Jhowill/StockGuard/issues |
+| Modelo de monetizacao | Banners, anuncios nativos e anuncios recompensados opcionais; sem compras no app |
+| Site/contato | https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial |
+| Politica de privacidade | https://sites.google.com/view/jwm-devcreator/privacidade/estoqueguard |
+| Suporte | https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial |
+| E-mail de suporte | jwmdevcreator@outlook.com |
+| E-mail de suporte | jwmdevcreator@outlook.com |
 
 ## Google Play
 
@@ -93,7 +95,7 @@ Recursos secundarios, como exportacao de relatorios e backup criptografado, pode
 
 Responda que o app coleta dados por parceiros de publicidade. Para o Google Mobile Ads SDK, declare identificadores, dados de uso, diagnosticos, dados de publicidade e localizacao aproximada derivada de IP conforme as telas do App Store Connect. Marque as finalidades que o SDK efetivamente usa: publicidade de terceiros, analise e funcionalidade/diagnostico quando aplicavel. Declare rastreamento somente conforme a classificacao indicada pelo App Store Connect para a configuracao final do SDK e do AdMob.
 
-URL da politica de privacidade: https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/PRIVACY_POLICY.md
+URL da politica de privacidade: https://sites.google.com/view/jwm-devcreator/privacidade/estoqueguard
 
 ### Informacoes para revisao
 
@@ -101,7 +103,8 @@ URL da politica de privacidade: https://raw.githubusercontent.com/Jhowill/StockG
 - As funcoes basicas funcionam offline.
 - A biometria e opcional e protege apenas o acesso local.
 - A selecao de foto e opcional e usada apenas para associar imagem a um produto.
-- Banners, anuncios nativos e intersticiais podem aparecer em telas de leitura e transicoes; anuncios recompensados so aparecem por escolha do usuario.
+- Banners e anuncios nativos podem aparecer em telas de leitura; anuncios recompensados so aparecem por escolha do usuario.
+- Anuncios recompensados sao pre-carregados. Se o AdMob nao fornecer inventario, o app informa o ocorrido e libera a pausa ou o recurso como cortesia, evitando uma tela sem resposta.
 - Configuracoes inclui opcoes de privacidade e um canal para denunciar anuncios inadequados.
 - `ITSAppUsesNonExemptEncryption` esta configurado como `false`.
 

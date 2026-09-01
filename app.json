@@ -4,6 +4,7 @@
     "slug": "estoqueguard-offline",
     "scheme": "estoqueguard",
     "version": "1.0.0",
+    "platforms": ["ios", "android"],
     "locales": {
       "pt-BR": "./locales/pt-BR.json",
       "en": "./locales/en.json",
@@ -107,8 +108,6 @@
       "EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID": "ca-app-pub-4042606302261972/5670388361",
       "EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID": "ca-app-pub-4042606302261972/6080351827",
       "EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID": "ca-app-pub-4042606302261972/5670388361",
-      "EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID": "ca-app-pub-4042606302261972/3168348101",
-      "EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID": "ca-app-pub-4042606302261972/6983470030",
       "router": {},
       "eas": {
         "projectId": "298fd73f-ff7f-4fe8-9f2c-d00b034f4521"

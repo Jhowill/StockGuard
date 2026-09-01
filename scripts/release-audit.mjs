@@ -31,13 +31,11 @@ for (const key of [
   'EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID',
   'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID',
   'EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID',
-  'EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID',
-  'EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID',
 ]) {
   requireValue(app.extra?.[key], `${key} is required`);
 }
 
-for (const file of ['eas.json', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md', 'docs/08_STORE_LISTING.md']) {
+for (const file of ['eas.json', 'app-ads.txt', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md', 'docs/08_STORE_LISTING.md', 'docs/09_APP_REVIEW_NOTES.md', 'docs/10_ADMOB_PUBLISHING.md']) {
   if (!fs.existsSync(file)) failures.push(`${file} is required`);
 }
 
@@ -78,8 +76,8 @@ if (app.extra?.EXPO_PUBLIC_ADS_TEST_MODE === 'true') {
 
 const settingsSource = fs.readFileSync('app/(tabs)/settings.tsx', 'utf8');
 for (const url of [
-  'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/PRIVACY_POLICY.md',
-  'https://raw.githubusercontent.com/Jhowill/StockGuard/main/docs/TERMS_OF_USE.md',
+  'https://sites.google.com/view/jwm-devcreator/privacidade/estoqueguard',
+  'https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial',
 ]) {
   if (!settingsSource.includes(url)) failures.push(`Missing stable in-app legal URL: ${url}`);
 }

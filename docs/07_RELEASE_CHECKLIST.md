@@ -15,7 +15,9 @@ Checklist operacional para publicar o EstoqueGuard Offline na Google Play e App 
 - Confirmar que consentimento AdMob/UMP e ATT no iOS estao configurados.
 - Confirmar em dispositivo real que nenhum banner, nativo ou intersticial e solicitado antes do consentimento UMP.
 - Confirmar que Configuracoes > Denunciar anuncio inadequado abre o canal de suporte.
-- Confirmar que a politica e os termos foram publicados na branch `main`; os links do app usam `raw.githubusercontent.com`.
+- Confirmar que politica e contato abrem publicamente em `sites.google.com/view/jwm-devcreator`.
+- Confirmar que o AdMob pre-carrega rewarded e rewarded interstitial no iPhone, iPad e Android.
+- Confirmar que falta de inventario apresenta feedback e aplica a liberacao de cortesia sem travar a interface.
 - Revisar `docs/08_STORE_LISTING.md` e preencher os campos de contato que pertencem a conta da loja.
 
 ## Builds
@@ -53,6 +55,8 @@ npx eas-cli build --platform android --profile preview
 
 - Preencher App Privacy considerando AdMob, diagnostico e identificadores.
 - Informar nas notas de revisao onde denunciar anuncios inadequados.
+- Informar nas notas de revisao que nao existe conta; PIN e biometria sao apenas protecao local.
+- Reproduzir no iPad o fluxo Home > Assistir e pausar propagandas e Premium > Assistir e desbloquear.
 - Confirmar ATT e mensagem de rastreamento.
 - Confirmar `ITSAppUsesNonExemptEncryption=false`.
 - Informar politica de privacidade publica.
@@ -72,7 +76,8 @@ npx eas-cli build --platform android --profile preview
 
 ## Pendencias externas
 
-- Criar mensagens UMP no painel do Google AdMob.
+- Confirmar que as mensagens UMP estao publicadas no painel do Google AdMob.
+- Vincular os apps iOS e Android as respectivas fichas das lojas no AdMob e concluir o App Readiness.
+- Publicar e verificar `app-ads.txt` em dominio proprio ou Firebase Hosting; Google Sites nao permite arquivo no diretorio raiz exigido pelo crawler.
 - Configurar credenciais Android/iOS no EAS.
-- Fazer merge/publicar a branch na `main` para ativar as URLs definitivas da politica e dos termos.
 - Preencher formularios de privacidade nas lojas.

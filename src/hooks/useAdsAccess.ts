@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PremiumFeature } from '@/types/ads';
-import { showRewardedAd, showRewardedInterstitial } from '@/services/adsService';
-import { getTemporaryAdFreeState, grantFeatureUnlock, grantTemporaryAdFree } from '@/services/rewardedAccessService';
+import { preloadRewardedAds, showRewardedAd, showRewardedInterstitial } from '@/services/adsService';
+import { getTemporaryAdFreeState, grantFeatureUnlock, grantTemporaryAdFree, subscribeAdAccess } from '@/services/rewardedAccessService';
 
 export function useAdsAccess() {
   const [isTemporaryAdFree, setIsTemporaryAdFree] = useState(false);
@@ -41,10 +41,20 @@ export function useAdsAccess() {
 
   useEffect(() => {
     void refresh();
+    void preloadRewardedAds().catch(() => undefined);
+    const unsubscribe = subscribeAdAccess(() => void refresh());
     return () => {
+      unsubscribe();
       requestIdRef.current += 1;
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!isTemporaryAdFree || !adFreeExpiresAt) return undefined;
+    const remainingMs = new Date(adFreeExpiresAt).getTime() - Date.now();
+    const timeout = setTimeout(() => void refresh(), Math.max(250, remainingMs + 250));
+    return () => clearTimeout(timeout);
+  }, [adFreeExpiresAt, isTemporaryAdFree, refresh]);
 
   const canRequestAdFreeReward = !isTemporaryAdFree && dailyAdFreeUses < dailyAdFreeLimit;
 

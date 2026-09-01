@@ -25,6 +25,7 @@ test('store identifiers, versions and native release flags are present', () => {
   assert.equal(app.ios.bundleIdentifier, 'com.jhowill.stockguard');
   assert.equal(app.ios.buildNumber, '1');
   assert.equal(app.ios.infoPlist.ITSAppUsesNonExemptEncryption, false);
+  assert.deepEqual(app.platforms, ['ios', 'android']);
   assert.ok(eas.build.production);
   assert.ok(eas.build.preview.android.buildType);
 });
@@ -48,9 +49,9 @@ test('production ads are configured without enabling test mode', () => {
     'EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID',
     'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID',
     'EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID',
-    'EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_TRANSITION_ID',
-    'EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_TRANSITION_ID',
   ]) {
     assert.match(app.extra[key], /^ca-app-pub-/);
   }
+
+  assert.match(readFileSync('app-ads.txt', 'utf8'), /^google\.com, pub-4042606302261972, DIRECT, f08c47fec0942fa0\s*$/);
 });

@@ -31,6 +31,7 @@ export default function PremiumScreen() {
   const { state, refreshAccess, error: featureError } = useFeatureGate(selectedFeature);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
+  const [actionNotice, setActionNotice] = useState<string | undefined>();
 
   const handleFeatureUnlock = async () => {
     if (busy) {
@@ -39,10 +40,15 @@ export default function PremiumScreen() {
 
     setBusy(true);
     setActionError(undefined);
+    setActionNotice(undefined);
     try {
       const result = await grantFeatureUnlock(selectedFeature);
       if (result.status === 'failed') {
         setActionError(result.reason);
+      } else if (result.status === 'cancelled') {
+        setActionError('ADS_CANCELLED');
+      } else if (result.source === 'availability_fallback') {
+        setActionNotice(t('ads.courtesyUnlock'));
       }
       await refreshAccess(selectedFeature);
     } catch (nextError) {
@@ -79,6 +85,7 @@ export default function PremiumScreen() {
       {actionError || adsError || featureError ? (
         <EmptyState title={t('premium.rewards')} description={translateAppError(actionError ?? adsError ?? featureError ?? t('premium.loadFailed'), t)} />
       ) : null}
+      {actionNotice ? <StatusBadge tone="success" label={actionNotice} /> : null}
 
       <AppCard style={{ gap: 12 }}>
         <AppCard.Title>{t('premium.unlockFeature')}</AppCard.Title>
@@ -102,6 +109,7 @@ export default function PremiumScreen() {
         </View>
         <StatusBadge tone={state?.allowed ? 'success' : 'warning'} label={state?.allowed ? t('premium.unlocked') : t('premium.blocked')} />
         <AppButton label={t('premium.watchUnlock')} variant="secondary" loading={busy} onPress={() => void handleFeatureUnlock()} />
+        {busy ? <AppCard.Text>{t('ads.preparing')}</AppCard.Text> : null}
       </AppCard>
     </ScreenContainer>
   );

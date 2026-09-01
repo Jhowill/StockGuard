@@ -10,4 +10,4 @@ Recursos secundarios podem ser liberados voluntariamente por anuncios recompensa
 
 O aplicativo e fornecido sem garantia de adequacao a uma finalidade especifica. Na extensao permitida pela lei, o desenvolvedor nao responde por perdas decorrentes de dados incorretos, ausencia de backup, falha do aparelho ou uso fora da finalidade proposta.
 
-Estes termos podem ser atualizados quando funcionalidades ou exigencias legais mudarem. Duvidas podem ser enviadas em https://github.com/Jhowill/StockGuard/issues.
+Estes termos podem ser atualizados quando funcionalidades ou exigencias legais mudarem. Duvidas podem ser enviadas em https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial.
