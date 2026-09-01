@@ -18,6 +18,11 @@ const adsPlugin = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0
 requireValue(adsPlugin?.[1]?.androidAppId, 'Android AdMob app ID is required');
 requireValue(adsPlugin?.[1]?.iosAppId, 'iOS AdMob app ID is required');
 
+const localizationPlugin = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'expo-localization');
+if (localizationPlugin?.[1]?.supportedLocales?.android?.includes('pt-BR')) {
+  failures.push('Android native resource filters must use pt instead of the unsupported AAPT value pt-BR');
+}
+
 for (const key of [
   'EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID',
   'EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID',
@@ -51,6 +56,10 @@ for (const asset of [
 
 for (const dependency of ['expo-font', 'expo-constants', 'expo-linking', 'react-native-google-mobile-ads']) {
   if (!pkg.dependencies?.[dependency]) failures.push(`${dependency} must be a direct dependency`);
+}
+
+if (pkg.dependencies?.['react-native-google-mobile-ads'] !== '16.3.0') {
+  failures.push('react-native-google-mobile-ads must stay pinned to 16.3.0 for Expo 54 Kotlin compatibility');
 }
 
 if (!fs.existsSync('package-lock.json')) {

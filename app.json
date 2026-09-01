@@ -86,7 +86,7 @@
         {
           "supportedLocales": {
             "ios": ["pt-BR", "en", "es"],
-            "android": ["pt-BR", "en", "es"]
+            "android": ["pt", "en", "es"]
           }
         }
       ]

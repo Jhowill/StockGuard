@@ -13,11 +13,13 @@ test('Expo 54 native dependency set stays aligned', () => {
   assert.equal(deps['react-native'], '0.81.5');
   assert.match(deps['babel-preset-expo'], /54\./);
   assert.equal(deps['react-native-worklets'], '0.5.1');
+  assert.equal(deps['react-native-google-mobile-ads'], '16.3.0');
 });
 
 test('store identifiers, versions and native release flags are present', () => {
   const app = readJson('app.json').expo;
   const eas = readJson('eas.json');
+  const localizationPlugin = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'expo-localization');
 
   assert.equal(app.version, '1.0.0');
   assert.equal(app.android.package, 'com.jhowill.stockguard');
@@ -26,6 +28,8 @@ test('store identifiers, versions and native release flags are present', () => {
   assert.equal(app.ios.buildNumber, '1');
   assert.equal(app.ios.infoPlist.ITSAppUsesNonExemptEncryption, false);
   assert.deepEqual(app.platforms, ['ios', 'android']);
+  assert.deepEqual(localizationPlugin[1].supportedLocales.ios, ['pt-BR', 'en', 'es']);
+  assert.deepEqual(localizationPlugin[1].supportedLocales.android, ['pt', 'en', 'es']);
   assert.ok(eas.build.production);
   assert.ok(eas.build.preview.android.buildType);
 });
