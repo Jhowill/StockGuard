@@ -42,7 +42,7 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "NSFaceIDUsageDescription": "Use o Face ID para proteger o acesso ao seu estoque.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": true
       }
     },
     "web": {

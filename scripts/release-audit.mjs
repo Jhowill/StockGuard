@@ -40,7 +40,7 @@ for (const key of [
   requireValue(app.extra?.[key], `${key} is required`);
 }
 
-for (const file of ['eas.json', 'app-ads.txt', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md', 'docs/08_STORE_LISTING.md', 'docs/09_APP_REVIEW_NOTES.md', 'docs/10_ADMOB_PUBLISHING.md']) {
+for (const file of ['eas.json', 'app-ads.txt', 'docs/PRIVACY_POLICY.md', 'docs/TERMS_OF_USE.md', 'docs/07_RELEASE_CHECKLIST.md', 'docs/08_STORE_LISTING.md', 'docs/09_APP_REVIEW_NOTES.md', 'docs/10_ADMOB_PUBLISHING.md', 'docs/11_APP_REVIEW_4_3.md', 'docs/12_STORE_CONSOLE_DATA.md']) {
   if (!fs.existsSync(file)) failures.push(`${file} is required`);
 }
 
@@ -89,6 +89,10 @@ for (const url of [
   'https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial',
 ]) {
   if (!settingsSource.includes(url)) failures.push(`Missing stable in-app legal URL: ${url}`);
+}
+
+if (!settingsSource.includes("router.push('/terms')") || !fs.existsSync('app/terms.tsx')) {
+  failures.push('Terms of use must remain available inside the app');
 }
 
 if (failures.length) {

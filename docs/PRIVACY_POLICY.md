@@ -1,6 +1,6 @@
 # Politica de Privacidade do EstoqueGuard Offline
 
-Ultima atualizacao: 6 de agosto de 2026.
+Ultima atualizacao: 2 de setembro de 2026.
 
 O EstoqueGuard Offline, publicado por Jhowill, e um aplicativo de controle de estoque com funcionamento principal offline. Produtos, movimentacoes, categorias, fornecedores, configuracoes, PIN e historico permanecem no dispositivo do usuario.
 
@@ -9,6 +9,8 @@ O EstoqueGuard Offline, publicado por Jhowill, e um aplicativo de controle de es
 O aplicativo pode armazenar localmente nome de perfil, dados de produtos, imagens escolhidas pelo usuario, fornecedores, valores, movimentacoes e configuracoes de seguranca. Esses dados nao sao enviados pelo StockGuard para um servidor proprio.
 
 O usuario pode criar, compartilhar e restaurar arquivos de backup. O destino do compartilhamento e escolhido pelo proprio usuario. Backups criptografados usam a senha informada pelo usuario, que nao e recuperavel pelo desenvolvedor.
+
+Dados de estoque, fotos, nome de perfil, PIN, dados de fornecedores e backups nao sao enviados pelo aplicativo para o desenvolvedor ou para um servidor proprio. Eles nao entram nas declaracoes de coleta das lojas, exceto se uma versao futura passar a transmitir esses dados.
 
 ## Anuncios
 
@@ -19,6 +21,8 @@ O Google Mobile Ads SDK pode coletar e compartilhar com o Google o endereco IP, 
 O usuario pode assistir voluntariamente a um anuncio recompensado para pausar anuncios comuns por cinco minutos, ate tres vezes por dia. Essa pausa nao impede anuncios que o proprio usuario escolher assistir para desbloquear recursos opcionais.
 
 Antes de solicitar anuncios, o aplicativo atualiza o consentimento pelo Google User Messaging Platform e verifica se anuncios podem ser requisitados. As opcoes de privacidade podem ser revistas dentro de Configuracoes. No iOS, o aplicativo respeita a permissao de rastreamento do sistema. Configuracoes tambem oferece um canal para denunciar anuncios inadequados ou incompativeis com a faixa etaria.
+
+O consentimento para anuncios e gerenciado pelo Google User Messaging Platform. Preferencias locais do aplicativo nao substituem, ignoram ou ampliam a decisao apresentada por esse sistema.
 
 ## Permissoes
 

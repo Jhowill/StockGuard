@@ -26,7 +26,8 @@ test('store identifiers, versions and native release flags are present', () => {
   assert.equal(app.android.versionCode, 1);
   assert.equal(app.ios.bundleIdentifier, 'com.jhowill.stockguard');
   assert.equal(app.ios.buildNumber, '1');
-  assert.equal(app.ios.infoPlist.ITSAppUsesNonExemptEncryption, false);
+  // Encrypted backups use AES from crypto-js, outside Apple's OS crypto APIs.
+  assert.equal(app.ios.infoPlist.ITSAppUsesNonExemptEncryption, true);
   assert.deepEqual(app.platforms, ['ios', 'android']);
   assert.deepEqual(localizationPlugin[1].supportedLocales.ios, ['pt-BR', 'en', 'es']);
   assert.deepEqual(localizationPlugin[1].supportedLocales.android, ['pt', 'en', 'es']);

@@ -6,6 +6,7 @@ Checklist operacional para publicar o EstoqueGuard Offline na Google Play e App 
 
 - Rodar `npm run audit:release`.
 - Rodar `npx expo-doctor`.
+- Rodar `npm audit --omit=dev --audit-level=high`. Nao usar `--force` para atualizar Expo sem um ciclo planejado de migracao e testes nativos.
 - Confirmar Expo SDK 54 e dependencias alinhadas.
 - Confirmar `android.package` e `ios.bundleIdentifier`.
 - Confirmar icones e splash em `icons/`.
@@ -58,7 +59,7 @@ npx eas-cli build --platform android --profile preview
 - Informar nas notas de revisao que nao existe conta; PIN e biometria sao apenas protecao local.
 - Reproduzir no iPad o fluxo Home > Assistir e pausar propagandas e Premium > Assistir e desbloquear.
 - Confirmar ATT e mensagem de rastreamento.
-- Confirmar `ITSAppUsesNonExemptEncryption=false`.
+- Confirmar a declaracao de exportacao de criptografia no App Store Connect. O app usa AES padrao via `crypto-js` para backups criptografados e declara `ITSAppUsesNonExemptEncryption=true`.
 - Informar politica de privacidade publica.
 - Testar biometria/Face ID em build nativa.
 - Testar restore de backup e exportacao em dispositivo real.

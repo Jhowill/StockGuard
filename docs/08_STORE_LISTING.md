@@ -106,7 +106,7 @@ URL da politica de privacidade: https://sites.google.com/view/jwm-devcreator/pri
 - Anuncios recompensados sao pre-carregados. Se o AdMob nao fornecer inventario, o app informa o ocorrido e libera a pausa ou o recurso como cortesia, evitando uma tela sem resposta.
 - Configuracoes inclui opcoes de privacidade e um canal para denunciar anuncios inadequados.
 - Os termos de uso tambem estao disponiveis em Configuracoes > Sobre > Termos de uso.
-- `ITSAppUsesNonExemptEncryption` esta configurado como `false`.
+- O app usa AES padrao via `crypto-js` para backups criptografados. Preencha a declaracao de exportacao de criptografia no App Store Connect conforme a distribuicao escolhida.
 
 ## Materiais visuais
 
