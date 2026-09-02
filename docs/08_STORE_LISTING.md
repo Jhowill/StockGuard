@@ -19,29 +19,28 @@ Este documento reune o texto e as respostas de cadastro para EstoqueGuard Offlin
 | Politica de privacidade | https://sites.google.com/view/jwm-devcreator/privacidade/estoqueguard |
 | Suporte | https://sites.google.com/view/jwm-devcreator/p%C3%A1gina-inicial |
 | E-mail de suporte | jwmdevcreator@outlook.com |
-| E-mail de suporte | jwmdevcreator@outlook.com |
 
 ## Google Play
 
 ### Descricao curta
 
-Controle seu estoque offline com produtos, alertas, relatorios e backups seguros.
+Controle de estoque offline, com dados locais, alertas e backup criptografado.
 
 ### Descricao completa
 
-EstoqueGuard Offline e um controle de estoque simples, rapido e feito para funcionar mesmo sem internet.
+EstoqueGuard Offline e um controle de estoque local, feito para pequenos negocios que precisam registrar produtos e movimentacoes mesmo sem conexao.
 
-Cadastre produtos, categorias e fornecedores. Registre entradas e saidas, acompanhe estoque minimo e validade, e veja relatorios para entender a movimentacao do seu negocio.
+Cadastre produtos, categorias e fornecedores. Registre entradas, saidas, perdas, devolucoes e ajustes. Acompanhe estoque minimo e validade, consulte o historico local e gere relatorios a partir dos dados guardados no aparelho.
 
-Seus dados principais ficam no seu aparelho. Para maior seguranca, voce pode usar PIN ou biometria e criar backups para compartilhar ou restaurar quando precisar.
+Seus dados principais ficam no seu aparelho, em banco SQLite local e sem conta obrigatoria. Para maior seguranca, voce pode usar PIN ou biometria e criar backups comuns ou criptografados por senha para compartilhar ou restaurar quando precisar.
 
 Recursos incluidos:
 
 - Cadastro de produtos, categorias e fornecedores.
-- Controle de entradas, saidas, estoque minimo e validade.
+- Controle de entradas, saidas, perdas, devolucoes, ajustes, estoque minimo e validade.
 - Relatorios de movimentacao e produtos mais movimentados.
 - Exportacao de relatorios em PDF e CSV.
-- Backup simples e backup criptografado.
+- Backup simples, backup criptografado por senha e restauracao validada.
 - Protecao por PIN e biometria compativel.
 - Tema claro ou escuro, idiomas e moedas configuraveis.
 
@@ -83,11 +82,11 @@ Marque transmissao criptografada em transito para os dados do AdMob. Esta declar
 
 ### Descricao
 
-Controle seu estoque com privacidade e sem depender de internet.
+Controle seu estoque localmente, com privacidade e sem depender de internet.
 
-EstoqueGuard Offline ajuda voce a cadastrar produtos, registrar entradas e saidas, acompanhar estoque minimo e validade e consultar relatorios de movimentacao.
+EstoqueGuard Offline ajuda voce a cadastrar produtos, registrar entradas, saidas, perdas, devolucoes e ajustes, acompanhar estoque minimo e validade e consultar relatorios de movimentacao.
 
-Seus dados principais ficam no aparelho. Use PIN ou biometria para proteger o acesso e crie backups quando precisar restaurar ou compartilhar suas informacoes.
+Os dados ficam no aparelho em banco SQLite local, sem login ou servidor proprio. Use PIN ou biometria para proteger o acesso e crie backups comuns ou criptografados por senha quando precisar restaurar ou compartilhar suas informacoes.
 
 Recursos secundarios, como exportacao de relatorios e backup criptografado, podem ser liberados voluntariamente por anuncios recompensados. O cadastro e a movimentacao de estoque nao dependem de anuncios.
 
@@ -106,6 +105,7 @@ URL da politica de privacidade: https://sites.google.com/view/jwm-devcreator/pri
 - Banners e anuncios nativos podem aparecer em telas de leitura; anuncios recompensados so aparecem por escolha do usuario.
 - Anuncios recompensados sao pre-carregados. Se o AdMob nao fornecer inventario, o app informa o ocorrido e libera a pausa ou o recurso como cortesia, evitando uma tela sem resposta.
 - Configuracoes inclui opcoes de privacidade e um canal para denunciar anuncios inadequados.
+- Os termos de uso tambem estao disponiveis em Configuracoes > Sobre > Termos de uso.
 - `ITSAppUsesNonExemptEncryption` esta configurado como `false`.
 
 ## Materiais visuais

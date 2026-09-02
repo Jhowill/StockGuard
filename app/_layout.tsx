@@ -68,6 +68,7 @@ function AppShell() {
       <Stack.Screen name="security/biometric" />
       <Stack.Screen name="premium" />
       <Stack.Screen name="backup" />
+      <Stack.Screen name="terms" />
     </Stack>
   );
 }

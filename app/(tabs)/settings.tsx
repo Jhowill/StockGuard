@@ -321,6 +321,7 @@ export default function SettingsScreen() {
         <AppCard.Text>{t('settings.version', { version: Application.nativeApplicationVersion ?? '1.0.0', build: Application.nativeBuildVersion ?? 'dev' })}</AppCard.Text>
         <AppCard.Text>{t('settings.privacyNote')}</AppCard.Text>
         <AppButton label={t('settings.privacyPolicy')} variant="ghost" onPress={() => void openExternalUrl(PRIVACY_POLICY_URL)} />
+        <AppButton label={t('settings.termsOfUse')} variant="ghost" onPress={() => router.push('/terms')} />
         <AppButton label={t('settings.contactSupport')} variant="ghost" onPress={() => void openExternalUrl(SUPPORT_URL)} />
       </AppCard>
 
