@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { getSettings, updateSettings } from '@/database/repositories/settingsRepository';
+import { resetDatabaseCache } from '@/database/db';
+import { inspectPinCredential } from '@/services/securityService';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type AppLanguage = 'system' | 'pt-BR' | 'en' | 'es';
@@ -11,6 +13,8 @@ export type UsageType = 'store' | 'workshop' | 'personal' | 'service' | 'other';
 type AppStateValue = {
   hasCompletedOnboarding: boolean;
   isReady: boolean;
+  initializationError?: string;
+  userName?: string | null;
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
@@ -20,6 +24,7 @@ type AppStateValue = {
   hideFinancialValues: boolean;
   isUnlocked: boolean;
   setOnboardingCompleted: (completed: boolean) => void;
+  setUserName: (name?: string | null) => void;
   completeOnboarding: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => void;
   setLanguage: (language: AppLanguage) => void;
@@ -32,13 +37,22 @@ type AppStateValue = {
   lockApp: () => void;
   resetDemo: () => Promise<void>;
   hydrateFromSettings: () => Promise<void>;
+  retryInitialization: () => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
+async function getSafeSettings() {
+  const settings = await getSettings();
+  if (!settings.appLockEnabled || await inspectPinCredential() !== 'missing') return settings;
+  return updateSettings({ appLockEnabled: false, biometricUnlockEnabled: false });
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | undefined>();
+  const [userName, setUserName] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeMode>('system');
   const [language, setLanguage] = useState<AppLanguage>('system');
   const [currency, setCurrency] = useState<CurrencyCode>('BRL');
@@ -47,24 +61,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [biometricUnlockEnabled, setBiometricUnlockEnabled] = useState(false);
   const [hideFinancialValues, setHideFinancialValues] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(true);
+  const initializationRequestRef = useRef(0);
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const settings = await getSettings();
-        setTheme(settings.theme);
-        setLanguage(settings.language);
-        setCurrency(settings.currency);
-        setUsageType(settings.usageType);
-        setAppLockEnabled(settings.appLockEnabled);
-        setBiometricUnlockEnabled(settings.biometricUnlockEnabled);
-        setHideFinancialValues(settings.hideFinancialValues);
-        setHasCompletedOnboarding(settings.onboardingCompleted);
-        setIsUnlocked(!settings.appLockEnabled);
-      } finally {
+  const initialize = async () => {
+    const requestId = ++initializationRequestRef.current;
+    setIsReady(false);
+    setInitializationError(undefined);
+    try {
+      const settings = await getSafeSettings();
+      if (requestId !== initializationRequestRef.current) {
+        return;
+      }
+      setUserName(settings.userName ?? null);
+      setTheme(settings.theme);
+      setLanguage(settings.language);
+      setCurrency(settings.currency);
+      setUsageType(settings.usageType);
+      setAppLockEnabled(settings.appLockEnabled);
+      setBiometricUnlockEnabled(settings.biometricUnlockEnabled);
+      setHideFinancialValues(settings.hideFinancialValues);
+      setHasCompletedOnboarding(settings.onboardingCompleted);
+      setIsUnlocked(!settings.appLockEnabled);
+    } catch (error) {
+      if (requestId === initializationRequestRef.current) {
+        setInitializationError(error instanceof Error ? error.message : 'DATABASE_INITIALIZATION_FAILED');
+      }
+    } finally {
+      if (requestId === initializationRequestRef.current) {
         setIsReady(true);
       }
-    })();
+    }
+  };
+
+  useEffect(() => {
+    void initialize();
   }, []);
 
   useEffect(() => {
@@ -81,6 +111,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       hasCompletedOnboarding,
       isReady,
+      initializationError,
+      userName,
       theme,
       language,
       currency,
@@ -90,6 +122,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hideFinancialValues,
       isUnlocked,
       setOnboardingCompleted: setHasCompletedOnboarding,
+      setUserName: (name?: string | null) => setUserName(name ?? null),
       completeOnboarding: async () => {
         await updateSettings({ onboardingCompleted: true });
         setHasCompletedOnboarding(true);
@@ -113,6 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetDemo: async () => {
         await updateSettings({
           onboardingCompleted: false,
+          userName: null,
           theme: 'system',
           language: 'system',
           currency: 'BRL',
@@ -122,6 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           hideFinancialValues: false,
         });
         setHasCompletedOnboarding(false);
+        setUserName(null);
         setTheme('system');
         setLanguage('system');
         setCurrency('BRL');
@@ -132,7 +167,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsUnlocked(true);
       },
       hydrateFromSettings: async () => {
-        const settings = await getSettings();
+        const settings = await getSafeSettings();
+        setUserName(settings.userName ?? null);
         setTheme(settings.theme);
         setLanguage(settings.language);
         setCurrency(settings.currency);
@@ -143,6 +179,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setHasCompletedOnboarding(settings.onboardingCompleted);
         setIsUnlocked(!settings.appLockEnabled);
       },
+      retryInitialization: async () => {
+        await resetDatabaseCache();
+        await initialize();
+      },
     }),
     [
       appLockEnabled,
@@ -150,10 +190,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currency,
       hasCompletedOnboarding,
       isReady,
+      initializationError,
       isUnlocked,
       hideFinancialValues,
       language,
       theme,
+      userName,
       usageType,
     ],
   );

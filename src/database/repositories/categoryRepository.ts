@@ -3,6 +3,7 @@ import { getDatabase } from '../db';
 import { createAuditLog } from './auditLogRepository';
 import type { Category } from '@/types/category';
 import { nowIso } from '@/utils/date';
+import { assertTextLength, INPUT_LIMITS } from '@/utils/validators';
 
 type CategoryRow = {
   id: string;
@@ -60,6 +61,10 @@ export async function createCategory(input: Omit<Category, 'id' | 'createdAt' | 
   if (!name) {
     throw new Error('CATEGORY_NAME_REQUIRED');
   }
+  assertTextLength(name, INPUT_LIMITS.name, 'CATEGORY_NAME_TOO_LONG');
+  if (!Number.isFinite(input.sortOrder) || input.sortOrder < 0 || !Number.isInteger(input.sortOrder)) {
+    throw new Error('INVALID_CATEGORY_SORT_ORDER');
+  }
 
   const id = Crypto.randomUUID();
   const category: Category = {
@@ -91,7 +96,6 @@ export async function createCategory(input: Omit<Category, 'id' | 'createdAt' | 
     action: 'category_created',
     entityType: 'category',
     entityId: category.id,
-    metadataJson: JSON.stringify({ name: category.name }),
   });
 
   return category;
@@ -113,6 +117,10 @@ export async function updateCategory(id: string, input: Partial<Omit<Category, '
   if (!next.name) {
     throw new Error('CATEGORY_NAME_REQUIRED');
   }
+  assertTextLength(next.name, INPUT_LIMITS.name, 'CATEGORY_NAME_TOO_LONG');
+  if (!Number.isFinite(next.sortOrder) || next.sortOrder < 0 || !Number.isInteger(next.sortOrder)) {
+    throw new Error('INVALID_CATEGORY_SORT_ORDER');
+  }
   await assertUniqueCategoryName(next.name, id);
 
   await db.runAsync(
@@ -130,7 +138,7 @@ export async function updateCategory(id: string, input: Partial<Omit<Category, '
     action: 'category_updated',
     entityType: 'category',
     entityId: id,
-    metadataJson: JSON.stringify({ name: next.name, status: next.status }),
+    metadataJson: JSON.stringify({ status: next.status }),
   });
 
   return next;

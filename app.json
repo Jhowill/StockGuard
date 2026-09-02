@@ -3,7 +3,13 @@
     "name": "EstoqueGuard Offline",
     "slug": "estoqueguard-offline",
     "scheme": "estoqueguard",
-    "version": "0.1.0",
+    "version": "1.0.0",
+    "platforms": ["ios", "android"],
+    "locales": {
+      "pt-BR": "./locales/pt-BR.json",
+      "en": "./locales/en.json",
+      "es": "./locales/es.json"
+    },
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./icons/android/expo/icon.png",
@@ -13,33 +19,99 @@
       "backgroundColor": "#0B0F14"
     },
     "android": {
+      "package": "com.jhowill.stockguard",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./icons/android/expo/adaptive-icon-foreground.png",
         "backgroundImage": "./icons/android/expo/adaptive-icon-background.png"
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.jhowill.stockguard",
+      "buildNumber": "1",
+      "icon": "./icons/ios/store/appstore_icon_1024.png",
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "NSFaceIDUsageDescription": "Use o Face ID para proteger o acesso ao seu estoque.",
+        "ITSAppUsesNonExemptEncryption": true
       }
     },
     "web": {
       "favicon": "./icons/android/expo/icon.png"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "plugins": [
       "expo-router",
       "expo-sqlite",
       "expo-secure-store",
-      "expo-localization",
       "expo-document-picker",
-      "expo-image-picker"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permita o acesso às fotos para adicionar uma imagem ao produto."
+        }
+      ],
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Use o Face ID para proteger o acesso ao seu estoque."
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-4042606302261972~8243870370",
+          "iosAppId": "ca-app-pub-4042606302261972~4321735996",
+          "delayAppMeasurementInit": true,
+          "userTrackingUsageDescription": "Sua permissão permite medir anúncios e manter recursos secundários gratuitos."
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Sua permissão permite medir anúncios e manter recursos secundários gratuitos."
+        }
+      ],
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["pt-BR", "en", "es"],
+            "android": ["pt", "en", "es"]
+          }
+        }
+      ]
     ],
     "extra": {
       "EXPO_PUBLIC_ADS_ENABLED": "true",
+      "EXPO_PUBLIC_ADS_TEST_MODE": "false",
       "EXPO_PUBLIC_ADMOB_ANDROID_APP_ID": "ca-app-pub-4042606302261972~8243870370",
       "EXPO_PUBLIC_ADMOB_IOS_APP_ID": "ca-app-pub-4042606302261972~4321735996",
       "EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID": "ca-app-pub-4042606302261972/8766614555",
       "EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID": "ca-app-pub-4042606302261972/3646149813",
       "EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID": "ca-app-pub-4042606302261972/3204095443",
-      "EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID": "ca-app-pub-4042606302261972/7453532884"
+      "EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID": "ca-app-pub-4042606302261972/7453532884",
+      "EXPO_PUBLIC_ADMOB_ANDROID_BANNER_HOME_ID": "ca-app-pub-4042606302261972/4537270094",
+      "EXPO_PUBLIC_ADMOB_IOS_BANNER_HOME_ID": "ca-app-pub-4042606302261972/5306326200",
+      "EXPO_PUBLIC_ADMOB_ANDROID_BANNER_ALERTS_ID": "ca-app-pub-4042606302261972/4537270094",
+      "EXPO_PUBLIC_ADMOB_IOS_BANNER_ALERTS_ID": "ca-app-pub-4042606302261972/5306326200",
+      "EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_PRODUCTS_ID": "ca-app-pub-4042606302261972/6080351827",
+      "EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID": "ca-app-pub-4042606302261972/5670388361",
+      "EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID": "ca-app-pub-4042606302261972/6080351827",
+      "EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID": "ca-app-pub-4042606302261972/5670388361",
+      "router": {},
+      "eas": {
+        "projectId": "298fd73f-ff7f-4fe8-9f2c-d00b034f4521"
+      }
     }
   }
 }

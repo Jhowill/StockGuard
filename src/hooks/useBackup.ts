@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { listBackupRecords } from '@/database/repositories/backupRecordRepository';
 import type { BackupRecord } from '@/types/backup';
 import { exportBackupFile, restoreBackupFile, shareBackupFile } from '@/services/backupService';
@@ -7,21 +7,33 @@ export function useBackup() {
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(undefined);
     try {
-      setBackups(await listBackupRecords());
+      const nextBackups = await listBackupRecords();
+      if (requestId === requestIdRef.current) {
+        setBackups(nextBackups);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'BACKUP_LOAD_FAILED');
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'BACKUP_LOAD_FAILED');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void refresh();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [refresh]);
 
   const createBackup = useCallback(async (password?: string) => {

@@ -7,15 +7,25 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
     "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["react", "react-native"]
+    "types": [
+      "react",
+      "react-native"
+    ]
   },
-  "include": ["app", "src", "expo-env.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "app",
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

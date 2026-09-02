@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "EstoqueGuard Offline",
+    "NSFaceIDUsageDescription": "Use o Face ID para proteger o acesso ao seu estoque.",
+    "NSPhotoLibraryUsageDescription": "Permita o acesso às fotos para adicionar uma imagem ao produto.",
+    "NSUserTrackingUsageDescription": "Sua permissão permite medir anúncios e manter recursos secundários gratuitos."
+  },
+  "android": {
+    "app_name": "EstoqueGuard Offline"
+  }
+}

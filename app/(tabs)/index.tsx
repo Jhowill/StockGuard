@@ -1,36 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { AppButton } from '@/components/ui/AppButton';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppCard } from '@/components/ui/AppCard';
+import { StandardBannerAd } from '@/components/ads/StandardBannerAd';
+import { AppButton } from '@/components/ui/AppButton';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useAdsAccess } from '@/hooks/useAdsAccess';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { useAppState } from '@/state/app-state';
+import { updateSettings } from '@/database/repositories/settingsRepository';
 import { formatMoney } from '@/utils/format';
 import { formatShortDateTime } from '@/utils/date-format';
 
-function getMovementLabel(type: string) {
+function getMovementLabel(type: string, t: (key: string) => string) {
   switch (type) {
     case 'in':
-      return 'Entrada';
+      return t('movement.entry');
     case 'out':
-      return 'Saida';
+      return t('movement.exit');
     case 'loss':
-      return 'Perda';
+      return t('movement.loss');
     case 'return':
-      return 'Devolucao';
+      return t('movement.return');
     case 'adjustment_positive':
+      return t('movement.adjustmentPositive');
     case 'adjustment_negative':
-      return 'Ajuste';
+      return t('movement.adjustmentNegative');
     case 'initial_balance':
-      return 'Ajuste inicial';
+      return t('movement.initialBalance');
     default:
-      return 'Ajuste';
+      return t('movement.title');
   }
 }
 
@@ -50,30 +57,134 @@ function getMovementTone(type: string) {
 }
 
 export default function HomeScreen() {
-  const { currency } = useAppState();
-  const { palette } = useAppTheme();
+  const { t, language } = useI18n();
+  const { currency, theme, userName, hideFinancialValues, setThemeMode, setHideFinancialValues } = useAppState();
+  const { palette, mode } = useAppTheme();
   const { summary, loading, error, refresh } = useDashboard();
+  const {
+    loading: adsLoading,
+    error: adsError,
+    isTemporaryAdFree,
+    adFreeExpiresAt,
+    dailyAdFreeUses,
+    dailyAdFreeLimit,
+    canRequestAdFreeReward,
+    grantTemporaryAdFree,
+    refresh: refreshAds,
+  } = useAdsAccess();
+  const [adFreeBusy, setAdFreeBusy] = useState(false);
+  const [adFreeActionError, setAdFreeActionError] = useState<string | undefined>();
+  const [adFreeNotice, setAdFreeNotice] = useState<string | undefined>();
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  const displayName = userName?.trim();
+  const greeting = displayName ? t('home.greeting', { name: displayName }) : t('home.greetingFallback');
+  const nextTheme = mode === 'dark' ? 'light' : 'dark';
+  const remainingAdFreeSeconds = adFreeExpiresAt
+    ? Math.max(0, Math.ceil((new Date(adFreeExpiresAt).getTime() - currentTime) / 1000))
+    : 0;
+
+  useEffect(() => {
+    if (!isTemporaryAdFree || !adFreeExpiresAt) {
+      return;
+    }
+
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isTemporaryAdFree, adFreeExpiresAt]);
+
+  useEffect(() => {
+    if (isTemporaryAdFree && remainingAdFreeSeconds === 0) {
+      void refreshAds();
+    }
+  }, [isTemporaryAdFree, remainingAdFreeSeconds, refreshAds]);
+
+  const toggleTheme = async () => {
+    setThemeMode(nextTheme);
+    try {
+      await updateSettings({ theme: nextTheme });
+    } catch {
+      setThemeMode(theme);
+    }
+  };
+
+  const toggleFinancialValues = async () => {
+    const nextHidden = !hideFinancialValues;
+    setHideFinancialValues(nextHidden);
+    try {
+      await updateSettings({ hideFinancialValues: nextHidden });
+    } catch {
+      setHideFinancialValues(hideFinancialValues);
+    }
+  };
+
+  const handleTemporaryAdFree = async () => {
+    if (adFreeBusy || !canRequestAdFreeReward) {
+      return;
+    }
+
+    setAdFreeBusy(true);
+    setAdFreeActionError(undefined);
+    setAdFreeNotice(undefined);
+    try {
+      const result = await grantTemporaryAdFree();
+      if (result.status !== 'success') {
+        setAdFreeActionError(result.status === 'failed' ? result.reason : 'ADS_CANCELLED');
+      } else if (result.source === 'availability_fallback') {
+        setAdFreeNotice(t('ads.courtesyPause'));
+      }
+      await refreshAds();
+    } catch (nextError) {
+      setAdFreeActionError(nextError instanceof Error ? nextError.message : 'ADS_UNAVAILABLE');
+    } finally {
+      setAdFreeBusy(false);
+    }
+  };
 
   const lastActivity = summary.lastMovements[0]?.createdAt;
   const heroHint = loading
-    ? 'Atualizado hoje'
+    ? t('home.updatedToday')
     : lastActivity
-      ? `Ultima atualizacao | ${formatShortDateTime(lastActivity)}`
-      : 'Nenhuma movimentacao recente';
+      ? t('home.lastUpdated', { date: formatShortDateTime(lastActivity, language) })
+      : t('home.noRecentActivity');
 
   return (
-    <ScreenContainer scroll padded>
+    <ScreenContainer scroll padded onRefresh={() => void refresh()} refreshing={loading}>
       <View style={[styles.glow, styles.glowTop, { backgroundColor: palette.primary }]} />
       <View style={[styles.glow, styles.glowBottom, { backgroundColor: palette.premium }]} />
 
-      <AppHeader title="Inicio" subtitle="Resumo rapido do seu estoque." rightAction={<StatusBadge tone="info" label="Offline first" />} />
+      <AppHeader
+        title={greeting}
+        subtitle={t('home.subtitle')}
+        rightAction={
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => void toggleFinancialValues()}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={hideFinancialValues ? t('home.showValues') : t('home.hideValues')}
+              style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
+            >
+              <Ionicons name={hideFinancialValues ? 'eye-off-outline' : 'eye-outline'} size={20} color={palette.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => void toggleTheme()}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={mode === 'dark' ? t('home.toggleLight') : t('home.toggleDark')}
+              style={[styles.headerAction, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}
+            >
+              <Ionicons name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={22} color={palette.text} />
+            </Pressable>
+          </View>
+        }
+      />
 
       <AppCard variant="hero" style={styles.heroCard}>
         <View style={styles.heroTop}>
           <View style={styles.heroCopy}>
-            <Text style={[styles.heroLabel, { color: palette.textMuted }]}>Valor total em estoque</Text>
+            <Text style={[styles.heroLabel, { color: palette.textMuted }]}>{t('home.stockValue')}</Text>
             <Text style={[styles.heroValue, { color: palette.text }]}>
-              {loading ? '...' : formatMoney(summary.totalStockValueCents, currency)}
+              {loading ? '...' : hideFinancialValues ? '••••••' : formatMoney(summary.totalStockValueCents, currency, language)}
             </Text>
             <Text style={[styles.heroHint, { color: palette.textMuted }]}>{heroHint}</Text>
           </View>
@@ -84,44 +195,73 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.heroBadges}>
-          <StatusBadge tone="success" label={`${loading ? '—' : summary.activeProductsCount} Produtos`} />
-          <StatusBadge tone="warning" label={`${loading ? '—' : summary.lowStockCount} Baixo estoque`} />
+          <StatusBadge tone="success" label={`${loading ? '-' : summary.activeProductsCount} ${t('home.products')}`} />
+          <StatusBadge tone="warning" label={`${loading ? '-' : summary.lowStockCount} ${t('home.lowStock')}`} />
         </View>
       </AppCard>
 
-      <View style={styles.metricRow}>
-        <MetricCard compact label="Produtos" value={loading ? '—' : String(summary.activeProductsCount)} hint="Atualizado hoje" />
-        <MetricCard compact label="Itens baixos" value={loading ? '—' : String(summary.lowStockCount)} hint="Itens criticos" />
-      </View>
-      <View style={styles.metricRow}>
-        <MetricCard compact label="Zerados" value={loading ? '—' : String(summary.zeroStockCount)} hint="Itens sem saldo" />
-        <MetricCard compact label="Vencendo" value={loading ? '—' : String(summary.expiringSoonCount)} hint="Proximos da validade" />
-      </View>
-
-      <AppCard style={styles.sectionCard}>
+      <AppCard style={styles.adFreeCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Acoes rapidas</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Acoes rapidas para o dia a dia.</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('ads.adFreeTitle')}</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>
+              {isTemporaryAdFree
+                ? t('ads.adFreeActiveBody', { minutes: Math.ceil(remainingAdFreeSeconds / 60) })
+                : t('ads.adFreeBody')}
+            </Text>
           </View>
-          <Ionicons name="flash-outline" size={20} color={palette.primary} />
+          <Ionicons name="timer-outline" size={22} color={palette.premium} />
         </View>
-
-        <AppButton label="Adicionar produto" onPress={() => router.push('/products/new')} />
-        <AppButton label="Movimentar estoque" variant="secondary" onPress={() => router.push('/products/movement')} />
+        <View style={styles.heroBadges}>
+          <StatusBadge
+            tone={isTemporaryAdFree ? 'success' : dailyAdFreeUses >= dailyAdFreeLimit ? 'warning' : 'info'}
+            label={isTemporaryAdFree
+              ? t('ads.adFreeActive', { minutes: Math.ceil(remainingAdFreeSeconds / 60) })
+              : t('ads.adFreeAvailable', { remaining: Math.max(0, dailyAdFreeLimit - dailyAdFreeUses), limit: dailyAdFreeLimit })}
+          />
+        </View>
+        <AppButton
+          label={isTemporaryAdFree ? t('ads.adFreeActiveButton') : t('ads.adFreeWatch')}
+          variant="secondary"
+          loading={adFreeBusy || adsLoading}
+          disabled={!canRequestAdFreeReward}
+          onPress={() => void handleTemporaryAdFree()}
+        />
+        {adFreeActionError || adsError ? (
+          <Text style={[styles.adFreeError, { color: palette.danger }]}>{translateAppError(adFreeActionError ?? adsError, t)}</Text>
+        ) : null}
+        {adFreeBusy ? <Text style={[styles.adFreeError, { color: palette.textMuted }]}>{t('ads.preparing')}</Text> : null}
+        {adFreeNotice ? <Text style={[styles.adFreeError, { color: palette.success }]}>{adFreeNotice}</Text> : null}
       </AppCard>
 
       <AppCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Ultimas movimentacoes</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Veja as ultimas entradas e saidas registradas localmente.</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.appFeatures')}</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>{t('home.appFeaturesBody')}</Text>
+          </View>
+          <Ionicons name="sparkles-outline" size={20} color={palette.premium} />
+        </View>
+        <AppButton label={t('home.openBackup')} variant="secondary" onPress={() => router.push('/backup')} />
+        <AppButton label={t('home.openPremium')} variant="ghost" onPress={() => router.push('/premium')} />
+      </AppCard>
+
+      <View style={styles.metricRow}>
+        <MetricCard compact label={t('home.products')} value={loading ? '-' : String(summary.activeProductsCount)} hint={t('home.updatedToday')} />
+        <MetricCard compact label={t('home.lowItems')} value={loading ? '-' : String(summary.lowStockCount)} hint={t('home.criticalItems')} />
+      </View>
+
+      <AppCard style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionCopy}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.recentMovements')}</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>{t('home.recentMovementsBody')}</Text>
           </View>
           <Ionicons name="time-outline" size={20} color={palette.primary} />
         </View>
 
         {error ? (
-          <EmptyState title="Nenhuma movimentacao recente" description={error} actionLabel="Tentar novamente" onActionPress={() => void refresh()} />
+          <EmptyState title={t('home.noRecentMovements')} description={translateAppError(error, t)} actionLabel={t('common.retry')} onActionPress={() => void refresh()} />
         ) : summary.lastMovements.length > 0 ? (
           <View style={styles.listGap}>
             {summary.lastMovements.map((movement) => (
@@ -129,21 +269,21 @@ export default function HomeScreen() {
                 key={movement.id}
                 icon={movement.type === 'in' ? 'arrow-up-outline' : movement.type === 'out' ? 'arrow-down-outline' : movement.type === 'loss' ? 'warning-outline' : 'swap-horizontal-outline'}
                 title={movement.productName}
-                subtitle={`${getMovementLabel(movement.type)} • ${formatShortDateTime(movement.createdAt)}`}
+                subtitle={`${getMovementLabel(movement.type, t)} - ${formatShortDateTime(movement.createdAt, language)}`}
                 trailing={<StatusBadge tone={getMovementTone(movement.type)} label={`x${movement.quantity}`} />}
               />
             ))}
           </View>
         ) : (
-          <EmptyState title="Nenhuma movimentacao recente" description="Quando voce salvar entradas ou saidas, tudo aparece aqui." />
+          <EmptyState title={t('home.noRecentMovements')} description={t('home.noRecentMovementsBody')} />
         )}
       </AppCard>
 
       <AppCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionCopy}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Alertas</Text>
-            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>Reponha, revise ou ajuste os itens criticos.</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{t('home.alerts')}</Text>
+            <Text style={[styles.sectionBody, { color: palette.textMuted }]}>{t('home.alertsBody')}</Text>
           </View>
           <Ionicons name="alert-circle-outline" size={20} color={palette.warning} />
         </View>
@@ -151,19 +291,28 @@ export default function HomeScreen() {
         {summary.zeroStockCount > 0 || summary.lowStockCount > 0 || summary.expiringSoonCount > 0 ? (
           <View style={styles.listGap}>
             {summary.zeroStockCount > 0 ? (
-              <AppCard.Row icon="alert-circle-outline" title="Zerados" subtitle={`${summary.zeroStockCount} itens sem saldo`} trailing={<StatusBadge tone="danger" label="0" />} />
+              <AppCard>
+                <AppCard.Row icon="alert-circle-outline" title={t('home.zeroStock')} subtitle={t('home.zeroStockBody', { count: summary.zeroStockCount })} trailing={<StatusBadge tone="danger" label="0" />} />
+              </AppCard>
             ) : null}
             {summary.lowStockCount > 0 ? (
-              <AppCard.Row icon="warning-outline" title="Baixo estoque" subtitle={`${summary.lowStockCount} itens no limite`} trailing={<StatusBadge tone="warning" label={String(summary.lowStockCount)} />} />
+              <AppCard>
+                <AppCard.Row icon="warning-outline" title={t('home.lowStock')} subtitle={t('home.lowStockBody', { count: summary.lowStockCount })} trailing={<StatusBadge tone="warning" label={String(summary.lowStockCount)} />} />
+              </AppCard>
             ) : null}
             {summary.expiringSoonCount > 0 ? (
-              <AppCard.Row icon="calendar-outline" title="Vencendo" subtitle={`${summary.expiringSoonCount} itens proximos da validade`} trailing={<StatusBadge tone="info" label={String(summary.expiringSoonCount)} />} />
+              <AppCard>
+                <AppCard.Row icon="calendar-outline" title={t('home.expiringSoon')} subtitle={t('home.expiringSoonBody', { count: summary.expiringSoonCount })} trailing={<StatusBadge tone="info" label={String(summary.expiringSoonCount)} />} />
+              </AppCard>
             ) : null}
           </View>
         ) : (
-          <EmptyState title="Sem alertas agora" description="Quando algo sair do esperado, ele aparece aqui." />
+          <EmptyState title={t('home.noAlerts')} description={t('home.noAlertsBody')} />
         )}
+        <AppButton label={t('home.viewAlerts')} variant="secondary" onPress={() => router.push('/(tabs)/alerts')} />
       </AppCard>
+
+      <StandardBannerAd placement="banner_home" />
     </ScreenContainer>
   );
 }
@@ -171,6 +320,26 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   heroCard: {
     gap: 18,
+  },
+  adFreeCard: {
+    gap: 14,
+  },
+  adFreeError: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerAction: {
+    width: 36,
+    height: 36,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroTop: {
     flexDirection: 'row',

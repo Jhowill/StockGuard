@@ -1,17 +1,31 @@
 import { featureDurations } from '@/constants/features';
-import { createEntitlement, expireOldEntitlements } from '@/database/repositories/adEntitlementRepository';
+import { claimTemporaryAdFreeReward, createEntitlement, expireOldEntitlements, getTemporaryAdFreeRewardState } from '@/database/repositories/adEntitlementRepository';
+import { consumeActiveEntitlementUse } from '@/database/repositories/adEntitlementRepository';
 import { incrementUsageLimit } from '@/database/repositories/featureUsageLimitRepository';
 import type { PremiumFeature } from '@/types/ads';
 import { nowIso } from '@/utils/date';
 import { dateKey } from '@/utils/date';
 
-export async function grantTemporaryAdFree(durationMinutes = 60) {
-  await expireOldEntitlements();
-  return createEntitlement({
-    type: 'temporary_ad_free',
-    source: 'rewarded_ad',
-    expiresAt: new Date(Date.now() + durationMinutes * 60 * 1000).toISOString(),
-  });
+export const TEMPORARY_AD_FREE_DURATION_MINUTES = 5;
+const adAccessListeners = new Set<() => void>();
+
+export function subscribeAdAccess(listener: () => void) {
+  adAccessListeners.add(listener);
+  return () => adAccessListeners.delete(listener);
+}
+
+function notifyAdAccessChanged() {
+  adAccessListeners.forEach((listener) => listener());
+}
+
+export async function getTemporaryAdFreeState() {
+  return getTemporaryAdFreeRewardState();
+}
+
+export async function grantTemporaryAdFree() {
+  const result = await claimTemporaryAdFreeReward(TEMPORARY_AD_FREE_DURATION_MINUTES);
+  if (result.granted) notifyAdAccessChanged();
+  return result;
 }
 
 export async function grantFeatureUnlock(featureKey: PremiumFeature) {
@@ -26,14 +40,22 @@ export async function grantFeatureUnlock(featureKey: PremiumFeature) {
     expiresAt,
     remainingUses,
   });
-
-  await incrementUsageLimit(featureKey, 1);
   return entitlement;
 }
 
 export async function consumeFeatureUse(featureKey: PremiumFeature) {
-  const next = await incrementUsageLimit(featureKey, 1);
-  return next;
+  const config = featureDurations[featureKey];
+
+  if (!config.uses) {
+    return null;
+  }
+
+  const consumedRewardUse = await consumeActiveEntitlementUse(featureKey);
+  if (consumedRewardUse) {
+    return consumedRewardUse;
+  }
+
+  return incrementUsageLimit(featureKey, 1);
 }
 
 export async function touchRewardUse() {

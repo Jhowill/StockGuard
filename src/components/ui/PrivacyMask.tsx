@@ -3,10 +3,8 @@ import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import type { AppStateStatus } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  allowScreenCaptureAsync,
   disableAppSwitcherProtectionAsync,
   enableAppSwitcherProtectionAsync,
-  preventScreenCaptureAsync,
 } from 'expo-screen-capture';
 import { useAppState } from '@/state/app-state';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -18,24 +16,17 @@ function PrivacyCaptureGuard() {
 
     void (async () => {
       try {
-        await preventScreenCaptureAsync('global-privacy-mask');
         if (active && Platform.OS === 'ios') {
           await enableAppSwitcherProtectionAsync(0.55);
         }
       } catch {
-        // If screen capture protection is unavailable, keep the visual mask only.
+        // If app-switcher protection is unavailable, keep the visual mask only.
       }
     })();
 
     return () => {
       active = false;
       void (async () => {
-        try {
-          await allowScreenCaptureAsync('global-privacy-mask');
-        } catch {
-          // Best-effort cleanup.
-        }
-
         if (Platform.OS === 'ios') {
           try {
             await disableAppSwitcherProtectionAsync();

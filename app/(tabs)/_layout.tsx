@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet } from 'react-native';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 
@@ -14,9 +15,24 @@ export default function TabsLayout() {
         tabBarActiveTintColor: palette.primary,
         tabBarInactiveTintColor: palette.textMuted,
         tabBarStyle: {
-          backgroundColor: palette.background,
+          backgroundColor: palette.surface,
           borderTopColor: palette.border,
+          borderTopWidth: 1,
+          marginHorizontal: 12,
+          marginBottom: 12,
+          borderRadius: 24,
+          height: 72,
+          paddingTop: 8,
+          paddingBottom: 10,
+          shadowColor: palette.shadow,
+          shadowOpacity: 0.2,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 6,
         },
+        tabBarItemStyle: styles.tabItem,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarIconStyle: styles.tabIcon,
       }}
     >
       <Tabs.Screen
@@ -67,3 +83,16 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabItem: {
+    paddingVertical: 2,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  tabIcon: {
+    marginTop: 2,
+  },
+});

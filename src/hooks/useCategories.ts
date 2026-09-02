@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   archiveCategory,
   createCategory,
@@ -11,21 +11,33 @@ export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(undefined);
     try {
-      setCategories(await listCategories());
+      const nextCategories = await listCategories();
+      if (requestId === requestIdRef.current) {
+        setCategories(nextCategories);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'CATEGORIES_LOAD_FAILED');
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'CATEGORIES_LOAD_FAILED');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void refresh();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [refresh]);
 
   const create = useCallback(async (input: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {

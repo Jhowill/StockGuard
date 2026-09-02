@@ -23,7 +23,7 @@ export default function Index() {
       <View style={[styles.glow, styles.glowBottom, { backgroundColor: palette.premium }]} />
 
       <View style={styles.center}>
-        <View style={[styles.logoShell, { borderColor: palette.border, backgroundColor: palette.surface }]}>
+        <View style={[styles.logoShell, { borderColor: palette.border, backgroundColor: palette.surface, shadowColor: palette.shadow }]}>
           <Image
             source={require('../icons/android/expo/icon.png')}
             style={styles.logo}

@@ -20,13 +20,23 @@ export type ReportSummary = {
 };
 
 function isInPeriod(date: Date, period: ReportPeriod) {
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
   const now = new Date();
+  if (date.getTime() > now.getTime()) {
+    return false;
+  }
+
   const diffMs = now.getTime() - date.getTime();
   const day = 24 * 60 * 60 * 1000;
 
   switch (period) {
     case 'today':
-      return diffMs <= day && date.getDate() === now.getDate();
+      return date.getFullYear() === now.getFullYear()
+        && date.getMonth() === now.getMonth()
+        && date.getDate() === now.getDate();
     case 'week':
       return diffMs <= 7 * day;
     case 'month':
@@ -36,17 +46,52 @@ function isInPeriod(date: Date, period: ReportPeriod) {
   }
 }
 
-export async function getReportSummary(period: ReportPeriod = 'month'): Promise<ReportSummary> {
-  const [products, movements] = await Promise.all([listProducts(), listMovements(1000)]);
-  const currency: CurrencyCode = products[0]?.currency ?? 'BRL';
+function getProductPrice(products: ProductRecord[], productId: string, field: 'costPriceCents' | 'salePriceCents') {
+  return products.find((product) => product.id === productId)?.[field] ?? 0;
+}
 
-  const filtered = movements.filter((movement) => isInPeriod(new Date(movement.createdAt), period));
+function movementValueCents(
+  movement: Awaited<ReturnType<typeof listMovements>>[number],
+  products: ProductRecord[],
+  field: 'totalCostCents' | 'totalSaleCents',
+) {
+  const stored = movement[field];
+  if (typeof stored === 'number' && Number.isFinite(stored) && stored >= 0) {
+    return stored;
+  }
+
+  const storedUnit = field === 'totalCostCents' ? movement.unitCostCents : movement.unitSalePriceCents;
+  if (typeof storedUnit === 'number' && Number.isFinite(storedUnit) && storedUnit >= 0) {
+    return Math.round(storedUnit * movement.quantity);
+  }
+
+  const unitField = field === 'totalCostCents' ? 'costPriceCents' : 'salePriceCents';
+  return Math.round(getProductPrice(products, movement.productId, unitField) * movement.quantity);
+}
+
+export async function getReportSummary(period: ReportPeriod = 'month', currency: CurrencyCode = 'BRL'): Promise<ReportSummary> {
+  const [products, movements] = await Promise.all([listProducts(), listMovements(0)]);
+
+  // Never aggregate monetary values from different currencies into one total.
+  const filtered = movements.filter(
+    (movement) => movement.currency === currency && isInPeriod(new Date(movement.createdAt), period),
+  );
   const entriesValueCents = filtered
     .filter((movement) => movement.type === 'in' || movement.type === 'return' || movement.type === 'adjustment_positive')
-    .reduce((sum, movement) => sum + (movement.totalCostCents ?? movement.quantity * 0), 0);
+    .reduce((sum, movement) => sum + movementValueCents(movement, products, 'totalCostCents'), 0);
   const exitsValueCents = filtered
     .filter((movement) => movement.type === 'out' || movement.type === 'loss' || movement.type === 'adjustment_negative')
-    .reduce((sum, movement) => sum + (movement.totalSaleCents ?? movement.quantity * 0), 0);
+    .reduce((sum, movement) => {
+      const valueField = movement.type === 'out' ? 'totalSaleCents' : 'totalCostCents';
+      return sum + movementValueCents(movement, products, valueField);
+    }, 0);
+  const estimatedProfitCents = filtered
+    .filter((movement) => movement.type === 'out')
+    .reduce((sum, movement) => {
+      const revenue = movementValueCents(movement, products, 'totalSaleCents');
+      const cost = movementValueCents(movement, products, 'totalCostCents');
+      return sum + revenue - cost;
+    }, 0);
 
   const movementMap = new Map<string, number>();
   filtered.forEach((movement) => {
@@ -66,18 +111,18 @@ export async function getReportSummary(period: ReportPeriod = 'month'): Promise<
     period,
     entriesValueCents,
     exitsValueCents,
-    estimatedProfitCents: exitsValueCents - entriesValueCents,
+    estimatedProfitCents,
     movedProductsCount: movementMap.size,
     topProductsByQuantity,
     currency,
   };
 }
 
-export async function getReportCards(period: ReportPeriod = 'month') {
-  const summary = await getReportSummary(period);
+export async function getReportCards(period: ReportPeriod = 'month', locale = 'pt-BR', currency: CurrencyCode = 'BRL') {
+  const summary = await getReportSummary(period, currency);
   return {
     summary,
-    formattedEntries: formatMoney(summary.entriesValueCents, summary.currency),
-    formattedExits: formatMoney(summary.exitsValueCents, summary.currency),
+    formattedEntries: formatMoney(summary.entriesValueCents, summary.currency, locale),
+    formattedExits: formatMoney(summary.exitsValueCents, summary.currency, locale),
   };
 }

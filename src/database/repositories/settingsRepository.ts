@@ -1,9 +1,11 @@
 import { getDatabase } from '../db';
 import { createAuditLog } from './auditLogRepository';
 import type { AppLanguage, CurrencyCode, ThemeMode, UsageType } from '@/types/settings';
+import { assertTextLength, INPUT_LIMITS } from '@/utils/validators';
 
 export type AppSettingsRecord = {
   id: 'default';
+  userName?: string | null;
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
@@ -25,6 +27,7 @@ export type AppSettingsRecord = {
 
 type SettingsRow = {
   id: string;
+  user_name: string | null;
   theme: ThemeMode;
   language: AppLanguage;
   currency: CurrencyCode;
@@ -46,6 +49,7 @@ type SettingsRow = {
 
 const DEFAULT_SETTINGS: AppSettingsRecord = {
   id: 'default',
+  userName: null,
   theme: 'system',
   language: 'system',
   currency: 'BRL',
@@ -81,6 +85,7 @@ function normalizePositiveInteger(value: unknown, fallback: number) {
 function mapRow(row: SettingsRow): AppSettingsRecord {
   return {
     id: 'default',
+    userName: row.user_name?.trim() || null,
     theme: pickAllowed(row.theme, themeModes, DEFAULT_SETTINGS.theme),
     language: pickAllowed(row.language, languages, DEFAULT_SETTINGS.language),
     currency: pickAllowed(row.currency, currencies, DEFAULT_SETTINGS.currency),
@@ -118,12 +123,13 @@ export async function ensureDefaultSettings() {
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO app_settings (
-      id, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
+      id, user_name, theme, language, currency, usage_type, onboarding_completed, app_lock_enabled, biometric_unlock_enabled,
       hide_financial_values, ads_enabled, personalized_ads_consent,
       expiration_warning_days, low_stock_warning_enabled, expiration_warning_enabled,
       backup_reminder_enabled, last_backup_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     DEFAULT_SETTINGS.id,
+    DEFAULT_SETTINGS.userName ?? null,
     DEFAULT_SETTINGS.theme,
     DEFAULT_SETTINGS.language,
     DEFAULT_SETTINGS.currency,
@@ -151,6 +157,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
   const next: AppSettingsRecord = {
     ...current,
     ...input,
+    userName: typeof input.userName === 'string' ? input.userName.trim() || null : input.userName === null ? null : current.userName ?? null,
     theme: input.theme ? pickAllowed(input.theme, themeModes, current.theme) : current.theme,
     language: input.language ? pickAllowed(input.language, languages, current.language) : current.language,
     currency: input.currency ? pickAllowed(input.currency, currencies, current.currency) : current.currency,
@@ -159,10 +166,12 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
     expirationWarningDays: normalizePositiveInteger(input.expirationWarningDays, current.expirationWarningDays),
     updatedAt: new Date().toISOString(),
   };
+  assertTextLength(next.userName, INPUT_LIMITS.name, 'USER_NAME_TOO_LONG');
 
   const db = await getDatabase();
   await db.runAsync(
     `UPDATE app_settings SET
+      user_name = ?,
       theme = ?,
       language = ?,
       currency = ?,
@@ -180,6 +189,7 @@ export async function updateSettings(input: Partial<AppSettingsRecord>) {
       last_backup_at = ?,
       updated_at = ?
      WHERE id = 'default'`,
+    next.userName ?? null,
     next.theme,
     next.language,
     next.currency,

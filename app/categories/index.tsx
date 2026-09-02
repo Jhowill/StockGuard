@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -6,12 +7,16 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppInput } from '@/components/ui/AppInput';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useCategories } from '@/hooks/useCategories';
+import { useI18n } from '@/hooks/useI18n';
+import { translateAppError } from '@/i18n/errorMessages';
 import { parseNonNegativeInteger } from '@/utils/validators';
 
 export default function CategoriesScreen() {
+  const { t } = useI18n();
   const { categories, loading, error, create, edit, archive } = useCategories();
   const [name, setName] = useState('');
   const [colorToken, setColorToken] = useState('');
@@ -22,12 +27,21 @@ export default function CategoriesScreen() {
   const [busy, setBusy] = useState(false);
   const [archiveId, setArchiveId] = useState<string | null>(null);
 
-  const resolveIcon = (iconName?: string) => {
-    if (iconName && iconName in Ionicons.glyphMap) {
-      return iconName as keyof typeof Ionicons.glyphMap;
+  const resolveIcon = (nextIconName?: string) => {
+    if (nextIconName && nextIconName in Ionicons.glyphMap) {
+      return nextIconName as keyof typeof Ionicons.glyphMap;
     }
 
     return 'layers-outline' as keyof typeof Ionicons.glyphMap;
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setName('');
+    setColorToken('');
+    setIconName('');
+    setSortOrder('0');
+    setActionError(undefined);
   };
 
   const handleSave = async () => {
@@ -43,7 +57,7 @@ export default function CategoriesScreen() {
     };
 
     if (!input.name) {
-      setActionError('Informe o nome da categoria.');
+      setActionError(t('categories.nameRequired'));
       return;
     }
 
@@ -52,17 +66,13 @@ export default function CategoriesScreen() {
     try {
       if (editingId) {
         await edit(editingId, input);
-        setEditingId(null);
       } else {
         await create(input);
       }
 
-      setName('');
-      setColorToken('');
-      setIconName('');
-      setSortOrder('0');
+      resetForm();
     } catch (nextError) {
-      setActionError(nextError instanceof Error ? nextError.message : 'Nao foi possivel salvar a categoria.');
+      setActionError(nextError instanceof Error ? nextError.message : t('categories.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -80,8 +90,8 @@ export default function CategoriesScreen() {
       setArchiveId(null);
     } catch (nextError) {
       const message = nextError instanceof Error && nextError.message === 'CATEGORY_HAS_PRODUCTS'
-        ? 'Esta categoria possui produtos vinculados. Mova os produtos antes de arquivar.'
-        : nextError instanceof Error ? nextError.message : 'Nao foi possivel arquivar a categoria.';
+        ? t('categories.linkedError')
+        : nextError instanceof Error ? nextError.message : t('categories.archiveFailed');
       setActionError(message);
     } finally {
       setBusy(false);
@@ -90,60 +100,66 @@ export default function CategoriesScreen() {
 
   return (
     <ScreenContainer scroll padded>
-      <AppHeader title="Categorias" subtitle="Organize produtos por grupo." />
+      <AppHeader title={t('categories.title')} subtitle={t('categories.subtitle')} actionLabel={t('categories.newAction')} actionIcon="add" onActionPress={resetForm} />
 
       <AppCard style={{ gap: 12 }}>
-        <AppCard.Title>{editingId ? 'Editar categoria' : 'Nova categoria'}</AppCard.Title>
-        <AppInput label="Nome" value={name} onChangeText={setName} />
-        <AppInput label="Cor" value={colorToken} onChangeText={setColorToken} />
-        <AppInput label="Icone" value={iconName} onChangeText={setIconName} />
-        <AppInput label="Ordem" keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
-        <AppButton label={busy ? '...' : editingId ? 'Salvar' : 'Criar'} disabled={busy} onPress={() => void handleSave()} />
-        {editingId ? <AppButton label="Cancelar" variant="ghost" onPress={() => setEditingId(null)} /> : null}
+        <AppCard.Title>{editingId ? t('categories.edit') : t('categories.new')}</AppCard.Title>
+        <AppCard.Text>{t('categories.formBody')}</AppCard.Text>
+        {editingId ? <StatusBadge tone="info" label={t('categories.editBadge')} /> : null}
+        <AppInput label={t('categories.name')} placeholder={t('categories.namePlaceholder')} value={name} onChangeText={setName} />
+        <AppInput label={t('categories.color')} placeholder={t('categories.colorPlaceholder')} helperText={t('categories.colorHelper')} value={colorToken} onChangeText={setColorToken} />
+        <AppInput label={t('categories.icon')} placeholder={t('categories.iconPlaceholder')} helperText={t('categories.iconHelper')} value={iconName} onChangeText={setIconName} />
+        <AppInput label={t('categories.order')} placeholder={t('categories.orderPlaceholder')} helperText={t('categories.orderHelper')} keyboardType="numeric" value={sortOrder} onChangeText={setSortOrder} />
+        <AppButton label={editingId ? t('common.save') : t('common.create')} loading={busy} onPress={() => void handleSave()} />
+        {editingId ? <AppButton label={t('common.cancel')} variant="ghost" onPress={resetForm} /> : null}
       </AppCard>
 
-      {actionError ? <EmptyState title="Categorias" description={actionError} /> : null}
+      {actionError ? <EmptyState title={t('categories.title')} description={translateAppError(actionError, t)} icon="layers-outline" /> : null}
 
       {loading ? (
-        <EmptyState title="Categorias" description="Carregando..." />
+        <LoadingState title={t('categories.title')} description={t('common.loading')} />
       ) : error ? (
-        <EmptyState title="Categorias" description={error} />
+        <EmptyState title={t('categories.title')} description={translateAppError(error, t)} icon="layers-outline" />
       ) : categories.length === 0 ? (
-        <EmptyState title="Categorias" description="Nenhuma categoria cadastrada." />
+        <EmptyState title={t('categories.title')} description={t('categories.empty')} icon="layers-outline" />
       ) : (
         categories.map((category) => (
           <AppCard key={category.id}>
             <AppCard.Row
               icon={resolveIcon(category.iconName)}
               title={category.name}
-              subtitle={category.colorToken ?? 'Sem cor'}
+              subtitle={category.colorToken ?? t('categories.noColor')}
               trailing={<StatusBadge tone={category.status === 'active' ? 'success' : 'info'} label={String(category.sortOrder)} />}
             />
-            <AppButton
-              label="Editar"
-              variant="secondary"
-              onPress={() => {
-                setEditingId(category.id);
-                setName(category.name);
-                setColorToken(category.colorToken ?? '');
-                setIconName(category.iconName ?? '');
-                setSortOrder(String(category.sortOrder));
-              }}
-            />
-            <AppButton
-              label="Arquivar"
-              variant="ghost"
-              disabled={busy}
-              onPress={() => setArchiveId(category.id)}
-            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <AppButton
+                label={t('common.edit')}
+                variant="secondary"
+                style={{ flex: 1 }}
+                onPress={() => {
+                  setEditingId(category.id);
+                  setName(category.name);
+                  setColorToken(category.colorToken ?? '');
+                  setIconName(category.iconName ?? '');
+                  setSortOrder(String(category.sortOrder));
+                }}
+              />
+              <AppButton
+                label={t('common.archive')}
+                variant="danger"
+                style={{ flex: 1 }}
+                disabled={busy}
+                onPress={() => setArchiveId(category.id)}
+              />
+            </View>
           </AppCard>
         ))
       )}
       <ConfirmDialog
         visible={Boolean(archiveId)}
-        title="Arquivar categoria?"
-        message="Categorias com produtos vinculados nao serao arquivadas ate que os produtos sejam movidos."
-        confirmLabel="Arquivar"
+        title={t('categories.archiveTitle')}
+        message={t('categories.archiveBody')}
+        confirmLabel={t('common.archive')}
         danger
         onCancel={() => setArchiveId(null)}
         onConfirm={() => void handleArchive()}

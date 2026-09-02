@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+
+const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
+
+test('Expo 54 native dependency set stays aligned', () => {
+  const pkg = readJson('package.json');
+  const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+  assert.match(deps.expo, /\^54\.|~54\./);
+  assert.equal(deps.react, '19.1.0');
+  assert.equal(deps['react-native'], '0.81.5');
+  assert.match(deps['babel-preset-expo'], /54\./);
+  assert.equal(deps['react-native-worklets'], '0.5.1');
+  assert.equal(deps['react-native-google-mobile-ads'], '16.3.0');
+});
+
+test('store identifiers, versions and native release flags are present', () => {
+  const app = readJson('app.json').expo;
+  const eas = readJson('eas.json');
+  const localizationPlugin = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'expo-localization');
+
+  assert.equal(app.version, '1.0.0');
+  assert.equal(app.android.package, 'com.jhowill.stockguard');
+  assert.equal(app.android.versionCode, 1);
+  assert.equal(app.ios.bundleIdentifier, 'com.jhowill.stockguard');
+  assert.equal(app.ios.buildNumber, '1');
+  // Encrypted backups use AES from crypto-js, outside Apple's OS crypto APIs.
+  assert.equal(app.ios.infoPlist.ITSAppUsesNonExemptEncryption, true);
+  assert.deepEqual(app.platforms, ['ios', 'android']);
+  assert.deepEqual(localizationPlugin[1].supportedLocales.ios, ['pt-BR', 'en', 'es']);
+  assert.deepEqual(localizationPlugin[1].supportedLocales.android, ['pt', 'en', 'es']);
+  assert.ok(eas.build.production);
+  assert.ok(eas.build.preview.android.buildType);
+});
+
+test('production ads are configured without enabling test mode', () => {
+  const app = readJson('app.json').expo;
+  const adsPlugin = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'react-native-google-mobile-ads');
+
+  assert.equal(app.extra.EXPO_PUBLIC_ADS_ENABLED, 'true');
+  assert.equal(app.extra.EXPO_PUBLIC_ADS_TEST_MODE, 'false');
+  assert.match(adsPlugin[1].androidAppId, /^ca-app-pub-/);
+  assert.match(adsPlugin[1].iosAppId, /^ca-app-pub-/);
+  assert.match(app.extra.EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID, /^ca-app-pub-/);
+  assert.match(app.extra.EXPO_PUBLIC_ADMOB_IOS_REWARDED_INTERSTITIAL_ID, /^ca-app-pub-/);
+  for (const key of [
+    'EXPO_PUBLIC_ADMOB_ANDROID_BANNER_HOME_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_BANNER_HOME_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_BANNER_ALERTS_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_BANNER_ALERTS_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_PRODUCTS_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_NATIVE_PRODUCTS_ID',
+    'EXPO_PUBLIC_ADMOB_ANDROID_NATIVE_REPORTS_ID',
+    'EXPO_PUBLIC_ADMOB_IOS_NATIVE_REPORTS_ID',
+  ]) {
+    assert.match(app.extra[key], /^ca-app-pub-/);
+  }
+
+  assert.match(readFileSync('app-ads.txt', 'utf8'), /^google\.com, pub-4042606302261972, DIRECT, f08c47fec0942fa0\s*$/);
+});
